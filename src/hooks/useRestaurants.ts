@@ -49,7 +49,11 @@ export const useRestaurants = () => {
     });
 
     // Filter logic: Only keep restaurants that are likely in Ho Chi Minh City
+    // BUT: Always keep sample restaurants to ensure consistency between environments
     const hcmcMerged = merged.filter(res => {
+      const isSample = SAMPLE_RESTAURANTS.some(s => s.name === res.name && s.location === res.location);
+      if (isSample) return true;
+
       const loc = res.location.toUpperCase();
       return loc.includes("TP. HCM") || 
              loc.includes("HỒ CHÍ MINH") || 
@@ -65,6 +69,8 @@ export const useRestaurants = () => {
              loc.includes("THỦ ĐỨC") ||
              loc.includes("BÌNH TÂN");
     });
+
+    console.log(`Loaded ${hcmcMerged.length} restaurants (${SAMPLE_RESTAURANTS.length} samples)`);
 
     // Final Migration/Cleanup for existing items
     const migrated = hcmcMerged.map(res => {

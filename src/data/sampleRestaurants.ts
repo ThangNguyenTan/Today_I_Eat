@@ -1,4 +1,4 @@
-import type { Restaurant } from '@/types';
+﻿import type { Restaurant } from '@/types';
 
 export const SAMPLE_RESTAURANTS: Omit<Restaurant, 'id' | 'createdAt'>[] = [
   // --- PHỞ (10) ---
@@ -78,8 +78,24 @@ export const SAMPLE_RESTAURANTS: Omit<Restaurant, 'id' | 'createdAt'>[] = [
     name: "Phở Hương Bình",
     type: "Phở",
     location: "148 Võ Thị Sáu, Quận 3, TP. HCM",
-    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Phở+Hương+Bình+Võ+Thị+Sáu",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Phở+Hương+Bình+148+Võ+Thị+Sáu+Ho+Chi+Minh",
     notes: "Nổi tiếng với món phở gà ta da giòn, thịt chắc.",
+    mealTimes: ["Sáng", "Trưa", "Tối"]
+  },
+  {
+    name: "Phở Nhớ Sài Gòn",
+    type: "Phở",
+    location: "42 Tôn Thất Tùng, Quận 1, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Phở+Nhớ+Sài+Gòn+42+Tôn+Thất+Tùng+Ho+Chi+Minh",
+    notes: "Nước dùng phở truyền thống, hương vị thơm nồng thảo mộc.",
+    mealTimes: ["Sáng", "Trưa", "Tối"]
+  },
+  {
+    name: "Phở Thìn 170",
+    type: "Phở",
+    location: "170 Nguyễn Đình Chiểu, Quận 3, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Phở+Thìn+170+Nguyễn+Đình+Chiểu+Ho+Chi+Minh",
+    notes: "Phiên bản phở xào lăn đậm vị tỏi, thịt bò mềm và thơm.",
     mealTimes: ["Sáng", "Trưa", "Tối"]
   },
 
@@ -159,10 +175,26 @@ export const SAMPLE_RESTAURANTS: Omit<Restaurant, 'id' | 'createdAt'>[] = [
   {
     name: "Bún Kèn Dì 3",
     type: "Bún",
-    location: "Trần Hưng Đạo, Quận 5, TP. HCM",
-    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Bún+Kèn+Dì+3+Saigon",
-    notes: "Món bún kèn đặc sản Phú Quốc với nước cốt dừa và cá xay.",
+    location: "87 Trần Hưng Đạo, Quận 5, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Bún+Kèn+Dì+3+Trần+Hưng+Đạo+Ho+Chi+Minh",
+    notes: "Món bún đặc sản Phú Quốc với nước cốt dừa béo ngậy và cá xay thơm nồng.",
     mealTimes: ["Chiều", "Tối"]
+  },
+  {
+    name: "Bún Quậy Kiến Xây",
+    type: "Bún",
+    location: "402 Điện Biên Phủ, Bình Thạnh, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Bún+Quậy+Kiến+Xây+Điện+Biên+Phủ+Ho+Chi+Minh",
+    notes: "Tự pha nước chấm theo khẩu vị, chả cá và bún tươi làm tại chỗ.",
+    mealTimes: ["Sáng", "Trưa", "Tối"]
+  },
+  {
+    name: "Bún Suông Cô Mai",
+    type: "Bún",
+    location: "14 Võ Văn Tần, Quận 3, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Bún+Suông+Cô+Mai+Võ+Văn+Tần+Ho+Chi+Minh",
+    notes: "Món bún suông Trà Vinh đậm đà với tôm quết dai và giòn.",
+    mealTimes: ["Sáng", "Trưa"]
   },
 
   // --- CƠM (10) ---
@@ -223,12 +255,28 @@ export const SAMPLE_RESTAURANTS: Omit<Restaurant, 'id' | 'createdAt'>[] = [
     mealTimes: ["Trưa", "Tối", "Khuya"]
   },
   {
-    name: "Cơm Gà Hải Nam",
+    name: "Cơm Gà Hải Nam Singapore",
     type: "Cơm",
-    location: "95-97 Âu Cơ, Tân Bình, TP. HCM",
-    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Cơm+Gà+Hải+Nam+Âu+Cơ",
-    notes: "Gà luộc da vàng óng, cơm nấu bằng nước dùng gà thơ phức.",
+    location: "Nguyễn Tri Phương, Quận 10, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Cơm+Gà+Hải+Nam+Singapore+Nguyễn+Tri+Phương+Ho+Chi+Minh",
+    notes: "Thịt gà luộc mềm, mướt, cơm nấu nước dùng gà béo ngậy.",
     mealTimes: ["Trưa", "Tối"]
+  },
+  {
+    name: "Cơm Niêu Việt Nam",
+    type: "Cơm",
+    location: "Sân bay Tân Sơn Nhất, Tân Bình, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Cơm+Niêu+Việt+Nam+Tân+Sơn+Nhất+Ho+Chi+Minh",
+    notes: "Cơm cháy giòn rụm đãi tiệc hoặc gia đình đều hợp.",
+    mealTimes: ["Trưa", "Tối"]
+  },
+  {
+    name: "Cơm Tấm Bụi Sài Gòn",
+    type: "Cơm",
+    location: "100 Thạch Thị Thanh, Quận 1, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Cơm+Tấm+Bụi+Thạch+Thị+Thanh+Ho+Chi+Minh",
+    notes: "Miếng sườn vàng ươm mật ong, vị đậm đà truyền thống.",
+    mealTimes: ["Sáng", "Trưa", "Tối"]
   },
   {
     name: "Cơm Gà Thượng Hải",
@@ -251,9 +299,9 @@ export const SAMPLE_RESTAURANTS: Omit<Restaurant, 'id' | 'createdAt'>[] = [
   {
     name: "Lẩu Cua Đất Mũi",
     type: "Lẩu",
-    location: "769 Quang Trung, Gò Vấp, TP. HCM",
-    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Lẩu+Cua+Đất+Mũi+Quang+Trung",
-    notes: "Cua Cà Mau tươi rói, lẩu cua gạch cực kỳ chất lượng.",
+    location: "661 Trần Hưng Đạo, Quận 5, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Lẩu+Cua+Đất+Mũi+661+Trần+Hưng+Đạo+Ho+Chi+Minh",
+    notes: "Cua Cà Mau tươi sống, nước lẩu bầu ngọt thanh.",
     mealTimes: ["Trưa", "Tối"]
   },
   {
@@ -741,10 +789,26 @@ export const SAMPLE_RESTAURANTS: Omit<Restaurant, 'id' | 'createdAt'>[] = [
 
   // --- HẢI SẢN (10) ---
   {
+    name: "Hải Sản Phố",
+    type: "Hải sản",
+    location: "15 Thạch Thị Thanh, Quận 1, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Hải+Sản+Phố+15+Thạch+Thị+Thanh+Ho+Chi+Minh",
+    notes: "Hải sản tươi sống cao cấp, tôm hùm đất và ghẹ là đặc sản.",
+    mealTimes: ["Trưa", "Tối"]
+  },
+  {
+    name: "Lẩu Cua Khôi",
+    type: "Hải sản",
+    location: "18 Trần Hưng Đạo, Quận 1, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Lẩu+Cua+Khôi+18+Trần+Hưng+Đạo+Ho+Chi+Minh",
+    notes: "Nước dùng lẩu cua đậm đà, cua chắc thịt và gạch béo.",
+    mealTimes: ["Trưa", "Tối"]
+  },
+  {
     name: "Hải Sản Rạn Biển",
     type: "Hải sản",
     location: "25 Kỳ Đồng, Quận 3, TP. HCM",
-    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Hải+Sản+Rạn+Biển+Kỳ+Đồng",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Hải+Sản+Rạn+Biển+25+Kỳ+Đồng+Ho+Chi+Minh",
     notes: "Nhà hàng hải sản tươi sống cao cấp, phù hợp đãi tiệc và gia đình.",
     mealTimes: ["Trưa", "Tối"]
   },
@@ -1397,10 +1461,26 @@ export const SAMPLE_RESTAURANTS: Omit<Restaurant, 'id' | 'createdAt'>[] = [
 
   // --- KHÁC (10) ---
   {
+    name: "Dim Tu Tac",
+    type: "Khác",
+    location: "55 Đông Du, Quận 1, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Dim+Tu+Tac+55+Đông+Du+Ho+Chi+Minh",
+    notes: "Dimsum đẳng cấp, không gian sang trọng, chuẩn vị Hong Kong.",
+    mealTimes: ["Trưa", "Tối"]
+  },
+  {
+    name: "Mì Quảng Sâm",
+    type: "Khác",
+    location: "8 Ca Văn Thỉnh, Tân Bình, TP. HCM",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Mì+Quảng+Sâm+8+Ca+Văn+Thỉnh+Ho+Chi+Minh",
+    notes: "Hương vị mì Quảng đặc trưng với gà ta và sợi mì vàng dai.",
+    mealTimes: ["Sáng", "Trưa", "Tối"]
+  },
+  {
     name: "Pizza 4P's Bến Thành",
     type: "Khác",
     location: "8 Thủ Khoa Huân, Quận 1, TP. HCM",
-    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Pizza+4Ps+Bến+Thành",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Pizza+4P's+8+Thủ+Khoa+Huân+Ho+Chi+Minh",
     notes: "Món mỳ Ý cua và pizza phô mai tươi trứ danh, cần đặt chỗ trước.",
     mealTimes: ["Trưa", "Tối"]
   },
