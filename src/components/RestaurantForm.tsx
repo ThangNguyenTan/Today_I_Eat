@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import type { FoodType, MealTime } from '@/types';
+import type { MealTime } from '@/types';
 import { FOOD_TYPES, MEAL_TIMES } from '@/constants';
 
 interface RestaurantFormProps {
