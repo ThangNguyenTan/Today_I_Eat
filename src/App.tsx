@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRestaurants, getCurrentMealTime } from '@/hooks/useRestaurants';
+import { useGeolocation } from '@/hooks/useGeolocation';
 import { RestaurantForm } from '@/components/RestaurantForm';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { SuggestionModal } from '@/components/SuggestionModal';
@@ -12,7 +13,9 @@ import {
   ChevronUp,
   Heart,
   MapPin,
-  RotateCcw
+  RotateCcw,
+  Search,
+  X
 } from 'lucide-react';
 import type { Restaurant, MealTime, FoodType } from '@/types';
 import { FOOD_TYPES } from '@/constants';
@@ -28,7 +31,9 @@ function App() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const currentArea = "Quận 1"; // Mocked current location area
+  const { area, loading: geoLoading, error: geoError, getLocation } = useGeolocation();
+  const [currentArea, setCurrentArea] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -57,29 +62,55 @@ function App() {
 
   const filteredRestaurants = useMemo(() => {
     let result = restaurants;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(r => 
+        r.name.toLowerCase().includes(query) ||
+        r.location.toLowerCase().includes(query) ||
+        (r.notes && r.notes.toLowerCase().includes(query)) ||
+        r.type.toLowerCase().includes(query)
+      );
+    }
+
     if (activeType !== 'Tất cả') {
       result = result.filter(r => r.type === activeType);
     }
     if (showFavoritesOnly) {
       result = result.filter(r => r.isFavorite);
     }
-    if (showNearbyOnly) {
-      result = result.filter(r => 
-        r.location.toUpperCase().includes(currentArea.toUpperCase()) ||
-        r.location.toUpperCase().includes("Q.1") ||
-        r.location.toUpperCase().includes("Q1")
-      );
+    if (showNearbyOnly && currentArea) {
+      result = result.filter(r => {
+        const loc = r.location.toUpperCase();
+        const cleanTarget = currentArea.toUpperCase().replace(/QUẬN|Q\.|Q/g, '').trim();
+        const patterns = [`QUẬN ${cleanTarget}`, `Q. ${cleanTarget}`, `Q.${cleanTarget}`, `Q${cleanTarget}`, cleanTarget];
+        return patterns.some(p => loc.includes(p));
+      });
     }
     return result;
-  }, [restaurants, activeType, showFavoritesOnly, showNearbyOnly]);
+  }, [restaurants, activeType, showFavoritesOnly, showNearbyOnly, searchQuery, currentArea]);
 
   const displayedRestaurants = filteredRestaurants.slice(0, page * itemsPerPage);
   const hasMore = filteredRestaurants.length > displayedRestaurants.length;
 
+  // Sync currentArea from hook
+  useEffect(() => {
+    if (area) {
+      setCurrentArea(area);
+    }
+  }, [area]);
+
+  // Request location when "Nearby" is toggled on
+  useEffect(() => {
+    if (showNearbyOnly && !currentArea && !geoLoading) {
+      getLocation();
+    }
+  }, [showNearbyOnly, currentArea, geoLoading]);
+
   // Reset page when filter changes
   useEffect(() => {
     setPage(1);
-  }, [activeType]);
+  }, [activeType, showNearbyOnly, showFavoritesOnly, searchQuery]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -148,7 +179,15 @@ function App() {
         <section className="mb-12">
           <div className="space-y-1 mb-8 text-center">
             <p className="text-sm font-semibold text-primary/80 uppercase tracking-widest">{greeting}</p>
-            <h2 className="text-5xl font-black tracking-tight sm:text-6xl leading-[1.1]">
+            {showNearbyOnly && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <div className={`h-2 w-2 rounded-full ${geoLoading ? 'bg-blue-400 animate-pulse' : currentArea ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  {geoLoading ? 'Đang định vị...' : geoError ? geoError : currentArea ? `Gần ${currentArea}` : 'Chưa có vị trí'}
+                </span>
+              </div>
+            )}
+            <h2 className="text-5xl font-black tracking-tight sm:text-6xl leading-[1.1] mt-4">
               Hôm nay bạn <br />
               <span className="text-gradient">thấy thế nào?</span>
             </h2>
@@ -194,14 +233,37 @@ function App() {
           </section>
         )}
 
-        {/* Restaurant List */}
-        <section className="space-y-8">
-          <div className="flex items-end justify-between px-2">
+        {/* Search & Filter Section */}
+        <section className="mb-10 space-y-4">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Tìm tên quán, món ăn hoặc địa chỉ..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-16 pl-14 pr-14 rounded-[2rem] bg-white border-0 shadow-xl shadow-black/5 focus:ring-4 focus:ring-primary/10 transition-all text-base font-medium placeholder:text-muted-foreground/60"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-5 flex items-center text-muted-foreground hover:text-primary transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+          
+          <div className="flex items-center justify-between px-2">
             <div>
-              <h3 className="text-2xl font-black tracking-tight">Danh sách của bạn</h3>
+              <h3 className="text-2xl font-black tracking-tight">Khám phá</h3>
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Info className="h-3 w-3" />
-                {activeType === 'Tất cả' ? `Hiện có ${restaurants.length}` : `Tìm thấy ${filteredRestaurants.length}`} địa điểm
+                {searchQuery || activeType !== 'Tất cả' 
+                  ? `Tìm thấy ${filteredRestaurants.length} địa điểm` 
+                  : `Có ${restaurants.length} địa điểm quanh bạn`}
               </p>
             </div>
             <Button 
@@ -211,9 +273,13 @@ function App() {
               className={`rounded-full gap-2 font-bold text-xs uppercase tracking-widest transition-all ${isFilterOpen ? 'bg-primary text-white shadow-lg' : 'text-primary'}`}
             >
               <ListFilter className="h-4 w-4" />
-              Lọc
+              Bộ lọc
             </Button>
           </div>
+        </section>
+
+        {/* Restaurant List */}
+        <section className="space-y-8">
 
           {/* Expanded Filter UI */}
           {isFilterOpen && (
