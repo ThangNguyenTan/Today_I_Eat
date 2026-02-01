@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from './ui/dialog';
 import type { Restaurant } from '@/types';
 import { Button } from './ui/button';
@@ -59,7 +60,13 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !isSpinning && onClose()}>
-      <DialogContent className="sm:max-w-md border-0 p-0 overflow-hidden rounded-[3rem] gap-0">
+      <DialogContent 
+        aria-describedby={undefined}
+        className="sm:max-w-md border-0 p-0 overflow-hidden rounded-[3rem] gap-0"
+      >
+        <DialogDescription className="sr-only">
+          Kết quả gợi ý món ăn dành cho bạn
+        </DialogDescription>
         <div className="bg-gradient-to-br from-primary to-orange-500 p-8 pt-12 text-center text-white relative">
           <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none overflow-hidden">
             <Sparkles className="absolute top-10 left-10 h-20 w-20" />

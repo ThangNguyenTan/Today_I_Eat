@@ -20,14 +20,18 @@ import {
 import { UserMenu } from '@/components/UserMenu';
 import { useAuth } from '@/context/AuthContext';
 import type { Restaurant, MealTime, FoodType } from '@/types';
-import { FOOD_TYPES } from '@/constants';
+import { FOOD_TYPES, HCM_DISTRICTS } from '@/constants';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function App() {
   const { user, login, logout } = useAuth();
   const { restaurants, addRestaurant, getRandomRestaurant, toggleFavorite, isSyncing } = useRestaurants(user);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<Restaurant | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [currentFilter, setCurrentFilter] = useState<MealTime | undefined>(undefined);
@@ -35,8 +39,10 @@ function App() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const { area, loading: geoLoading, error: geoError, getLocation } = useGeolocation();
+  const { area, loading: geoLoading, error: geoError, getLocation, hasAttempted } = useGeolocation();
   const [currentArea, setCurrentArea] = useState<string | null>(null);
+  const [manualArea, setManualArea] = useState<string | null>(null);
+  const [isAreaSelectorOpen, setIsAreaSelectorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -63,7 +69,7 @@ function App() {
     setCurrentFilter(mealTime);
     const random = getRandomRestaurant(mealTime);
     setSuggestion(random);
-    setIsModalOpen(true);
+    setIsSuggestionModalOpen(true);
   };
 
   const handleShuffle = () => {
@@ -90,12 +96,44 @@ function App() {
     if (showFavoritesOnly) {
       result = result.filter(r => r.isFavorite);
     }
-    if (showNearbyOnly && currentArea) {
+    const activeArea = manualArea || currentArea;
+    
+    if (showNearbyOnly && activeArea) {
       result = result.filter(r => {
         const loc = r.location.toUpperCase();
-        const cleanTarget = currentArea.toUpperCase().replace(/QUẬN|Q\.|Q/g, '').trim();
-        const patterns = [`QUẬN ${cleanTarget}`, `Q. ${cleanTarget}`, `Q.${cleanTarget}`, `Q${cleanTarget}`, cleanTarget];
-        return patterns.some(p => loc.includes(p));
+        const target = activeArea.toUpperCase();
+        
+        // coreArea is the name/number without prefix (e.g., "1", "BÌNH THẠNH")
+        const coreArea = target.replace(/QUẬN|HUYỆN|Q\.|Q|DISTRICT|D\.|THÀNH PHỐ|TP\./g, '').trim();
+        const isNumeric = /^\d+$/.test(coreArea);
+
+        if (isNumeric) {
+          /**
+           * For numeric districts (e.g. "1"):
+           * 1. Look for District Keywords (Q, Quận, etc.) followed by the number.
+           * 2. Use word boundaries (\b) to avoid matching "12" when looking for "1".
+           * 3. Specifically ensure it's NOT preceded by "P." or "PHƯỜNG" to avoid ward matches.
+           */
+          const districtRegex = new RegExp(`(^|[^P])\\b(QUẬN|Q\\.|Q|DISTRICT|D)\\s?${coreArea}\\b`, 'i');
+          
+          // Pattern for shorthand ", Q1" or ", 1" at the end of parts
+          const shorthandRegex = new RegExp(`,\\s?(Q\\.|Q|D\\.)?\\s?${coreArea}\\b`, 'i');
+          
+          return districtRegex.test(loc) || (loc.includes(coreArea) && shorthandRegex.test(loc));
+        } else {
+          /**
+           * For named districts (e.g. "BÌNH THẠNH"):
+           * 1. Search for the name preceded by a district keyword.
+           * 2. Or if the address is simply the district name itself.
+           */
+          const namedRegex = new RegExp(`\\b(QUẬN|Q\\.|Q|DISTRICT|D|HUYỆN|H\\.|THÀNH PHỐ|TP\\.)\\s?${coreArea}\\b`, 'i');
+          
+          // Fallback for simple names but cautious about wards
+          const isFullMatch = loc.trim() === coreArea;
+          const containsNamedDistrict = loc.includes(coreArea) && namedRegex.test(loc);
+          
+          return isFullMatch || containsNamedDistrict;
+        }
       });
     }
     return result;
@@ -106,17 +144,15 @@ function App() {
 
   // Sync currentArea from hook
   useEffect(() => {
-    if (area) {
-      setCurrentArea(area);
-    }
+    setCurrentArea(area);
   }, [area]);
 
   // Request location when "Nearby" is toggled on
   useEffect(() => {
-    if (showNearbyOnly && !currentArea && !geoLoading) {
+    if (showNearbyOnly && !currentArea && !geoLoading && !hasAttempted && !geoError) {
       getLocation();
     }
-  }, [showNearbyOnly, currentArea, geoLoading]);
+  }, [showNearbyOnly, currentArea, geoLoading, hasAttempted, geoError, getLocation]);
 
   // Reset page when filter changes
   useEffect(() => {
@@ -334,32 +370,106 @@ function App() {
               <div className="p-5 rounded-[2.5rem] bg-white border border-gray-100 shadow-xl space-y-6">
                 {/* Secondary Toggles Row */}
                 <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => setShowNearbyOnly(!showNearbyOnly)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                        showNearbyOnly 
-                        ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-500/20' 
-                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-                      }`}
-                    >
-                      <MapPin className={`h-3 w-3 ${showNearbyOnly ? 'fill-current' : ''}`} />
-                      Gần đây
-                    </button>
-                    <button 
-                      onClick={() => user ? setShowFavoritesOnly(!showFavoritesOnly) : login()}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                        showFavoritesOnly 
-                        ? 'bg-red-50 text-red-500 ring-1 ring-red-500/20' 
-                        : user 
-                          ? 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-                          : 'bg-gray-50/50 text-gray-300 cursor-help'
-                      }`}
-                      title={!user ? "Đăng nhập để xem Quán ruột" : ""}
-                    >
-                      <Heart className={`h-3 w-3 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-                      Quán ruột
-                    </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          if (showNearbyOnly) {
+                            setShowNearbyOnly(false);
+                          } else {
+                            setShowNearbyOnly(true);
+                            if (!currentArea && !manualArea) {
+                              getLocation();
+                            }
+                          }
+                        }}
+                        disabled={geoLoading}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          showNearbyOnly 
+                          ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-500/20' 
+                          : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                        } ${geoLoading ? 'opacity-50 cursor-wait' : ''}`}
+                      >
+                        {geoLoading ? (
+                          <RotateCcw className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <MapPin className={`h-3 w-3 ${showNearbyOnly ? 'fill-current' : ''}`} />
+                        )}
+                        {showNearbyOnly && (manualArea || currentArea) ? `Ở ${manualArea || currentArea}` : 'Gần đây'}
+                      </button>
+
+                      <button 
+                        onClick={() => user ? setShowFavoritesOnly(!showFavoritesOnly) : login()}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          showFavoritesOnly 
+                          ? 'bg-red-50 text-red-500 ring-1 ring-red-500/20' 
+                          : user 
+                            ? 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                            : 'bg-gray-50/50 text-gray-300 cursor-help'
+                        }`}
+                        title={!user ? "Đăng nhập để xem Quán ruột" : ""}
+                      >
+                        <Heart className={`h-3 w-3 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+                        Quán ruột
+                      </button>
+                    </div>
+
+                    {/* Manual District Selection Fallback/Alternative */}
+                    {(showNearbyOnly || geoError) && (
+                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300 px-1">
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Hoặc chọn:</span>
+                        <Popover open={isAreaSelectorOpen} onOpenChange={setIsAreaSelectorOpen}>
+                          <PopoverTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 rounded-lg text-[9px] font-black uppercase border-dashed border-primary/30 text-primary hover:bg-primary/5"
+                            >
+                              {manualArea || "Chọn Quận..."}
+                              <ChevronsUpDown className="ml-1 h-3 w-3 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[180px] p-0 rounded-2xl border-gray-100 shadow-2xl" align="start">
+                            <Command>
+                              <CommandInput placeholder="Tìm Quận..." className="h-8 text-[11px]" />
+                              <CommandList className="max-h-[200px]">
+                                <CommandEmpty className="text-[10px] py-2">Không thấy rồi...</CommandEmpty>
+                                <CommandGroup>
+                                  {HCM_DISTRICTS.map((district) => (
+                                    <CommandItem
+                                      key={district}
+                                      value={district}
+                                      onSelect={() => {
+                                        setManualArea(district);
+                                        setShowNearbyOnly(true);
+                                        setIsAreaSelectorOpen(false);
+                                      }}
+                                      className="text-[11px] py-2 cursor-pointer"
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-3 w-3",
+                                          manualArea === district ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {district}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        {manualArea && (
+                          <button 
+                            onClick={() => setManualArea(null)}
+                            className="text-[9px] font-bold text-red-400 hover:text-red-500"
+                          >
+                            Xóa
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <button 
@@ -367,6 +477,7 @@ function App() {
                       setActiveType('Tất cả');
                       setShowFavoritesOnly(false);
                       setShowNearbyOnly(false);
+                      setManualArea(null);
                     }}
                     className={`flex items-center gap-1.5 p-2 px-3 rounded-xl text-[10px] font-black text-primary hover:bg-primary/5 uppercase tracking-widest transition-all duration-300 ${
                       (activeType !== 'Tất cả' || showFavoritesOnly || showNearbyOnly)
@@ -484,7 +595,23 @@ function App() {
             )}
             {filteredRestaurants.length === 0 && (
               <div className="py-20 text-center glass rounded-[2.5rem] border-0">
-                <p className="text-muted-foreground font-bold">Không tìm thấy quán nào trong danh mục này 🍲</p>
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-50 text-gray-300">
+                  <MapPin className="h-10 w-10" />
+                </div>
+                <p className="text-muted-foreground font-bold px-6">
+                  {showNearbyOnly 
+                    ? `Opps! Hiện tại "Ăn Gì Đây" chưa có quán nào tại ${manualArea || currentArea || 'vị trí của bạn'}.`
+                    : "Không tìm thấy quán nào trong danh mục này 🍲"}
+                </p>
+                {showNearbyOnly && (
+                  <Button 
+                    variant="link" 
+                    onClick={() => setShowNearbyOnly(false)}
+                    className="mt-4 text-primary font-bold"
+                  >
+                    Xem tất cả khu vực
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -503,9 +630,9 @@ function App() {
 
       {/* Suggestion Modal */}
       <SuggestionModal
-        isOpen={isModalOpen}
+        isOpen={isSuggestionModalOpen}
         restaurant={suggestion}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => setIsSuggestionModalOpen(false)}
         onShuffle={handleShuffle}
       />
 
