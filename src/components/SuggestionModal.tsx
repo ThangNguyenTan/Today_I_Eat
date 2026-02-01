@@ -7,7 +7,7 @@ import {
 } from './ui/dialog';
 import type { Restaurant } from '@/types';
 import { Button } from './ui/button';
-import { Sparkles, MapPin, Utensils, ExternalLink, RefreshCw, Star, Heart, Loader2, RotateCw } from 'lucide-react';
+import { Sparkles, MapPin, Utensils, ExternalLink, RefreshCw, Heart, Loader2, RotateCw } from 'lucide-react';
 import { FOOD_TYPES } from '@/constants';
 
 interface SuggestionModalProps {
@@ -123,16 +123,6 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                         <Heart className="h-5 w-5 fill-red-500 text-red-500" />
                       )}
                     </div>
-                    {restaurant.rating && (
-                      <div className="flex items-center gap-0.5 mb-1">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star 
-                            key={s} 
-                            className={`h-3 w-3 ${s <= (restaurant.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} 
-                          />
-                        ))}
-                      </div>
-                    )}
                     <p className="text-sm text-muted-foreground leading-snug">
                       {restaurant.location}
                     </p>

@@ -29,7 +29,6 @@ export interface Restaurant {
   notes?: string;
   mealTimes?: MealTime[];
   isFavorite?: boolean;
-  rating?: number;
   createdAt: number;
 }
 

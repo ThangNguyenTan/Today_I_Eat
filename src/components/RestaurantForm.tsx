@@ -2,13 +2,18 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from './ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { getCurrentMealTime } from '@/hooks/useRestaurants';
 import type { MealTime } from '@/types';
 import { FOOD_TYPES, MEAL_TIMES } from '@/constants';
 
@@ -29,10 +34,11 @@ const mealTimeOptions = MEAL_TIMES;
 export const RestaurantForm: React.FC<RestaurantFormProps> = ({ onAdd }) => {
   const [name, setName] = useState('');
   const [type, setType] = useState<string>('');
+  const [open, setOpen] = useState(false);
   const [location, setLocation] = useState('');
   const [googleMapsUrl, setGoogleMapsUrl] = useState('');
   const [notes, setNotes] = useState('');
-  const [mealTimes, setMealTimes] = useState<MealTime[]>(["Trưa", "Tối"]);
+  const [mealTimes, setMealTimes] = useState<MealTime[]>(() => [getCurrentMealTime()]);
 
   const toggleMealTime = (time: MealTime) => {
     setMealTimes(prev => 
@@ -59,7 +65,7 @@ export const RestaurantForm: React.FC<RestaurantFormProps> = ({ onAdd }) => {
     setLocation('');
     setGoogleMapsUrl('');
     setNotes('');
-    setMealTimes(["Trưa", "Tối"]);
+    setMealTimes([getCurrentMealTime()]);
   };
 
   return (
@@ -80,18 +86,58 @@ export const RestaurantForm: React.FC<RestaurantFormProps> = ({ onAdd }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="type" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Loại Món Ăn</Label>
-            <Select value={type} onValueChange={setType} required>
-              <SelectTrigger className="rounded-xl border-gray-100 h-12">
-                <SelectValue placeholder="Chọn loại món ăn" />
-              </SelectTrigger>
-              <SelectContent>
-                {foodTypes.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full h-12 justify-between rounded-xl border-gray-100 font-normal hover:bg-transparent"
+                >
+                  <span className={type ? "text-foreground" : "text-muted-foreground"}>
+                    {type ? foodTypes.find((t) => t === type) : "Chọn loại món ăn..."}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                side="bottom" 
+                avoidCollisions={false}
+                className="p-0 rounded-2xl border-gray-100 shadow-2xl w-[var(--radix-popover-trigger-width)]"
+              >
+                <Command>
+                  <CommandInput placeholder="Tìm loại món..." className="h-12" />
+                  <CommandList>
+                    <CommandEmpty>Không tìm thấy loại này.</CommandEmpty>
+                    <CommandGroup>
+                      {foodTypes.map((t) => (
+                        <CommandItem
+                          key={t}
+                          value={t}
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onSelect={() => {
+                            setType(t);
+                            setOpen(false);
+                          }}
+                          className="py-3 px-4 flex items-center justify-between cursor-pointer"
+                        >
+                          {t}
+                          <Check
+                            className={cn(
+                              "h-4 w-4 text-primary",
+                              type === t ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">

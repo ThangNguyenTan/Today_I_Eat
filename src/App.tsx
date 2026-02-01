@@ -17,11 +17,14 @@ import {
   Search,
   X
 } from 'lucide-react';
+import { UserMenu } from '@/components/UserMenu';
+import { useAuth } from '@/context/AuthContext';
 import type { Restaurant, MealTime, FoodType } from '@/types';
 import { FOOD_TYPES } from '@/constants';
 
 function App() {
-  const { restaurants, addRestaurant, getRandomRestaurant, toggleFavorite, updateRating } = useRestaurants();
+  const { user, login, logout } = useAuth();
+  const { restaurants, addRestaurant, getRandomRestaurant, toggleFavorite, isSyncing } = useRestaurants(user);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<Restaurant | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,6 +49,13 @@ function App() {
     else if (hour < 18) setGreeting('Chiều rồi, làm chút ăn vặt nhỉ? 🍰');
     else setGreeting('Bữa tối ấm cúng nhé 🍜');
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setShowFavoritesOnly(false);
+      setIsFormOpen(false);
+    }
+  }, [user]);
 
   const handleSuggest = (filter?: MealTime) => {
     const mealTime = filter || getCurrentMealTime();
@@ -163,14 +173,28 @@ function App() {
               <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Vietnamese Cuisine</span>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsFormOpen(!isFormOpen)}
-            className={`rounded-full transition-all ${isFormOpen ? 'bg-primary text-white scale-110' : 'hover:bg-primary/10'}`}
-          >
-            <PlusCircle className="h-6 w-6" />
-          </Button>
+          <div className="flex items-center gap-4">
+            <UserMenu 
+              user={user ? {
+                name: user.displayName || 'User',
+                email: user.email || '',
+                photoURL: user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`
+              } : null} 
+              onLogin={login} 
+              onLogout={logout} 
+              isSyncing={isSyncing} 
+            />
+            <div className="w-[1px] h-6 bg-gray-100 mx-1 hidden sm:block" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => user ? setIsFormOpen(!isFormOpen) : login()}
+              className={`rounded-full transition-all ${isFormOpen ? 'bg-primary text-white scale-110' : 'hover:bg-primary/10'}`}
+              title={!user ? "Đăng nhập để thêm quán" : ""}
+            >
+              <PlusCircle className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -217,18 +241,35 @@ function App() {
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-black tracking-tight">Thêm Quán Mới</h3>
-                  <p className="text-sm text-muted-foreground">Lưu giữ hương vị yêu thích của bạn</p>
+                  <p className="text-sm text-muted-foreground">
+                    {user ? "Lưu giữ hương vị yêu thích của bạn" : "Vui lòng đăng nhập để lưu quán"}
+                  </p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsFormOpen(false)} className="rounded-full">
                    <PlusCircle className="h-5 w-5 rotate-45" />
                 </Button>
               </div>
-              <RestaurantForm
-                onAdd={(data) => {
-                  addRestaurant(data);
-                  setIsFormOpen(false);
-                }}
-              />
+              
+              {user ? (
+                <RestaurantForm
+                  onAdd={(data) => {
+                    addRestaurant(data);
+                    setIsFormOpen(false);
+                  }}
+                />
+              ) : (
+                <div className="py-10 text-center space-y-6">
+                  <div className="mx-auto w-20 h-20 bg-primary/5 rounded-[1.5rem] flex items-center justify-center">
+                     <PlusCircle className="h-10 w-10 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground text-sm max-w-[15rem] mx-auto">
+                    Đăng nhập để bắt đầu xây dựng kho tàng ẩm thực của riêng bạn.
+                  </p>
+                  <Button onClick={login} className="rounded-xl px-8 font-black uppercase tracking-widest shadow-lg shadow-primary/20">
+                    Đăng nhập ngay
+                  </Button>
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -300,12 +341,15 @@ function App() {
                       Gần đây
                     </button>
                     <button 
-                      onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                      onClick={() => user ? setShowFavoritesOnly(!showFavoritesOnly) : login()}
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                         showFavoritesOnly 
                         ? 'bg-red-50 text-red-500 ring-1 ring-red-500/20' 
-                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                        : user 
+                          ? 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                          : 'bg-gray-50/50 text-gray-300 cursor-help'
                       }`}
+                      title={!user ? "Đăng nhập để xem Quán ruột" : ""}
                     >
                       <Heart className={`h-3 w-3 ${showFavoritesOnly ? 'fill-current' : ''}`} />
                       Quán ruột
@@ -370,19 +414,32 @@ function App() {
                 <RestaurantCard
                   key={res.id}
                   restaurant={res}
-                  onToggleFavorite={() => toggleFavorite(res.id)}
-                  onUpdateRating={(rating) => updateRating(res.id, rating)}
+                  onToggleFavorite={user ? () => toggleFavorite(res.id) : undefined}
                 />
               ))
             ) : (
               <div className="col-span-full py-20 text-center glass rounded-[2.5rem] border-0">
                 <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-orange-50 text-primary animate-float">
-                  <UtensilsCrossed className="h-10 w-10" />
+                  <Heart className="h-10 w-10 fill-current" />
                 </div>
-                <h4 className="text-xl font-bold mb-2">Chưa có "quán ruột"?</h4>
-                <p className="max-w-[15rem] mx-auto text-muted-foreground text-sm">
-                  Hãy thêm những địa điểm bạn yêu thích để bắt đầu nhé!
-                </p>
+                {user ? (
+                  <>
+                    <h4 className="text-xl font-bold mb-2">Chưa có "quán ruột"?</h4>
+                    <p className="max-w-[15rem] mx-auto text-muted-foreground text-sm">
+                      Hãy thêm những địa điểm bạn yêu thích bằng cách nhấn vào trái tim nhé!
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="text-xl font-bold mb-2">Đăng nhập để bắt đầu</h4>
+                    <p className="max-w-[15rem] mx-auto text-muted-foreground text-sm mb-6">
+                      Lưu những quán ăn yêu thích của bạn và đồng bộ trên mọi thiết bị.
+                    </p>
+                    <Button onClick={login} className="rounded-xl px-8 font-black uppercase tracking-widest shadow-lg shadow-primary/20">
+                      Đăng nhập ngay
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -1,17 +1,15 @@
 import type { Restaurant } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
-import { MapPin, Utensils, ExternalLink, Quote, Heart, Star } from 'lucide-react';
+import { MapPin, Utensils, ExternalLink, Quote, Heart } from 'lucide-react';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
   onToggleFavorite?: () => void;
-  onUpdateRating?: (rating: number) => void;
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   restaurant,
   onToggleFavorite,
-  onUpdateRating,
 }) => {
   return (
     <Card className="group overflow-hidden border-0 bg-white shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-[2rem]">
@@ -24,51 +22,27 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           </div>
 
           {/* Favorite Toggle */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onToggleFavorite?.();
-            }}
-            className={`p-2 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 ${
-              restaurant.isFavorite 
-                ? 'bg-red-50 text-red-500' 
-                : 'hover:bg-gray-100 text-gray-300'
-            }`}
-          >
-            <Heart className={`h-5 w-5 ${restaurant.isFavorite ? 'fill-current' : ''}`} />
-          </button>
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onToggleFavorite?.();
+              }}
+              className={`p-2 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 ${
+                restaurant.isFavorite 
+                  ? 'bg-red-50 text-red-500' 
+                  : 'hover:bg-gray-100 text-gray-300'
+              }`}
+            >
+              <Heart className={`h-5 w-5 ${restaurant.isFavorite ? 'fill-current' : ''}`} />
+            </button>
+          )}
         </div>
         
         <CardTitle className="text-xl font-black tracking-tight text-[#1A1A1A] group-hover:text-primary transition-colors line-clamp-1">
           {restaurant.name}
         </CardTitle>
 
-        {/* Dynamic Star Rating */}
-        <div className="flex items-center gap-1">
-          {[1, 2, 3, 4, 5].map((s) => (
-            <button
-              key={s}
-              onClick={(e) => {
-                e.preventDefault();
-                onUpdateRating?.(s);
-              }}
-              className="group/star transition-transform hover:scale-125 focus:outline-none"
-            >
-              <Star 
-                className={`h-4 w-4 transition-all ${
-                  s <= (restaurant.rating || 0)
-                    ? 'fill-yellow-400 text-yellow-400' 
-                    : 'text-gray-200 group-hover/star:text-yellow-200'
-                }`} 
-              />
-            </button>
-          ))}
-          {restaurant.rating && (
-            <span className="ml-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              {restaurant.rating}.0
-            </span>
-          )}
-        </div>
       </CardHeader>
       
       <CardContent className="p-6 pt-2 space-y-4">
