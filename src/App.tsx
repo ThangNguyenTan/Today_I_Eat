@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRestaurants, getCurrentMealTime } from '@/hooks/useRestaurants';
-import { useGeolocation } from '@/hooks/useGeolocation';
 import { RestaurantForm } from '@/components/RestaurantForm';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { SuggestionModal } from '@/components/SuggestionModal';
@@ -24,7 +23,6 @@ import { FOOD_TYPES, HCM_DISTRICTS } from '@/constants';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 function App() {
   const { user, login, logout } = useAuth();
@@ -39,8 +37,6 @@ function App() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const { area, loading: geoLoading, error: geoError, getLocation, hasAttempted } = useGeolocation();
-  const [currentArea, setCurrentArea] = useState<string | null>(null);
   const [manualArea, setManualArea] = useState<string | null>(null);
   const [isAreaSelectorOpen, setIsAreaSelectorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,63 +92,33 @@ function App() {
     if (showFavoritesOnly) {
       result = result.filter(r => r.isFavorite);
     }
-    const activeArea = manualArea || currentArea;
-    
-    if (showNearbyOnly && activeArea) {
+    if (showNearbyOnly && manualArea) {
       result = result.filter(r => {
         const loc = r.location.toUpperCase();
-        const target = activeArea.toUpperCase();
+        const target = manualArea.toUpperCase();
         
         // coreArea is the name/number without prefix (e.g., "1", "BÌNH THẠNH")
         const coreArea = target.replace(/QUẬN|HUYỆN|Q\.|Q|DISTRICT|D\.|THÀNH PHỐ|TP\./g, '').trim();
         const isNumeric = /^\d+$/.test(coreArea);
 
         if (isNumeric) {
-          /**
-           * For numeric districts (e.g. "1"):
-           * 1. Look for District Keywords (Q, Quận, etc.) followed by the number.
-           * 2. Use word boundaries (\b) to avoid matching "12" when looking for "1".
-           * 3. Specifically ensure it's NOT preceded by "P." or "PHƯỜNG" to avoid ward matches.
-           */
           const districtRegex = new RegExp(`(^|[^P])\\b(QUẬN|Q\\.|Q|DISTRICT|D)\\s?${coreArea}\\b`, 'i');
-          
-          // Pattern for shorthand ", Q1" or ", 1" at the end of parts
           const shorthandRegex = new RegExp(`,\\s?(Q\\.|Q|D\\.)?\\s?${coreArea}\\b`, 'i');
-          
           return districtRegex.test(loc) || (loc.includes(coreArea) && shorthandRegex.test(loc));
         } else {
-          /**
-           * For named districts (e.g. "BÌNH THẠNH"):
-           * 1. Search for the name preceded by a district keyword.
-           * 2. Or if the address is simply the district name itself.
-           */
           const namedRegex = new RegExp(`\\b(QUẬN|Q\\.|Q|DISTRICT|D|HUYỆN|H\\.|THÀNH PHỐ|TP\\.)\\s?${coreArea}\\b`, 'i');
-          
-          // Fallback for simple names but cautious about wards
           const isFullMatch = loc.trim() === coreArea;
           const containsNamedDistrict = loc.includes(coreArea) && namedRegex.test(loc);
-          
           return isFullMatch || containsNamedDistrict;
         }
       });
     }
     return result;
-  }, [restaurants, activeType, showFavoritesOnly, showNearbyOnly, searchQuery, currentArea]);
+  }, [restaurants, activeType, showFavoritesOnly, showNearbyOnly, searchQuery, manualArea]);
 
   const displayedRestaurants = filteredRestaurants.slice(0, page * itemsPerPage);
   const hasMore = filteredRestaurants.length > displayedRestaurants.length;
 
-  // Sync currentArea from hook
-  useEffect(() => {
-    setCurrentArea(area);
-  }, [area]);
-
-  // Request location when "Nearby" is toggled on
-  useEffect(() => {
-    if (showNearbyOnly && !currentArea && !geoLoading && !hasAttempted && !geoError) {
-      getLocation();
-    }
-  }, [showNearbyOnly, currentArea, geoLoading, hasAttempted, geoError, getLocation]);
 
   // Reset page when filter changes
   useEffect(() => {
@@ -356,166 +322,150 @@ function App() {
         {/* Restaurant List */}
         <section className="space-y-8">
 
-          {/* Expanded Filter UI */}
-          {isFilterOpen && (
-            <div className="animate-in slide-in-from-top-4 fade-in duration-300">
-              <div className="p-5 rounded-[2.5rem] bg-white border border-gray-100 shadow-xl space-y-6">
-                {/* Secondary Toggles Row */}
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => {
-                          if (showNearbyOnly) {
+                {/* Expanded Filter UI */}
+                {isFilterOpen && (
+                  <div className="animate-in slide-in-from-top-4 fade-in duration-300">
+                    <div className="pt-0 px-8 pb-8 rounded-[3rem] bg-white border border-gray-100 shadow-2xl space-y-8 relative overflow-hidden">
+                      {/* Decorative Background Elements */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-500/5 rounded-full -ml-12 -mb-12 blur-2xl pointer-events-none" />
+
+                      {/* Header with Clear Action */}
+                      <div className="flex items-center justify-between px-1">
+                        <div className="space-y-1">
+                          <h3 className="text-sm font-black uppercase tracking-widest text-primary">Bộ lọc tìm kiếm</h3>
+                          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter">Tùy chỉnh theo nhu cầu của bạn</p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setActiveType('Tất cả');
+                            setShowFavoritesOnly(false);
                             setShowNearbyOnly(false);
-                          } else {
-                            setShowNearbyOnly(true);
-                            if (!currentArea && !manualArea) {
-                              getLocation();
-                            }
-                          }
-                        }}
-                        disabled={geoLoading}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                          showNearbyOnly 
-                          ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-500/20' 
-                          : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-                        } ${geoLoading ? 'opacity-50 cursor-wait' : ''}`}
-                      >
-                        {geoLoading ? (
-                          <RotateCcw className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <MapPin className={`h-3 w-3 ${showNearbyOnly ? 'fill-current' : ''}`} />
-                        )}
-                        {showNearbyOnly && (manualArea || currentArea) ? `Ở ${manualArea || currentArea}` : 'Gần đây'}
-                      </button>
-
-                      <button 
-                        onClick={() => user ? setShowFavoritesOnly(!showFavoritesOnly) : login()}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                          showFavoritesOnly 
-                          ? 'bg-red-50 text-red-500 ring-1 ring-red-500/20' 
-                          : user 
-                            ? 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-                            : 'bg-gray-50/50 text-gray-300 cursor-help'
-                        }`}
-                        title={!user ? "Đăng nhập để xem Quán ruột" : ""}
-                      >
-                        <Heart className={`h-3 w-3 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-                        Quán ruột
-                      </button>
-                    </div>
-
-                    {/* Manual District Selection Fallback/Alternative */}
-                    {(showNearbyOnly || geoError) && (
-                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300 px-1">
-                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Hoặc chọn:</span>
-                        <Popover open={isAreaSelectorOpen} onOpenChange={setIsAreaSelectorOpen}>
-                          <PopoverTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-7 rounded-lg text-[9px] font-black uppercase border-dashed border-primary/30 text-primary hover:bg-primary/5"
-                            >
-                              {manualArea || "Chọn Quận..."}
-                              <ChevronsUpDown className="ml-1 h-3 w-3 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[180px] p-0 rounded-2xl border-gray-100 shadow-2xl" align="start">
-                            <Command>
-                              <CommandInput placeholder="Tìm Quận..." className="h-8 text-[11px]" />
-                              <CommandList className="max-h-[200px]">
-                                <CommandEmpty className="text-[10px] py-2">Không thấy rồi...</CommandEmpty>
-                                <CommandGroup>
-                                  {HCM_DISTRICTS.map((district) => (
-                                    <CommandItem
-                                      key={district}
-                                      value={district}
-                                      onSelect={() => {
-                                        setManualArea(district);
-                                        setShowNearbyOnly(true);
-                                        setIsAreaSelectorOpen(false);
-                                      }}
-                                      className="text-[11px] py-2 cursor-pointer"
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-3 w-3",
-                                          manualArea === district ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {district}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        {manualArea && (
-                          <button 
-                            onClick={() => setManualArea(null)}
-                            className="text-[9px] font-bold text-red-400 hover:text-red-500"
-                          >
-                            Xóa
-                          </button>
-                        )}
+                            setManualArea(null);
+                          }}
+                          className={`flex items-center gap-2 py-1.5 px-3 rounded-full text-[9px] font-black text-red-500 bg-red-50 hover:bg-red-100 uppercase tracking-widest transition-all duration-500 ${
+                            (activeType !== 'Tất cả' || showFavoritesOnly || showNearbyOnly)
+                              ? 'opacity-100 translate-y-0'
+                              : 'opacity-0 translate-y-2 pointer-events-none'
+                          }`}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Làm mới
+                        </button>
                       </div>
-                    )}
-                  </div>
-                  
-                  <button 
-                    onClick={() => {
-                      setActiveType('Tất cả');
-                      setShowFavoritesOnly(false);
-                      setShowNearbyOnly(false);
-                      setManualArea(null);
-                    }}
-                    className={`flex items-center gap-1.5 p-2 px-3 rounded-xl text-[10px] font-black text-primary hover:bg-primary/5 uppercase tracking-widest transition-all duration-300 ${
-                      (activeType !== 'Tất cả' || showFavoritesOnly || showNearbyOnly)
-                        ? 'opacity-100 translate-x-0'
-                        : 'opacity-0 translate-x-4 pointer-events-none'
-                    }`}
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    <span className="whitespace-nowrap">Xóa lọc</span>
-                  </button>
-                </div>
 
-                {/* Categories Row */}
-                <div className="space-y-3">
-                  <span className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-                    Phân loại món ăn
-                  </span>
-                  <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1 mask-fade-right">
-                    <button
-                      onClick={() => setActiveType('Tất cả')}
-                      className={`flex-none px-6 py-2.5 rounded-2xl text-xs font-black transition-all border-2 ${
-                        activeType === 'Tất cả'
-                          ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105'
-                          : 'bg-white border-gray-100 text-gray-400 hover:border-primary/30'
-                      }`}
-                    >
-                      Tất cả
-                    </button>
-                    {FOOD_TYPES.map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setActiveType(type)}
-                        className={`flex-none px-6 py-2.5 rounded-2xl text-xs font-black transition-all border-2 ${
-                          activeType === type
-                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105'
-                            : 'bg-white border-gray-100 text-gray-400 hover:border-primary/30'
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
+                      <div className="grid gap-10 sm:grid-cols-2">
+                        {/* Location Section */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 px-1">
+                            <MapPin className="h-3.5 w-3.5 text-primary" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Khu vực</span>
+                          </div>
+                          <Popover open={isAreaSelectorOpen} onOpenChange={setIsAreaSelectorOpen}>
+                            <PopoverTrigger asChild>
+                              <button 
+                                className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[11px] font-bold transition-all border-2 ${
+                                  showNearbyOnly 
+                                  ? 'bg-primary/5 border-primary text-primary shadow-sm' 
+                                  : 'bg-gray-50/50 border-transparent text-gray-500 hover:bg-gray-100/50'
+                                }`}
+                              >
+                                <span className="uppercase tracking-widest">{manualArea || 'Toàn thành phố'}</span>
+                                <ChevronsUpDown className="h-4 w-4 opacity-30" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[240px] p-0 rounded-3xl border-gray-100 shadow-2xl" align="start" sideOffset={8}>
+                              <Command>
+                                <CommandInput placeholder="Tìm Quận..." className="h-12 text-[13px] border-none focus:ring-0" />
+                                <CommandList className="max-h-[300px] p-2">
+                                  <CommandEmpty className="text-[11px] py-6 text-center text-muted-foreground font-medium">Không tìm thấy khu vực này 📍</CommandEmpty>
+                                  <CommandGroup>
+                                    {HCM_DISTRICTS.map((district) => (
+                                      <CommandItem
+                                        key={district}
+                                        value={district}
+                                        onSelect={() => {
+                                          setManualArea(district);
+                                          setShowNearbyOnly(true);
+                                          setIsAreaSelectorOpen(false);
+                                        }}
+                                        className="text-[12px] py-3 px-4 rounded-xl cursor-pointer hover:bg-primary/5 data-[selected=true]:bg-primary/10"
+                                      >
+                                        <div className="flex items-center justify-between w-full">
+                                          <span className="font-semibold">{district}</span>
+                                          {manualArea === district && <Check className="h-4 w-4 text-primary" />}
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
+                        {/* Preferences Section */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 px-1">
+                            <Heart className="h-3.5 w-3.5 text-red-500" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Ưu tiên</span>
+                          </div>
+                          <button 
+                            onClick={() => user ? setShowFavoritesOnly(!showFavoritesOnly) : login()}
+                            className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[11px] font-bold transition-all border-2 ${
+                              showFavoritesOnly 
+                              ? 'bg-red-50 border-red-200 text-red-500 shadow-sm' 
+                              : 'bg-gray-50/50 border-transparent text-gray-500 hover:bg-gray-100/50'
+                            }`}
+                          >
+                            <span className="uppercase tracking-widest">Danh sách quán ruột</span>
+                            <div className={`h-5 w-10 rounded-full transition-all duration-500 flex items-center px-1 ${showFavoritesOnly ? 'bg-red-500' : 'bg-gray-200'}`}>
+                              <div className={`h-3 w-3 rounded-full bg-white shadow-sm transition-all duration-300 ${showFavoritesOnly ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Categories Section */}
+                      <div className="space-y-6 pt-2">
+                        <div className="flex items-center justify-between px-1">
+                          <div className="flex items-center gap-2">
+                            <UtensilsCrossed className="h-3.5 w-3.5 text-orange-500" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Loại món ăn</span>
+                          </div>
+                          {activeType !== 'Tất cả' && (
+                            <span className="text-[9px] font-black text-primary/60 uppercase">Đang chọn: {activeType}</span>
+                          )}
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2">
+                          <button
+                            onClick={() => setActiveType('Tất cả')}
+                            className={`flex-none px-7 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
+                              activeType === 'Tất cả'
+                                ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-105 ring-4 ring-primary/10'
+                                : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                            }`}
+                          >
+                            Tất cả
+                          </button>
+                          {FOOD_TYPES.map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => setActiveType(type)}
+                              className={`flex-none px-7 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
+                                activeType === type
+                                  ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-105 ring-4 ring-primary/10'
+                                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                              }`}
+                            >
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
+                )}
 
           <div className="grid gap-6 sm:grid-cols-2">
             {displayedRestaurants.length > 0 ? (
@@ -592,7 +542,7 @@ function App() {
                 </div>
                 <p className="text-muted-foreground font-bold px-6">
                   {showNearbyOnly 
-                    ? `Opps! Hiện tại "Ăn Gì Đây" chưa có quán nào tại ${manualArea || currentArea || 'vị trí của bạn'}.`
+                    ? `Opps! Hiện tại "Ăn Gì Đây" chưa có quán nào tại ${manualArea || 'khu vực này'}.`
                     : "Không tìm thấy quán nào trong danh mục này 🍲"}
                 </p>
                 {showNearbyOnly && (
