@@ -28,6 +28,7 @@ function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<Restaurant | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [currentFilter, setCurrentFilter] = useState<MealTime | undefined>(undefined);
   const [activeType, setActiveType] = useState<FoodType | 'Tất cả'>('Tất cả');
@@ -139,8 +140,13 @@ function App() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setPage((prev) => prev + 1);
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          setIsLoadingMore(true);
+          // Add a small delay to make the loading state feel more natural
+          setTimeout(() => {
+            setPage((prev) => prev + 1);
+            setIsLoadingMore(false);
+          }, 800);
         }
       },
       { threshold: 0.1, rootMargin: '100px' }
@@ -151,7 +157,7 @@ function App() {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, filteredRestaurants.length]);
+  }, [hasMore, filteredRestaurants.length, isLoadingMore]);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-24 font-sans selection:bg-primary/20">
@@ -444,17 +450,32 @@ function App() {
             )}
           </div>
 
-          {/* Infinite Scroll Sentinel & Status */}
-          <div className="mt-12 text-center">
-            {hasMore ? (
-              <div ref={sentinelRef} className="h-20 flex items-center justify-center">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
-                </div>
+          {/* Infinite Scroll Skeleton & Status */}
+          <div className="mt-12 text-center pb-20">
+            {isLoadingMore && (
+              <div className="grid gap-6 sm:grid-cols-2 mt-6 animate-pulse">
+                {[1, 2].map((i) => (
+                  <div key={i} className="h-48 rounded-[2rem] bg-gray-100 shadow-sm border-0">
+                    <div className="p-6 space-y-4">
+                      <div className="w-20 h-5 bg-gray-200 rounded-full" />
+                      <div className="w-3/4 h-8 bg-gray-200 rounded-lg" />
+                      <div className="w-full h-4 bg-gray-200 rounded-lg" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ) : filteredRestaurants.length > 0 && (
+            )}
+
+            {hasMore ? (
+              <div ref={sentinelRef} className="h-24 flex flex-col items-center justify-center gap-3">
+                <div className="flex gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Đang tìm thêm món ngon...</p>
+              </div>
+            ) : filteredRestaurants.length > (itemsPerPage) && (
               <div className="py-8 px-6 rounded-[2rem] bg-gray-50/50 border border-dashed border-gray-200">
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
                   ✨ Đã hiển thị tất cả quán ăn ✨
