@@ -39,7 +39,6 @@ export const useGeolocation = () => {
       if (!response.ok) throw new Error('Network response was not ok');
       
       const data = await response.json();
-      console.log('📍 Geolocation Address Object:', data);
       const address = data.address;
       
       // In Vietnam, 'city_district' and 'district' are the most reliable for 'Quận/Huyện'

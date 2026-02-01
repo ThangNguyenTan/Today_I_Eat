@@ -245,14 +245,6 @@ function App() {
         <section className="mb-12">
           <div className="space-y-1 mb-8 text-center">
             <p className="text-sm font-semibold text-primary/80 uppercase tracking-widest">{greeting}</p>
-            {showNearbyOnly && (
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <div className={`h-2 w-2 rounded-full ${geoLoading ? 'bg-blue-400 animate-pulse' : currentArea ? 'bg-green-500' : 'bg-red-500'}`} />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  {geoLoading ? 'Đang định vị...' : geoError ? geoError : currentArea ? `Gần ${currentArea}` : 'Chưa có vị trí'}
-                </span>
-              </div>
-            )}
             <h2 className="text-5xl font-black tracking-tight sm:text-6xl leading-[1.1] mt-4">
               Hôm nay bạn <br />
               <span className="text-gradient">thấy thế nào?</span>
