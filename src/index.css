@@ -55,33 +55,147 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Be Vietnam Pro', sans-serif;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Better touch experience */
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 @layer utilities {
+  /* Glass morphism */
   .glass {
     @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
   }
-  
+
   .dark .glass {
     @apply bg-black/40 backdrop-blur-lg border border-white/10 shadow-2xl;
   }
 
+  /* Text gradient */
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-400;
   }
 
+  /* Floating animation */
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
+  /* Confetti animation */
+  .animate-confetti {
+    animation: confetti-fall 1s ease-out forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-20px) rotate(0deg) scale(0);
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(200px) rotate(720deg) scale(1);
+      opacity: 0;
+    }
+  }
+
+  /* Glow pulse for CTA buttons */
+  .animate-glow {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 20px rgba(249, 115, 22, 0.3),
+        0 0 40px rgba(249, 115, 22, 0.1);
+    }
+    50% {
+      box-shadow:
+        0 0 30px rgba(249, 115, 22, 0.5),
+        0 0 60px rgba(249, 115, 22, 0.2);
+    }
+  }
+
+  /* Bounce in animation */
+  .animate-bounce-in {
+    animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  @keyframes bounce-in {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Wiggle animation for attention */
+  .animate-wiggle {
+    animation: wiggle 0.5s ease-in-out;
+  }
+
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-5deg);
+    }
+    75% {
+      transform: rotate(5deg);
+    }
+  }
+
+  /* Shimmer effect */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Scale up on hover */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  /* Hide scrollbar */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -90,13 +204,68 @@
     scrollbar-width: none;
   }
 
+  /* Fade mask */
   .mask-fade-right {
     mask-image: linear-gradient(to right, black 85%, transparent 100%);
   }
 
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-    50% { transform: translateX(100%); shadow: 0 0 20px 10px rgba(255, 255, 255, 0.3); }
-    100% { transform: translateX(100%); shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+  /* Pressed state */
+  .active-press {
+    @apply active:scale-95 transition-transform;
   }
+
+  /* Gradient border */
+  .gradient-border {
+    position: relative;
+    background: white;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(30, 100%, 55%)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .gradient-border:hover::before {
+    opacity: 1;
+  }
+
+  /* Ripple effect container */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_infinite];
+  }
+}
+
+/* Custom selection color */
+::selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: inherit;
+}
+
+/* Focus visible styles */
+:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2;
 }
