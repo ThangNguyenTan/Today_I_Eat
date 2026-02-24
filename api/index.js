@@ -9,15 +9,22 @@ const DB_NAME = "today-i-eat";
 const COL_NAME = "restaurants";
 const PORT = 3001;
 
-// ─── MongoDB client (singleton) ───────────────────────────────────────────────
-const client = new MongoClient(MONGO_URI);
-let collection;
+// ─── MongoDB client (Serverless Friendly) ────────────────────────────────────
+let client;
+let clientPromise;
 
-async function connect() {
-  await client.connect();
-  collection = client.db(DB_NAME).collection(COL_NAME);
-  console.log(`✅ Connected to MongoDB: ${DB_NAME}.${COL_NAME}`);
+if (process.env.NODE_ENV === "development") {
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(MONGO_URI);
+    global._mongoClientPromise = client.connect();
+  }
+  clientPromise = global._mongoClientPromise;
+} else {
+  client = new MongoClient(MONGO_URI);
+  clientPromise = client.connect();
 }
+
+let collection;
 
 // ─── snake_case → camelCase transformer ──────────────────────────────────────
 function toCamel(str) {
@@ -137,6 +144,20 @@ function deriveMealTimes(operating) {
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Ensure DB connection for all API routes (Serverless Lazy Load)
+app.use(async (req, res, next) => {
+  try {
+    if (!collection) {
+      await clientPromise;
+      collection = client.db(DB_NAME).collection(COL_NAME);
+    }
+    next();
+  } catch (err) {
+    console.error("DB Connection Error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
 
 /**
  * GET /api/restaurants
@@ -305,14 +326,11 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-connect()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 API server running at http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("❌ Failed to connect to MongoDB:", err.message);
-    process.exit(1);
+// ─── Boot / Export ────────────────────────────────────────────────────────────
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`🚀 API server running locally at http://localhost:${PORT}`);
   });
+}
+
+export default app;
