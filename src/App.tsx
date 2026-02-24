@@ -18,7 +18,9 @@ import {
   RotateCcw,
   Search,
   X,
+  Navigation,
 } from "lucide-react";
+import { NearbyModal } from "@/components/NearbyModal";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/context/AuthContext";
 import type { Restaurant, MealTime, FoodType } from "@/types";
@@ -42,10 +44,15 @@ function App() {
   const { user, login, logout } = useAuth();
   const {
     restaurants,
+    totalCount,
+    loading,
+    isSyncing,
+    hasMore: apiHasMore,
     addRestaurant,
     getRandomRestaurant,
     toggleFavorite,
-    isSyncing,
+    loadMore,
+    search,
   } = useRestaurants(user);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<Restaurant | null>(null);
@@ -62,10 +69,48 @@ function App() {
   const [manualArea, setManualArea] = useState<string | null>(null);
   const [isAreaSelectorOpen, setIsAreaSelectorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isNearbyModalOpen, setIsNearbyModalOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const itemsPerPage = 10;
+
+  // Debounced server search when filters change
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerSearch = useCallback(
+    (
+      overrides: {
+        type?: FoodType | "Tất cả";
+        q?: string;
+        district?: string;
+        favOnly?: boolean;
+      } = {},
+    ) => {
+      const type = overrides.type ?? activeType;
+      const q = overrides.q ?? searchQuery;
+      const district =
+        overrides.district ??
+        (showNearbyOnly ? (manualArea ?? undefined) : undefined);
+      const favOnly = overrides.favOnly ?? showFavoritesOnly;
+
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = setTimeout(() => {
+        search({
+          type: type !== "Tất cả" ? type : undefined,
+          q: q || undefined,
+          district: district || undefined,
+        });
+        // showFavoritesOnly is still client-side (Firebase-based)
+        void favOnly;
+      }, 300);
+    },
+    [
+      activeType,
+      searchQuery,
+      showNearbyOnly,
+      manualArea,
+      showFavoritesOnly,
+      search,
+    ],
+  );
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -111,95 +156,30 @@ function App() {
     maxPull: 120,
   });
 
-  const handleSuggest = (filter?: MealTime) => {
+  const handleSuggest = async (filter?: MealTime) => {
     const mealTime = filter || getCurrentMealTime();
     setCurrentFilter(mealTime);
-    const random = getRandomRestaurant(mealTime);
-    setSuggestion(random);
     setIsSuggestionModalOpen(true);
-  };
-
-  const handleShuffle = () => {
-    const random = getRandomRestaurant(currentFilter);
+    const random = await getRandomRestaurant(mealTime);
     setSuggestion(random);
   };
 
-  const filteredRestaurants = useMemo(() => {
-    let result = restaurants;
+  const handleShuffle = async () => {
+    const random = await getRandomRestaurant(currentFilter);
+    setSuggestion(random);
+  };
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (r) =>
-          r.name.toLowerCase().includes(query) ||
-          r.location.toLowerCase().includes(query) ||
-          (r.notes && r.notes.toLowerCase().includes(query)) ||
-          r.type.toLowerCase().includes(query),
-      );
-    }
+  // Client-side favorite filter on top of server results
+  const displayedRestaurants = useMemo(() => {
+    if (showFavoritesOnly) return restaurants.filter((r) => r.isFavorite);
+    return restaurants;
+  }, [restaurants, showFavoritesOnly]);
 
-    if (activeType !== "Tất cả") {
-      result = result.filter((r) => r.type === activeType);
-    }
-    if (showFavoritesOnly) {
-      result = result.filter((r) => r.isFavorite);
-    }
-    if (showNearbyOnly && manualArea) {
-      result = result.filter((r) => {
-        const loc = r.location.toUpperCase();
-        const target = manualArea.toUpperCase();
-
-        // coreArea is the name/number without prefix (e.g., "1", "BÌNH THẠNH")
-        const coreArea = target
-          .replace(/QUẬN|HUYỆN|Q\.|Q|DISTRICT|D\.|THÀNH PHỐ|TP\./g, "")
-          .trim();
-        const isNumeric = /^\d+$/.test(coreArea);
-
-        if (isNumeric) {
-          const districtRegex = new RegExp(
-            `(^|[^P])\\b(QUẬN|Q\\.|Q|DISTRICT|D)\\s?${coreArea}\\b`,
-            "i",
-          );
-          const shorthandRegex = new RegExp(
-            `,\\s?(Q\\.|Q|D\\.)?\\s?${coreArea}\\b`,
-            "i",
-          );
-          return (
-            districtRegex.test(loc) ||
-            (loc.includes(coreArea) && shorthandRegex.test(loc))
-          );
-        } else {
-          const namedRegex = new RegExp(
-            `\\b(QUẬN|Q\\.|Q|DISTRICT|D|HUYỆN|H\\.|THÀNH PHỐ|TP\\.)\\s?${coreArea}\\b`,
-            "i",
-          );
-          const isFullMatch = loc.trim() === coreArea;
-          const containsNamedDistrict =
-            loc.includes(coreArea) && namedRegex.test(loc);
-          return isFullMatch || containsNamedDistrict;
-        }
-      });
-    }
-    return result;
-  }, [
-    restaurants,
-    activeType,
-    showFavoritesOnly,
-    showNearbyOnly,
-    searchQuery,
-    manualArea,
-  ]);
-
-  const displayedRestaurants = filteredRestaurants.slice(
-    0,
-    page * itemsPerPage,
-  );
-  const hasMore = filteredRestaurants.length > displayedRestaurants.length;
-
-  // Reset page when filter changes
+  // Trigger server search whenever filter state changes
   useEffect(() => {
-    setPage(1);
-  }, [activeType, showNearbyOnly, showFavoritesOnly, searchQuery]);
+    triggerSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeType, searchQuery, showNearbyOnly, manualArea]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -214,28 +194,33 @@ function App() {
   };
 
   useEffect(() => {
-    if (!hasMore) return;
+    if (!apiHasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !isLoadingMore) {
           setIsLoadingMore(true);
-          // Add a small delay to make the loading state feel more natural
-          setTimeout(() => {
-            setPage((prev) => prev + 1);
-            setIsLoadingMore(false);
-          }, 800);
+          loadMore({
+            type: activeType !== "Tất cả" ? activeType : undefined,
+            q: searchQuery || undefined,
+            district: showNearbyOnly ? (manualArea ?? undefined) : undefined,
+          }).finally(() => setIsLoadingMore(false));
         }
       },
       { threshold: 0.1, rootMargin: "100px" },
     );
 
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [hasMore, filteredRestaurants.length, isLoadingMore]);
+  }, [
+    apiHasMore,
+    isLoadingMore,
+    loadMore,
+    activeType,
+    searchQuery,
+    showNearbyOnly,
+    manualArea,
+  ]);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-24 font-sans selection:bg-primary/20">
@@ -453,20 +438,34 @@ function App() {
               <h3 className="text-2xl font-black tracking-tight">Khám phá</h3>
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Info className="h-3 w-3" />
-                {searchQuery || activeType !== "Tất cả"
-                  ? `Tìm thấy ${filteredRestaurants.length} địa điểm`
-                  : `Có ${restaurants.length} địa điểm quanh bạn`}
+                {loading
+                  ? "Đang tải..."
+                  : searchQuery || activeType !== "Tất cả"
+                    ? `Tìm thấy ${displayedRestaurants.length} địa điểm`
+                    : `Có ${totalCount.toLocaleString()} địa điểm quanh bạn`}
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`rounded-full gap-2 font-bold text-xs uppercase tracking-widest transition-all ${isFilterOpen ? "bg-primary text-white shadow-lg" : "text-primary"}`}
-            >
-              <ListFilter className="h-4 w-4" />
-              Bộ lọc
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Gần Đây button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsNearbyModalOpen(true)}
+                className="rounded-full gap-1.5 font-bold text-xs uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+              >
+                <Navigation className="h-4 w-4" />
+                Gần Đây
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`rounded-full gap-2 font-bold text-xs uppercase tracking-widest transition-all ${isFilterOpen ? "bg-primary text-white shadow-lg" : "text-primary"}`}
+              >
+                <ListFilter className="h-4 w-4" />
+                Bộ lọc
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -801,7 +800,7 @@ function App() {
               </div>
             )}
 
-            {hasMore ? (
+            {apiHasMore ? (
               <div
                 ref={sentinelRef}
                 className="h-24 flex flex-col items-center justify-center gap-3"
@@ -816,7 +815,7 @@ function App() {
                 </p>
               </div>
             ) : (
-              filteredRestaurants.length > itemsPerPage && (
+              displayedRestaurants.length > 0 && (
                 <div className="py-8 px-6 rounded-[2rem] bg-gray-50/50 border border-dashed border-gray-200">
                   <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
                     ✨ Đã hiển thị tất cả quán ăn ✨
@@ -824,37 +823,39 @@ function App() {
                 </div>
               )
             )}
-            {filteredRestaurants.length === 0 && (
-              <div className="py-20 text-center glass rounded-[2.5rem] border-0 flex flex-col items-center justify-center">
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 bg-gray-100 rounded-full animate-ping opacity-20" />
-                  <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-gray-50 to-gray-100 border-4 border-white shadow-xl shadow-gray-200/50 text-gray-300">
-                    <Search className="h-10 w-10 text-gray-400" />
+            {displayedRestaurants.length === 0 &&
+              !loading &&
+              !showFavoritesOnly && (
+                <div className="py-20 text-center glass rounded-[2.5rem] border-0 flex flex-col items-center justify-center">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-gray-100 rounded-full animate-ping opacity-20" />
+                    <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-gray-50 to-gray-100 border-4 border-white shadow-xl shadow-gray-200/50 text-gray-300">
+                      <Search className="h-10 w-10 text-gray-400" />
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg">
+                      <span className="text-2xl">🤔</span>
+                    </div>
                   </div>
-                  <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg">
-                    <span className="text-2xl">🤔</span>
-                  </div>
-                </div>
 
-                <h4 className="text-xl font-black text-gray-800 mb-2">
-                  Không tìm thấy quán nào
-                </h4>
-                <p className="text-muted-foreground font-medium px-6 max-w-xs mx-auto text-sm mb-6">
-                  {showNearbyOnly
-                    ? `Opps! Hiện tại "Ăn Gì Đây" chưa có quán nào tại ${manualArea || "khu vực này"}.`
-                    : "Thử tìm từ khóa khác xem sao nhé? 🍲"}
-                </p>
-                {showNearbyOnly && (
-                  <Button
-                    variant="link"
-                    onClick={() => setShowNearbyOnly(false)}
-                    className="mt-4 text-primary font-bold"
-                  >
-                    Xem tất cả khu vực
-                  </Button>
-                )}
-              </div>
-            )}
+                  <h4 className="text-xl font-black text-gray-800 mb-2">
+                    Không tìm thấy quán nào
+                  </h4>
+                  <p className="text-muted-foreground font-medium px-6 max-w-xs mx-auto text-sm mb-6">
+                    {showNearbyOnly
+                      ? `Opps! Hiện tại "Ăn Gì Đây" chưa có quán nào tại ${manualArea || "khu vực này"}.`
+                      : "Thử tìm từ khóa khác xem sao nhé? 🍲"}
+                  </p>
+                  {showNearbyOnly && (
+                    <Button
+                      variant="link"
+                      onClick={() => setShowNearbyOnly(false)}
+                      className="mt-4 text-primary font-bold"
+                    >
+                      Xem tất cả khu vực
+                    </Button>
+                  )}
+                </div>
+              )}
           </div>
         </section>
       </main>
@@ -877,6 +878,13 @@ function App() {
         restaurant={suggestion}
         onClose={() => setIsSuggestionModalOpen(false)}
         onShuffle={handleShuffle}
+      />
+
+      {/* Nearby Modal */}
+      <NearbyModal
+        isOpen={isNearbyModalOpen}
+        restaurants={restaurants}
+        onClose={() => setIsNearbyModalOpen(false)}
       />
 
       {/* Footer */}
