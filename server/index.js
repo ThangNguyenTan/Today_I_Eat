@@ -1,9 +1,10 @@
 import express from "express";
 import cors from "cors";
 import { MongoClient } from "mongodb";
+import "dotenv/config";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-const MONGO_URI = "mongodb://localhost:27017";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017";
 const DB_NAME = "today-i-eat";
 const COL_NAME = "restaurants";
 const PORT = 3001;
