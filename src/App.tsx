@@ -136,7 +136,6 @@ function App() {
     setShowFavoritesOnly(false);
     setShowNearbyOnly(false);
     setManualArea(null);
-    setPage(1);
 
     // Update greeting based on current time
     const hour = new Date().getHours();
@@ -883,7 +882,6 @@ function App() {
       {/* Nearby Modal */}
       <NearbyModal
         isOpen={isNearbyModalOpen}
-        restaurants={restaurants}
         onClose={() => setIsNearbyModalOpen(false)}
       />
 
