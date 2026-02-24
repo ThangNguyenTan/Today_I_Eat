@@ -335,6 +335,7 @@ app.get("/api/restaurants/nearby", async (req, res) => {
 app.get("/api/restaurants/random", async (req, res) => {
   try {
     const filter = {
+      is_open: true,
       keyword: { $nin: EXCLUDE_DRINKS },
     };
     // No meal-time field in Mongo schema — could derive from operating hours

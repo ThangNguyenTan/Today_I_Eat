@@ -222,10 +222,15 @@ export const useRestaurants = (user: User | null) => {
         return resp.json();
       } catch {
         // Fallback: pick from current loaded list
-        const pool = mealTime
-          ? restaurants.filter((r) => r.mealTimes?.includes(mealTime))
-          : restaurants;
-        const src = pool.length > 0 ? pool : restaurants;
+        const pool = (
+          mealTime
+            ? restaurants.filter((r) => r.mealTimes?.includes(mealTime))
+            : restaurants
+        ).filter((r) => r.isOpen !== false);
+        const src =
+          pool.length > 0
+            ? pool
+            : restaurants.filter((r) => r.isOpen !== false);
         if (src.length === 0) return null;
         return src[Math.floor(Math.random() * src.length)];
       }

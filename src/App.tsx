@@ -57,7 +57,7 @@ function App() {
     lat: number;
     lon: number;
   } | null>(null);
-  const [isSortingByDistance, setIsSortingByDistance] = useState(false);
+  const [isSortingByDistance, setIsSortingByDistance] = useState(true);
 
   // Debounced server search when filters change
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -209,6 +209,31 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
+
+  // Handle automatic location retrieval on mount
+  useEffect(() => {
+    if (isSortingByDistance && !userLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+          });
+        },
+        () => {
+          // If failed, we just stay in default mode but keep the flag true for UI
+          console.warn("Could not get default location");
+        },
+        { enableHighAccuracy: false }, // Use faster/lower power for initial
+      );
+    }
+  }, [isSortingByDistance, userLocation]);
+
+  // Re-trigger search specifically when location or sort mode changes
+  useEffect(() => {
+    triggerSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSortingByDistance, userLocation]);
 
   const handleApplyFilters = (filters: {
     type: FoodType | "Tất cả";
