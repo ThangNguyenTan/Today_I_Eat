@@ -30,8 +30,6 @@ export type FoodType =
   | "Cháo Lòng"
   | "Ốc"
   | "Lẩu"
-  | "Trà Sữa"
-  | "Cà Phê"
   | "Chè";
 
 export type MealTime = "Sáng" | "Trưa" | "Chiều" | "Tối" | "Khuya";

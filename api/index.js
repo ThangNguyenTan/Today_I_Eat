@@ -8,6 +8,7 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017";
 const DB_NAME = "today-i-eat";
 const COL_NAME = "restaurants";
 const PORT = 3001;
+const EXCLUDE_DRINKS = ["Trà Sữa", "Cà Phê"];
 
 // ─── MongoDB client (Serverless Friendly) ────────────────────────────────────
 let client;
@@ -178,11 +179,19 @@ app.get("/api/restaurants", async (req, res) => {
     );
     const skip = (page - 1) * limit;
 
-    const filter = {};
+    const filter = {
+      keyword: { $nin: EXCLUDE_DRINKS },
+    };
 
     // Keyword / food-type filter
     if (req.query.type) {
-      filter.keyword = { $regex: req.query.type, $options: "i" };
+      // If a type is specified, we narrow down but still keep the exclusion
+      filter.keyword = {
+        $and: [
+          { $nin: EXCLUDE_DRINKS },
+          { $regex: req.query.type, $options: "i" },
+        ],
+      };
     }
 
     // District / area substring
@@ -198,21 +207,24 @@ app.get("/api/restaurants", async (req, res) => {
       ];
     }
 
-    const [docs, total] = await Promise.all([
-      collection.find(filter).skip(skip).limit(limit).toArray(),
-      collection.countDocuments(filter),
-    ]);
-
-    // Transform + optional client-side distance filter
-    let restaurants = docs.map(transformRestaurant);
-
-    // Geospatial filter (post-transform, using position.latitude/longitude)
+    // Geospatial sorting/filtering if lat/lon provided
     const lat = parseFloat(req.query.lat);
     const lon = parseFloat(req.query.lon);
-    const radiusKm = parseFloat(req.query.radiusKm ?? "5");
+    const radiusKm = parseFloat(req.query.radiusKm ?? "50");
+
     if (!isNaN(lat) && !isNaN(lon)) {
-      restaurants = restaurants
-        .filter((r) => r.position?.latitude && r.position?.longitude)
+      // For distance sorting, we fetch all relevant docs, calculate distance, sort, and then paginate.
+      // 5.5k docs is fine for this approach.
+      const docs = await collection
+        .find({
+          ...filter,
+          "position.latitude": { $exists: true, $ne: null },
+          "position.longitude": { $exists: true, $ne: null },
+        })
+        .toArray();
+
+      const transformed = docs
+        .map(transformRestaurant)
         .map((r) => ({
           ...r,
           distanceKm: haversineKm(
@@ -224,12 +236,36 @@ app.get("/api/restaurants", async (req, res) => {
         }))
         .filter((r) => r.distanceKm <= radiusKm)
         .sort((a, b) => a.distanceKm - b.distanceKm);
+
+      const total = transformed.length;
+      const restaurants = transformed.slice(skip, skip + limit);
+
+      return res.json({ restaurants, total, page, limit });
     }
+
+    // Default: Sort by database order (likely insertion order or _id)
+    console.log("Fetching default page...", { page, limit, filter });
+    const [docs, total] = await Promise.all([
+      collection.find(filter).skip(skip).limit(limit).toArray(),
+      collection.countDocuments(filter),
+    ]);
+    console.log(`Found ${docs.length} docs, total ${total}`);
+
+    const restaurants = docs.map((doc) => {
+      try {
+        return transformRestaurant(doc);
+      } catch (e) {
+        console.error("Transform error for doc:", doc._id, e);
+        throw e;
+      }
+    });
 
     res.json({ restaurants, total, page, limit });
   } catch (err) {
-    console.error("GET /api/restaurants error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("GET /api/restaurants error detail:", err);
+    res
+      .status(500)
+      .json({ error: "Internal server error", message: err.message });
   }
 });
 
@@ -256,10 +292,15 @@ app.get("/api/restaurants/nearby", async (req, res) => {
   }
 
   try {
-    const filter = { "position.latitude": { $exists: true, $ne: null } };
+    const filter = {
+      "position.latitude": { $exists: true, $ne: null },
+      keyword: { $nin: EXCLUDE_DRINKS },
+    };
     if (type) {
       // Allow searching by exact or partial keyword
-      filter.keyword = { $regex: type, $options: "i" };
+      filter.keyword = {
+        $and: [{ $nin: EXCLUDE_DRINKS }, { $regex: type, $options: "i" }],
+      };
     }
 
     const docs = await collection.find(filter).toArray();
@@ -294,7 +335,9 @@ app.get("/api/restaurants/nearby", async (req, res) => {
  */
 app.get("/api/restaurants/random", async (req, res) => {
   try {
-    const filter = {};
+    const filter = {
+      keyword: { $nin: EXCLUDE_DRINKS },
+    };
     // No meal-time field in Mongo schema — could derive from operating hours
     const [count] = await Promise.all([collection.countDocuments(filter)]);
     const skip = Math.floor(Math.random() * count);

@@ -34,13 +34,33 @@ export const useRestaurants = (user: User | null) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [favoritePrefs, setFavoritePrefs] = useState<Record<string, boolean>>(
+    {},
+  );
   const ITEMS_PER_PAGE = 20;
 
-  // ── Fetch a page from the API ──────────────────────────────────────────────
+  const applyFavorites = useCallback(
+    (list: Restaurant[], prefs: Record<string, boolean>) => {
+      return list.map((r) => {
+        const key = getRestaurantKey(r);
+        return prefs[key] !== undefined ? { ...r, isFavorite: prefs[key] } : r;
+      });
+    },
+    [],
+  );
+
+  // ─── Fetch a page from the API ──────────────────────────────────────────────
   const fetchPage = useCallback(
     async (
       page = 1,
-      filters: { type?: string; q?: string; district?: string } = {},
+      filters: {
+        type?: string;
+        q?: string;
+        district?: string;
+        lat?: number;
+        lon?: number;
+        favOnly?: boolean;
+      } = {},
     ): Promise<RestaurantsApiResponse> => {
       const params = new URLSearchParams({
         page: String(page),
@@ -50,6 +70,11 @@ export const useRestaurants = (user: User | null) => {
         params.set("type", filters.type);
       if (filters.q) params.set("q", filters.q);
       if (filters.district) params.set("district", filters.district);
+      if (filters.lat !== undefined && filters.lon !== undefined) {
+        params.set("lat", String(filters.lat));
+        params.set("lon", String(filters.lon));
+        params.set("radiusKm", "50"); // Large radius if sorting by distance
+      }
 
       const resp = await fetch(`${API_BASE}/restaurants?${params}`);
       if (!resp.ok) throw new Error(`API error: ${resp.status}`);
@@ -68,7 +93,7 @@ export const useRestaurants = (user: User | null) => {
         const data = await fetchPage(1);
         if (cancelled) return;
 
-        let list = data.restaurants;
+        let fetchedPrefs: Record<string, boolean> = {};
 
         // Apply cloud favorites if logged in
         if (user) {
@@ -76,16 +101,8 @@ export const useRestaurants = (user: User | null) => {
           try {
             const prefRef = collection(db, "users", user.uid, "preferences");
             const prefSnap = await getDocs(prefRef);
-            const prefs: Record<string, boolean> = {};
             prefSnap.forEach((d) => {
-              prefs[d.id] = d.data().isFavorite;
-            });
-
-            list = list.map((r) => {
-              const key = getRestaurantKey(r);
-              return prefs[key] !== undefined
-                ? { ...r, isFavorite: prefs[key] }
-                : r;
+              fetchedPrefs[d.id] = d.data().isFavorite;
             });
           } finally {
             if (!cancelled) setIsSyncing(false);
@@ -93,7 +110,8 @@ export const useRestaurants = (user: User | null) => {
         }
 
         if (!cancelled) {
-          setRestaurants(list);
+          setFavoritePrefs(fetchedPrefs);
+          setRestaurants(applyFavorites(data.restaurants, fetchedPrefs));
           setTotalCount(data.total);
           setCurrentPage(1);
           setHasMore(data.total > data.restaurants.length);
@@ -111,34 +129,51 @@ export const useRestaurants = (user: User | null) => {
     };
   }, [user?.uid, fetchPage]);
 
-  // ── Load more (infinite scroll) ───────────────────────────────────────────
-  const loadMore = useCallback(
-    async (filters: { type?: string; q?: string; district?: string } = {}) => {
-      const nextPage = currentPage + 1;
+  // ── Go to specific page ───────────────────────────────────────────────────
+  const goToPage = useCallback(
+    async (
+      page: number,
+      filters: {
+        type?: string;
+        q?: string;
+        district?: string;
+        lat?: number;
+        lon?: number;
+        favOnly?: boolean;
+      } = {},
+    ) => {
+      setLoading(true);
       try {
-        const data = await fetchPage(nextPage, filters);
-        setRestaurants((prev) => {
-          // Deduplicate by id
-          const existingIds = new Set(prev.map((r) => r.id));
-          const fresh = data.restaurants.filter((r) => !existingIds.has(r.id));
-          return [...prev, ...fresh];
-        });
-        setCurrentPage(nextPage);
-        setHasMore(nextPage * ITEMS_PER_PAGE < data.total);
+        const data = await fetchPage(page, filters);
+        setRestaurants(applyFavorites(data.restaurants, favoritePrefs));
+        setCurrentPage(page);
+        setHasMore(page * ITEMS_PER_PAGE < data.total);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {
-        console.error("Failed to load more restaurants:", err);
+        console.error(`Failed to load page ${page}:`, err);
+      } finally {
+        setLoading(false);
       }
     },
-    [currentPage, fetchPage],
+    [fetchPage],
   );
 
   // ── Search / filter (resets to page 1) ───────────────────────────────────
   const search = useCallback(
-    async (filters: { type?: string; q?: string; district?: string } = {}) => {
+    async (
+      filters: {
+        type?: string;
+        q?: string;
+        district?: string;
+        lat?: number;
+        lon?: number;
+        favOnly?: boolean;
+      } = {},
+    ) => {
       setLoading(true);
       try {
         const data = await fetchPage(1, filters);
-        setRestaurants(data.restaurants);
+        setRestaurants(applyFavorites(data.restaurants, favoritePrefs));
         setTotalCount(data.total);
         setCurrentPage(1);
         setHasMore(data.total > data.restaurants.length);
@@ -208,6 +243,9 @@ export const useRestaurants = (user: User | null) => {
       prev.map((r) => (r.id === id ? { ...r, isFavorite: newStatus } : r)),
     );
 
+    const key = getRestaurantKey(restaurant);
+    setFavoritePrefs((prev) => ({ ...prev, [key]: newStatus }));
+
     if (user) {
       setIsSyncing(true);
       try {
@@ -236,10 +274,12 @@ export const useRestaurants = (user: User | null) => {
     loading,
     isSyncing,
     hasMore,
+    currentPage,
+    totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
     addRestaurant,
     getRandomRestaurant,
     toggleFavorite,
-    loadMore,
+    goToPage,
     search,
   };
 };

@@ -32,8 +32,6 @@ export const FOOD_TYPES: FoodType[] = [
   "Cháo Lòng",
   "Ốc",
   "Lẩu",
-  "Trà Sữa",
-  "Cà Phê",
   "Chè",
 ];
 

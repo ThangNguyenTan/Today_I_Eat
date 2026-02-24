@@ -15,30 +15,18 @@ import {
   ChevronUp,
   Heart,
   MapPin,
-  RotateCcw,
   Search,
   X,
   Navigation,
+  ExternalLink,
 } from "lucide-react";
 import { NearbyModal } from "@/components/NearbyModal";
 import { UserMenu } from "@/components/UserMenu";
+import { Pagination } from "@/components/Pagination";
 import { useAuth } from "@/context/AuthContext";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import { FilterModal } from "@/components/FilterModal";
 import type { FoodType } from "@/types";
-import { FOOD_TYPES, HCM_DISTRICTS } from "@/constants";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
 
 function App() {
   const { user, login, logout } = useAuth();
@@ -47,26 +35,29 @@ function App() {
     totalCount,
     loading,
     isSyncing,
-    hasMore: apiHasMore,
+    currentPage,
+    totalPages,
     addRestaurant,
     toggleFavorite,
-    loadMore,
+    goToPage,
     search,
   } = useRestaurants(user);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [greeting, setGreeting] = useState("");
   const [activeType, setActiveType] = useState<FoodType | "Tất cả">("Tất cả");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [manualArea, setManualArea] = useState<string | null>(null);
-  const [isAreaSelectorOpen, setIsAreaSelectorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isNearbyModalOpen, setIsNearbyModalOpen] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+  const [isSortingByDistance, setIsSortingByDistance] = useState(false);
 
   // Debounced server search when filters change
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,9 +83,10 @@ function App() {
           type: type !== "Tất cả" ? type : undefined,
           q: q || undefined,
           district: district || undefined,
+          lat: isSortingByDistance ? userLocation?.lat : undefined,
+          lon: isSortingByDistance ? userLocation?.lon : undefined,
+          favOnly: favOnly,
         });
-        // showFavoritesOnly is still client-side (Firebase-based)
-        void favOnly;
       }, 300);
     },
     [
@@ -104,8 +96,18 @@ function App() {
       manualArea,
       showFavoritesOnly,
       search,
+      isSortingByDistance,
+      userLocation,
     ],
   );
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 11) setGreeting("Chào buổi sáng ☕");
+    else if (hour < 14) setGreeting("Chúc bạn bữa trưa ngon miệng 🍱");
+    else if (hour < 18) setGreeting("Chiều rồi, làm chút ăn vặt nhỉ? 🍰");
+    else setGreeting("Bữa tối ấm cúng nhé 🍜");
+  }, []);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -150,6 +152,38 @@ function App() {
     maxPull: 120,
   });
 
+  const toggleDistanceSort = useCallback(() => {
+    if (isSortingByDistance) {
+      setIsSortingByDistance(false);
+      return;
+    }
+
+    if (userLocation) {
+      setIsSortingByDistance(true);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      info("Trình duyệt không hỗ trợ định vị");
+      return;
+    }
+
+    info("Đang xác định vị trí để sắp xếp...");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        });
+        setIsSortingByDistance(true);
+      },
+      () => {
+        info("Không thể lấy vị trí của bạn");
+      },
+      { enableHighAccuracy: true },
+    );
+  }, [isSortingByDistance, userLocation, info]);
+
   const handleSuggest = () => {
     setIsSuggestionModalOpen(true);
   };
@@ -160,11 +194,39 @@ function App() {
     return restaurants;
   }, [restaurants, showFavoritesOnly]);
 
-  // Trigger server search whenever filter state changes
+  // Initial load search
   useEffect(() => {
     triggerSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeType, searchQuery, showNearbyOnly, manualArea]);
+  }, []);
+
+  // Sync search query only (allow live search for text while keeping filters manual)
+  useEffect(() => {
+    if (searchQuery) {
+      triggerSearch({ q: searchQuery });
+    } else if (searchQuery === "") {
+      triggerSearch({ q: "" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const handleApplyFilters = (filters: {
+    type: FoodType | "Tất cả";
+    favOnly: boolean;
+    area: string | null;
+  }) => {
+    setActiveType(filters.type);
+    setShowFavoritesOnly(filters.favOnly);
+    setManualArea(filters.area);
+    setShowNearbyOnly(!!filters.area);
+
+    // Trigger explicit search with new filters
+    triggerSearch({
+      type: filters.type,
+      favOnly: filters.favOnly,
+      district: filters.area || undefined,
+    });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -178,37 +240,8 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  useEffect(() => {
-    if (!apiHasMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isLoadingMore) {
-          setIsLoadingMore(true);
-          loadMore({
-            type: activeType !== "Tất cả" ? activeType : undefined,
-            q: searchQuery || undefined,
-            district: showNearbyOnly ? (manualArea ?? undefined) : undefined,
-          }).finally(() => setIsLoadingMore(false));
-        }
-      },
-      { threshold: 0.1, rootMargin: "100px" },
-    );
-
-    if (sentinelRef.current) observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
-  }, [
-    apiHasMore,
-    isLoadingMore,
-    loadMore,
-    activeType,
-    searchQuery,
-    showNearbyOnly,
-    manualArea,
-  ]);
-
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-24 font-sans selection:bg-primary/20">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-32 font-sans selection:bg-primary/20">
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full" />
@@ -268,7 +301,7 @@ function App() {
               variant="ghost"
               size="icon"
               onClick={() => (user ? setIsFormOpen(!isFormOpen) : login())}
-              className={`rounded-full transition-all duration-300 ${isFormOpen ? "bg-primary text-white scale-110 rotate-45" : "hover:bg-primary/10 hover:scale-110"}`}
+              className={`rounded-full transition-all duration-300 ${isFormOpen ? "bg-primary text-white scale-110 rotate-45" : "hover:bg-primary/10 hover:scale-110"} hidden sm:flex`}
               title={!user ? "Đăng nhập để thêm quán" : ""}
             >
               <PlusCircle className="h-6 w-6" />
@@ -418,11 +451,11 @@ function App() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between px-2">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-2">
             <div>
-              <h3 className="text-2xl font-black tracking-tight">Khám phá</h3>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Info className="h-3 w-3" />
+              <h3 className="text-3xl font-black tracking-tight">Khám phá</h3>
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                <Info className="h-3.5 w-3.5 text-primary/60" />
                 {loading
                   ? "Đang tải..."
                   : searchQuery || activeType !== "Tất cả"
@@ -430,24 +463,33 @@ function App() {
                     : `Có ${totalCount.toLocaleString()} địa điểm quanh bạn`}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
               {/* Gần Đây button */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsNearbyModalOpen(true)}
-                className="rounded-full gap-1.5 font-bold text-xs uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                className="rounded-xl gap-1.5 font-bold text-[10px] uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 h-9"
               >
-                <Navigation className="h-4 w-4" />
+                <Navigation className="h-3.5 w-3.5" />
                 Gần Đây
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`rounded-full gap-2 font-bold text-xs uppercase tracking-widest transition-all ${isFilterOpen ? "bg-primary text-white shadow-lg" : "text-primary"}`}
+                onClick={toggleDistanceSort}
+                className={`rounded-xl gap-1.5 font-bold text-[10px] uppercase tracking-widest transition-all h-9 ${isSortingByDistance ? "bg-amber-50 text-amber-600 shadow-sm ring-1 ring-amber-200" : "text-amber-600 hover:bg-amber-50"}`}
               >
-                <ListFilter className="h-4 w-4" />
+                <MapPin className="h-3.5 w-3.5" />
+                {isSortingByDistance ? "Đang sắp xếp" : "Sắp xếp"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`rounded-xl gap-2 font-bold text-[10px] uppercase tracking-widest transition-all h-9 ${isFilterOpen ? "bg-primary text-white shadow-lg" : "text-primary hover:bg-primary/5"}`}
+              >
+                <ListFilter className="h-3.5 w-3.5" />
                 Bộ lọc
               </Button>
             </div>
@@ -456,237 +498,6 @@ function App() {
 
         {/* Restaurant List */}
         <section className="space-y-8">
-          {/* Expanded Filter UI */}
-          {isFilterOpen && (
-            <div className="animate-in slide-in-from-top-4 fade-in duration-300">
-              <div className="pt-0 px-8 pb-8 rounded-[3rem] bg-white border border-gray-100 shadow-2xl space-y-8 relative overflow-hidden">
-                {/* Decorative Background Elements */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-500/5 rounded-full -ml-12 -mb-12 blur-2xl pointer-events-none" />
-
-                {/* Header with Clear Action */}
-                <div className="flex items-center justify-between px-1">
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-primary">
-                      Bộ lọc tìm kiếm
-                    </h3>
-                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter">
-                      Tùy chỉnh theo nhu cầu của bạn
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setActiveType("Tất cả");
-                      setShowFavoritesOnly(false);
-                      setShowNearbyOnly(false);
-                      setManualArea(null);
-                    }}
-                    className={`flex items-center gap-2 py-1.5 px-3 rounded-full text-[9px] font-black text-red-500 bg-red-50 hover:bg-red-100 uppercase tracking-widest transition-all duration-500 ${
-                      activeType !== "Tất cả" ||
-                      showFavoritesOnly ||
-                      showNearbyOnly
-                        ? "opacity-100 translate-y-0"
-                        : "opacity-0 translate-y-2 pointer-events-none"
-                    }`}
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    Làm mới
-                  </button>
-                </div>
-
-                <div className="grid gap-10 sm:grid-cols-2">
-                  {/* Location Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
-                      <MapPin className="h-3.5 w-3.5 text-primary" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                        Khu vực
-                      </span>
-                    </div>
-                    <Popover
-                      open={isAreaSelectorOpen}
-                      onOpenChange={setIsAreaSelectorOpen}
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[11px] font-bold transition-all border-2 ${
-                            showNearbyOnly
-                              ? "bg-primary/5 border-primary text-primary shadow-sm"
-                              : "bg-gray-50/50 border-transparent text-gray-500 hover:bg-gray-100/50"
-                          }`}
-                        >
-                          <span className="uppercase tracking-widest">
-                            {manualArea || "Toàn thành phố"}
-                          </span>
-                          <ChevronsUpDown className="h-4 w-4 opacity-30" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-[240px] p-0 rounded-3xl border-gray-100 shadow-2xl"
-                        align="start"
-                        sideOffset={8}
-                      >
-                        <Command>
-                          <CommandInput
-                            placeholder="Tìm Quận..."
-                            className="h-12 text-[13px] border-none focus:ring-0"
-                          />
-                          <CommandList className="max-h-[300px] p-2">
-                            <CommandEmpty className="text-[11px] py-6 text-center text-muted-foreground font-medium">
-                              Không tìm thấy khu vực này 📍
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {HCM_DISTRICTS.map((district) => (
-                                <CommandItem
-                                  key={district}
-                                  value={district}
-                                  onSelect={() => {
-                                    setManualArea(district);
-                                    setShowNearbyOnly(true);
-                                    setIsAreaSelectorOpen(false);
-                                  }}
-                                  className="text-[12px] py-3 px-4 rounded-xl cursor-pointer hover:bg-primary/5 data-[selected=true]:bg-primary/10"
-                                >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span className="font-semibold">
-                                      {district}
-                                    </span>
-                                    {manualArea === district && (
-                                      <Check className="h-4 w-4 text-primary" />
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Preferences Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
-                      <Heart className="h-3.5 w-3.5 text-red-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                        Ưu tiên
-                      </span>
-                    </div>
-                    <button
-                      onClick={() =>
-                        user
-                          ? setShowFavoritesOnly(!showFavoritesOnly)
-                          : login()
-                      }
-                      className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-[11px] font-bold transition-all border-2 ${
-                        showFavoritesOnly
-                          ? "bg-red-50 border-red-200 text-red-500 shadow-sm"
-                          : "bg-gray-50/50 border-transparent text-gray-500 hover:bg-gray-100/50"
-                      }`}
-                    >
-                      <span className="uppercase tracking-widest">
-                        Danh sách quán ruột
-                      </span>
-                      <div
-                        className={`h-5 w-10 rounded-full transition-all duration-500 flex items-center px-1 ${showFavoritesOnly ? "bg-red-500" : "bg-gray-200"}`}
-                      >
-                        <div
-                          className={`h-3 w-3 rounded-full bg-white shadow-sm transition-all duration-300 ${showFavoritesOnly ? "translate-x-5" : "translate-x-0"}`}
-                        />
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Categories Section */}
-                <div className="space-y-6 pt-2">
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <UtensilsCrossed className="h-3.5 w-3.5 text-orange-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                        Loại món ăn
-                      </span>
-                    </div>
-                    {activeType !== "Tất cả" && (
-                      <span className="text-[9px] font-black text-primary/60 uppercase">
-                        Đang chọn: {activeType}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-3 overflow-x-auto pb-6 pt-2 no-scrollbar -mx-2 px-6 snap-x snap-mandatory">
-                    <button
-                      onClick={() => setActiveType("Tất cả")}
-                      className={`snap-start flex-none px-6 py-3.5 rounded-[1.2rem] text-[11px] font-black uppercase tracking-wider transition-all duration-300 border-2 ${
-                        activeType === "Tất cả"
-                          ? "bg-primary border-primary text-white shadow-xl shadow-primary/30 scale-105"
-                          : "bg-white border-gray-100 text-gray-400 hover:border-primary/30 hover:text-primary"
-                      }`}
-                    >
-                      🍽️ Tất cả
-                    </button>
-                    {FOOD_TYPES.map((type) => {
-                      // Simple emoji mapping
-                      const emoji =
-                        (
-                          {
-                            Phở: "🍜",
-                            "Bánh Mì": "🥖",
-                            "Gỏi Cuốn": "🥗",
-                            "Chả Giò": "🥓",
-                            "Nem Rán": "🥓",
-                            "Bún Chả": "🍜",
-                            "Bún Bò Huế": "🍜",
-                            "Cơm Tấm": "🍚",
-                            "Cao Lầu": "🍜",
-                            "Bánh Cuốn": "🍥",
-                            "Bánh Xèo": "🥞",
-                            "Bánh Khọt": "🥞",
-                            "Bún Đậu Mắm Tôm": "🥒",
-                            "Bánh Bao": "🥟",
-                            Xôi: "🍚",
-                            "Bún Riêu": "🍜",
-                            "Bò Kho": "🥘",
-                            "Nem Nướng": "🍢",
-                            "Bánh Tráng Nướng": "🍕",
-                            "Bánh Bèo": "🍥",
-                            "Bánh Canh": "🍜",
-                            "Bánh Mì Xíu Mại": "🥖",
-                            "Bún Thịt Nướng": "🍜",
-                            "Mì Quảng": "🍝",
-                            "Hủ Tiếu": "🍲",
-                            "Cơm Gà": "🍗",
-                            "Cơm Chiên": "🍚",
-                            "Bún Mắm": "🍜",
-                            "Cháo Lòng": "🥣",
-                            Ốc: "🐚",
-                            Lẩu: "🫕",
-                            "Trà Sữa": "🧋",
-                            "Cà Phê": "☕",
-                            Chè: "🍧",
-                          } as Record<string, string>
-                        )[type] || "🍽️";
-
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setActiveType(type)}
-                          className={`snap-start flex-none px-6 py-3.5 rounded-[1.2rem] text-[11px] font-black uppercase tracking-wider transition-all duration-300 border-2 ${
-                            activeType === type
-                              ? "bg-primary border-primary text-white shadow-xl shadow-primary/30 scale-105"
-                              : "bg-white border-gray-100 text-gray-400 hover:border-primary/30 hover:text-primary"
-                          }`}
-                        >
-                          <span className="mr-2 text-base">{emoji}</span>
-                          {type}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="grid gap-6 sm:grid-cols-2">
             {displayedRestaurants.length > 0 ? (
               displayedRestaurants.map((res) => (
@@ -769,104 +580,42 @@ function App() {
             )}
           </div>
 
-          {/* Infinite Scroll Skeleton & Status */}
-          <div className="mt-12 text-center pb-20">
-            {isLoadingMore && (
-              <div className="grid gap-6 sm:grid-cols-2 mt-6">
-                {[1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="h-64 rounded-[2rem] bg-white shadow-sm border border-gray-100 overflow-hidden relative"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-[shimmer_1.5s_infinite] z-10" />
-                    <div className="p-6 space-y-4">
-                      {/* Header skeleton */}
-                      <div className="flex justify-between items-center">
-                        <div className="w-24 h-6 bg-gray-100 rounded-full" />
-                        <div className="w-8 h-8 bg-gray-100 rounded-full" />
-                      </div>
-
-                      {/* Title skeleton */}
-                      <div className="w-3/4 h-8 bg-gray-100 rounded-xl" />
-
-                      {/* Content skeleton */}
-                      <div className="space-y-2 pt-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gray-100 rounded-xl" />
-                          <div className="flex-1 h-4 bg-gray-100 rounded-full" />
-                        </div>
-                        <div className="h-20 bg-gray-50 rounded-2xl mt-4 border border-gray-100/50" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {apiHasMore ? (
-              <div
-                ref={sentinelRef}
-                className="h-24 flex flex-col items-center justify-center gap-3"
-              >
-                <div className="flex gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" />
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                  Đang tìm thêm món ngon...
-                </p>
-              </div>
-            ) : (
-              displayedRestaurants.length > 0 && (
-                <div className="py-8 px-6 rounded-[2rem] bg-gray-50/50 border border-dashed border-gray-200">
-                  <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
-                    ✨ Đã hiển thị tất cả quán ăn ✨
-                  </p>
-                </div>
-              )
-            )}
-            {displayedRestaurants.length === 0 &&
-              !loading &&
-              !showFavoritesOnly && (
-                <div className="py-20 text-center glass rounded-[2.5rem] border-0 flex flex-col items-center justify-center">
-                  <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-gray-100 rounded-full animate-ping opacity-20" />
-                    <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-gray-50 to-gray-100 border-4 border-white shadow-xl shadow-gray-200/50 text-gray-300">
-                      <Search className="h-10 w-10 text-gray-400" />
-                    </div>
-                    <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg">
-                      <span className="text-2xl">🤔</span>
-                    </div>
-                  </div>
-
-                  <h4 className="text-xl font-black text-gray-800 mb-2">
-                    Không tìm thấy quán nào
-                  </h4>
-                  <p className="text-muted-foreground font-medium px-6 max-w-xs mx-auto text-sm mb-6">
-                    {showNearbyOnly
-                      ? `Opps! Hiện tại "Ăn Gì Đây" chưa có quán nào tại ${manualArea || "khu vực này"}.`
-                      : "Thử tìm từ khóa khác xem sao nhé? 🍲"}
-                  </p>
-                  {showNearbyOnly && (
-                    <Button
-                      variant="link"
-                      onClick={() => setShowNearbyOnly(false)}
-                      className="mt-4 text-primary font-bold"
-                    >
-                      Xem tất cả khu vực
-                    </Button>
-                  )}
-                </div>
-              )}
-          </div>
+          {/* Pagination UI */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              goToPage(page, {
+                type: activeType !== "Tất cả" ? activeType : undefined,
+                q: searchQuery || undefined,
+                district: showNearbyOnly
+                  ? (manualArea ?? undefined)
+                  : undefined,
+                lat: isSortingByDistance ? userLocation?.lat : undefined,
+                lon: isSortingByDistance ? userLocation?.lon : undefined,
+                favOnly: showFavoritesOnly,
+              });
+            }}
+            isLoading={loading}
+          />
         </section>
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <BottomNavigation
+        onHome={scrollToTop}
+        onNearby={() => setIsNearbyModalOpen(true)}
+        onSuggest={handleSuggest}
+        onFilter={() => setIsFilterOpen(!isFilterOpen)}
+        onAdd={() => (user ? setIsFormOpen(!isFormOpen) : login())}
+        isFilterActive={isFilterOpen}
+        isFormOpen={isFormOpen}
+      />
 
       {/* Fixed Scroll to Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-4 rounded-2xl bg-white shadow-2xl border border-gray-100 text-primary transition-all duration-500 hover:scale-110 active:scale-90 ${
+        className={`fixed bottom-32 sm:bottom-8 right-4 sm:right-8 z-50 p-4 rounded-2xl bg-white shadow-2xl border border-gray-100 text-primary transition-all duration-500 hover:scale-110 active:scale-90 ${
           showScrollTop
             ? "translate-y-0 opacity-100"
             : "translate-y-20 opacity-0 pointer-events-none"
@@ -887,15 +636,99 @@ function App() {
         onClose={() => setIsNearbyModalOpen(false)}
       />
 
+      {/* Filter Modal */}
+      <FilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        activeType={activeType}
+        showFavoritesOnly={showFavoritesOnly}
+        manualArea={manualArea}
+        isLoggedIn={!!user}
+        onLogin={login}
+        onApply={handleApplyFilters}
+      />
+
       {/* Footer */}
-      <footer className="mt-20 py-10 text-center border-t bg-white/50">
-        <div className="container px-6">
-          <p className="text-sm font-bold opacity-20 uppercase tracking-[0.3em]">
-            Ăn Gì Đây? © 2026
-          </p>
-          <p className="mt-2 text-[10px] text-muted-foreground uppercase tracking-widest">
-            Made with ✨ for Vietnam
-          </p>
+      <footer className="relative mt-20 pt-24 pb-12 overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container px-6 relative z-10">
+          <div className="grid gap-12 sm:grid-cols-2 mb-16">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-orange-500 text-white shadow-lg">
+                  <UtensilsCrossed className="h-5 w-5" />
+                </div>
+                <h2 className="text-xl font-black tracking-tight">
+                  Ăn Gì Đây?
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+                Nền tảng giúp bạn khám phá tinh hoa ẩm thực Việt Nam. Tìm kiếm
+                những quán ăn ngon nhất quanh bạn chỉ với vài cú chạm.
+              </p>
+            </div>
+
+            <div className="space-y-6 sm:text-right">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary">
+                Hợp tác kinh doanh
+              </h3>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Bạn muốn đưa quán của mình lên bản đồ ẩm thực?
+                  <br />
+                  Hãy liên hệ với chúng tôi để cùng phát triển!
+                </p>
+                <div className="flex flex-col sm:items-end gap-2">
+                  <a
+                    href="mailto:partnership@angiday.vn"
+                    className="group inline-flex items-center gap-2 text-sm font-bold hover:text-primary transition-colors"
+                  >
+                    partnership@angiday.vn
+                    <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-primary/10 transition-colors">
+                      <ExternalLink className="h-3 w-3" />
+                    </div>
+                  </a>
+                  <a
+                    href="tel:+84901234567"
+                    className="group inline-flex items-center gap-2 text-sm font-bold hover:text-primary transition-colors"
+                  >
+                    +84 901 234 567
+                    <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-primary/10 transition-colors">
+                      <ExternalLink className="h-3 w-3" />
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">
+                Ăn Gì Đây? © 2026
+              </p>
+              <div className="flex gap-4">
+                <a
+                  href="#"
+                  className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest"
+                >
+                  Điều khoản
+                </a>
+                <a
+                  href="#"
+                  className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest"
+                >
+                  Bảo mật
+                </a>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-[0.1em]">
+              Handcrafted with ✨ for Vietnam Cuisine
+            </p>
+          </div>
         </div>
       </footer>
     </div>
