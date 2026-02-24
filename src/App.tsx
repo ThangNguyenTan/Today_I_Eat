@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useRestaurants, getCurrentMealTime } from "@/hooks/useRestaurants";
+import { useRestaurants } from "@/hooks/useRestaurants";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useToast } from "@/context/ToastContext";
 import { RestaurantForm } from "@/components/RestaurantForm";
@@ -23,7 +23,7 @@ import {
 import { NearbyModal } from "@/components/NearbyModal";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/context/AuthContext";
-import type { Restaurant, MealTime, FoodType } from "@/types";
+import type { FoodType } from "@/types";
 import { FOOD_TYPES, HCM_DISTRICTS } from "@/constants";
 import {
   Popover,
@@ -49,7 +49,6 @@ function App() {
     isSyncing,
     hasMore: apiHasMore,
     addRestaurant,
-    getRandomRestaurant,
     toggleFavorite,
     loadMore,
     search,
@@ -58,9 +57,6 @@ function App() {
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [greeting, setGreeting] = useState("");
-  const [currentFilter, setCurrentFilter] = useState<MealTime | undefined>(
-    undefined,
-  );
   const [activeType, setActiveType] = useState<FoodType | "Tất cả">("Tất cả");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
@@ -154,9 +150,7 @@ function App() {
     maxPull: 120,
   });
 
-  const handleSuggest = (filter?: MealTime) => {
-    const mealTime = filter || getCurrentMealTime();
-    setCurrentFilter(mealTime);
+  const handleSuggest = () => {
     setIsSuggestionModalOpen(true);
   };
 
@@ -633,26 +627,44 @@ function App() {
                     {FOOD_TYPES.map((type) => {
                       // Simple emoji mapping
                       const emoji =
-                        {
-                          Phở: "🍜",
-                          Bún: "🍜",
-                          Cơm: "🍚",
-                          Lẩu: "🫕",
-                          "Đồ chay": "🥗",
-                          "Bánh mì": "🥖",
-                          "Ăn vặt": "🍿",
-                          "Bánh cuốn": "🍥",
-                          "Bún đậu": "🥒",
-                          "Hải sản": "🦐",
-                          Ốc: "🐚",
-                          Mì: "🍝",
-                          "Hủ tiếu": "🍲",
-                          "Đồ nướng": "🥩",
-                          "Nước & Cafe": "🥤",
-                          Chè: "🍧",
-                          "Bánh xèo": "🥞",
-                          Khác: "🍴",
-                        }[type] || "🍽️";
+                        (
+                          {
+                            Phở: "🍜",
+                            "Bánh Mì": "🥖",
+                            "Gỏi Cuốn": "🥗",
+                            "Chả Giò": "🥓",
+                            "Nem Rán": "🥓",
+                            "Bún Chả": "🍜",
+                            "Bún Bò Huế": "🍜",
+                            "Cơm Tấm": "🍚",
+                            "Cao Lầu": "🍜",
+                            "Bánh Cuốn": "🍥",
+                            "Bánh Xèo": "🥞",
+                            "Bánh Khọt": "🥞",
+                            "Bún Đậu Mắm Tôm": "🥒",
+                            "Bánh Bao": "🥟",
+                            Xôi: "🍚",
+                            "Bún Riêu": "🍜",
+                            "Bò Kho": "🥘",
+                            "Nem Nướng": "🍢",
+                            "Bánh Tráng Nướng": "🍕",
+                            "Bánh Bèo": "🍥",
+                            "Bánh Canh": "🍜",
+                            "Bánh Mì Xíu Mại": "🥖",
+                            "Bún Thịt Nướng": "🍜",
+                            "Mì Quảng": "🍝",
+                            "Hủ Tiếu": "🍲",
+                            "Cơm Gà": "🍗",
+                            "Cơm Chiên": "🍚",
+                            "Bún Mắm": "🍜",
+                            "Cháo Lòng": "🥣",
+                            Ốc: "🐚",
+                            Lẩu: "🫕",
+                            "Trà Sữa": "🧋",
+                            "Cà Phê": "☕",
+                            Chè: "🍧",
+                          } as Record<string, string>
+                        )[type] || "🍽️";
 
                       return (
                         <button

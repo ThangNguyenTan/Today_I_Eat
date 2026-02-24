@@ -298,7 +298,9 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
               {isSpinning ? "Đang quay..." : "🎉 Tìm thấy rồi!"}
             </DialogTitle>
             <p className="text-white/80 text-[11px] font-bold uppercase tracking-[0.25em]">
-              {isSpinning ? "Chờ tí nhé ⏳" : "Gợi ý hoàn hảo cho bạn"}
+              {isSpinning
+                ? spinningName || "Đang quay..."
+                : "Gợi ý hoàn hảo cho bạn"}
             </p>
           </DialogHeader>
 
@@ -316,144 +318,137 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                 className={`text-3xl font-black text-white leading-tight transition-all duration-300 ${isSpinning ? "" : "animate-in slide-in-from-bottom-2"}`}
               >
                 {spinningType || "Đang chọn..."}
-                <span className="inline-block ml-2 animate-bounce">✨</span>
               </h2>
             </div>
           </div>
         </div>
 
         {/* Content section */}
-        <div className="flex-1 overflow-y-auto no-scrollbar p-6 pb-8 space-y-6 bg-gradient-to-b from-white to-gray-50/50 relative">
-          {isSpinning && (
-            <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex flex-col items-center justify-center space-y-4">
-              <div className="flex flex-col items-center text-center px-8">
+        {!isSpinning && (
+          <div className="flex-1 overflow-y-auto no-scrollbar p-6 pb-8 space-y-6 bg-gradient-to-b from-white to-gray-50/50 relative min-h-[100px] animate-in fade-in zoom-in-95 duration-500">
+            {phase === "locating" && (
+              <div className="py-12 flex flex-col items-center gap-5">
                 <div className="relative">
-                  <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
-                </div>
-                <h3 className="text-xl font-black text-gray-400 italic animate-pulse mt-6">
-                  {spinningName}
-                </h3>
-              </div>
-            </div>
-          )}
-
-          {phase === "locating" && (
-            <div className="py-12 flex flex-col items-center gap-5">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center">
-                  <Navigation className="h-9 w-9 text-orange-500 animate-pulse" />
-                </div>
-                <div className="absolute inset-0 rounded-full border-4 border-orange-300/50 animate-ping" />
-              </div>
-              <div className="text-center space-y-1">
-                <p className="font-black text-gray-800">
-                  Đang tìm quán {spinningType} gần bạn...
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Vui lòng cho phép truy cập GPS
-                </p>
-              </div>
-            </div>
-          )}
-
-          {phase === "loading" && (
-            <div className="py-12 flex flex-col items-center gap-5">
-              <div className="relative">
-                <Loader2 className="h-12 w-12 text-primary animate-spin" />
-                <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
-              </div>
-              <div className="text-center space-y-1">
-                <p className="font-black text-gray-800">
-                  Đang tải danh sách quán...
-                </p>
-                <p className="text-sm text-muted-foreground">Chờ chút nhé 🍽️</p>
-              </div>
-            </div>
-          )}
-
-          {phase === "done" && (
-            <div className="space-y-3">
-              {nearby.length > 0 ? (
-                <>
-                  <div className="flex items-center justify-between px-1 mb-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      Top quán {spinningType} quanh bạn
-                    </p>
+                  <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center">
+                    <Navigation className="h-9 w-9 text-orange-500 animate-pulse" />
                   </div>
-                  {nearby.map((r, idx) => (
-                    <RestaurantRow key={r.id} restaurant={r} rank={idx + 1} />
-                  ))}
+                  <div className="absolute inset-0 rounded-full border-4 border-orange-300/50 animate-ping" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="font-black text-gray-800">
+                    Đang tìm quán {spinningType} gần bạn...
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Vui lòng cho phép truy cập GPS
+                  </p>
+                </div>
+              </div>
+            )}
 
-                  {hasMore ? (
-                    <div ref={sentinelRef} className="py-6 flex justify-center">
-                      <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
-                    </div>
-                  ) : (
-                    <div className="pt-2 pb-4 text-center">
-                      <p className="text-[11px] font-bold text-gray-300 uppercase tracking-widest">
-                        ✨ Đã hết danh sách ✨
+            {phase === "loading" && (
+              <div className="py-12 flex flex-col items-center gap-5">
+                <div className="relative">
+                  <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                  <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="font-black text-gray-800">
+                    Đang tải danh sách quán...
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Chờ chút nhé 🍽️
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {phase === "done" && (
+              <div className="space-y-3">
+                {nearby.length > 0 ? (
+                  <>
+                    <div className="flex items-center justify-between px-1 mb-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        Top quán {spinningType} quanh bạn
                       </p>
                     </div>
-                  )}
+                    {nearby.map((r, idx) => (
+                      <RestaurantRow key={r.id} restaurant={r} rank={idx + 1} />
+                    ))}
 
-                  <div className="grid grid-cols-2 gap-3 pt-6 pb-2">
+                    {hasMore ? (
+                      <div
+                        ref={sentinelRef}
+                        className="py-6 flex justify-center"
+                      >
+                        <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                      </div>
+                    ) : (
+                      <div className="pt-2 pb-4 text-center">
+                        <p className="text-[11px] font-bold text-gray-300 uppercase tracking-widest">
+                          ✨ Đã hết danh sách ✨
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3 pt-6 pb-2">
+                      <Button
+                        onClick={startSpinning}
+                        className="h-14 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-300 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <RotateCw className="h-4 w-4" />
+                        Tìm món khác
+                      </Button>
+                      <Button
+                        onClick={onClose}
+                        className="h-14 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white text-sm font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:-translate-y-1 active:scale-95"
+                      >
+                        Đóng
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Utensils className="h-10 w-10 text-gray-300" />
+                    </div>
+                    <p className="text-gray-800 font-bold mb-1">Rất tiếc...</p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Không tìm thấy quán {spinningType} nào quanh vị trí của
+                      bạn.
+                    </p>
                     <Button
                       onClick={startSpinning}
-                      className="h-14 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-300 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
+                      variant="outline"
+                      className="h-12 rounded-xl"
                     >
-                      <RotateCw className="h-4 w-4" />
-                      Tìm món khác
-                    </Button>
-                    <Button
-                      onClick={onClose}
-                      className="h-14 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white text-sm font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:-translate-y-1 active:scale-95"
-                    >
-                      Đóng
+                      <RotateCw className="mr-2 h-4 w-4" /> Quán món khác
                     </Button>
                   </div>
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Utensils className="h-10 w-10 text-gray-300" />
-                  </div>
-                  <p className="text-gray-800 font-bold mb-1">Rất tiếc...</p>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Không tìm thấy quán {spinningType} nào quanh vị trí của bạn.
-                  </p>
-                  <Button
-                    onClick={startSpinning}
-                    variant="outline"
-                    className="h-12 rounded-xl"
-                  >
-                    <RotateCw className="mr-2 h-4 w-4" /> Quán món khác
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {phase === "error" && (
-            <div className="py-12 flex flex-col items-center gap-5 text-center px-6">
-              <div className="w-16 h-16 rounded-[1.25rem] bg-red-50 flex items-center justify-center">
-                <AlertCircle className="h-8 w-8 text-red-400" />
+            {phase === "error" && (
+              <div className="py-12 flex flex-col items-center gap-5 text-center px-6">
+                <div className="w-16 h-16 rounded-[1.25rem] bg-red-50 flex items-center justify-center">
+                  <AlertCircle className="h-8 w-8 text-red-400" />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-black text-gray-800">Đã xảy ra lỗi</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {errorMsg}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => locateAndSearch(spinningType)}
+                  className="mt-2 rounded-xl"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
+                </Button>
               </div>
-              <div className="space-y-1">
-                <p className="font-black text-gray-800">Đã xảy ra lỗi</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {errorMsg}
-                </p>
-              </div>
-              <Button
-                onClick={() => locateAndSearch(spinningType)}
-                className="mt-2 rounded-xl"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
-              </Button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
