@@ -55,7 +55,7 @@ function getEmoji(type: string): string {
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Phase = "idle" | "locating" | "loading" | "done" | "error";
 
-interface NearbyRestaurant extends Restaurant {
+export interface NearbyRestaurant extends Restaurant {
   distanceKm: number;
 }
 
@@ -73,38 +73,68 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
   const [errorMsg, setErrorMsg] = useState("");
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
-  const isCancelledRef = useRef(false);
-  const RADIUS_KM = 5;
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const runSearch = useCallback(async (lat: number, lon: number) => {
-    isCancelledRef.current = false;
-    setPhase("loading");
-    setNearby([]);
-    try {
-      const params = new URLSearchParams({
-        lat: String(lat),
-        lon: String(lon),
-        radiusKm: String(RADIUS_KM),
-        limit: "30",
-      });
-      const resp = await fetch(`/api/restaurants/nearby?${params}`);
-      if (!resp.ok) throw new Error(`API error: ${resp.status}`);
-      const data = await resp.json();
-      if (!isCancelledRef.current) {
-        setNearby(data.restaurants as NearbyRestaurant[]);
-        setPhase("done");
+  const isCancelledRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const RADIUS_KM = 5;
+  const LIMIT = 15;
+
+  const runSearch = useCallback(
+    async (lat: number, lon: number, pageNum = 1) => {
+      isCancelledRef.current = false;
+      if (pageNum === 1) {
+        setPhase("loading");
+        setNearby([]);
+      } else {
+        setIsLoadingMore(true);
       }
-    } catch (err) {
-      if (!isCancelledRef.current) {
-        setErrorMsg("Không thể tải dữ liệu từ máy chủ");
-        setPhase("error");
+
+      try {
+        const params = new URLSearchParams({
+          lat: String(lat),
+          lon: String(lon),
+          radiusKm: String(RADIUS_KM),
+          limit: String(LIMIT),
+          page: String(pageNum),
+        });
+        const resp = await fetch(`/api/restaurants/nearby?${params}`);
+        if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+        const data = await resp.json();
+
+        if (!isCancelledRef.current) {
+          if (pageNum === 1) {
+            setNearby(data.restaurants as NearbyRestaurant[]);
+          } else {
+            setNearby((prev) => [
+              ...prev,
+              ...(data.restaurants as NearbyRestaurant[]),
+            ]);
+          }
+
+          setHasMore(pageNum * LIMIT < data.total);
+          setPage(pageNum);
+          setPhase("done");
+          setIsLoadingMore(false);
+        }
+      } catch (err) {
+        if (!isCancelledRef.current) {
+          setErrorMsg("Không thể tải dữ liệu từ máy chủ");
+          setPhase("error");
+          setIsLoadingMore(false);
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   const startSearch = useCallback(() => {
     setPhase("locating");
     setNearby([]);
+    setPage(1);
+    setHasMore(true);
     setErrorMsg("");
 
     if (!navigator.geolocation) {
@@ -138,8 +168,26 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
       isCancelledRef.current = true;
       setPhase("idle");
       setNearby([]);
+      setPage(1);
+      setHasMore(true);
     }
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!hasMore || phase !== "done" || !userCoords) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          runSearch(userCoords[0], userCoords[1], page + 1);
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" },
+    );
+
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, phase, userCoords, isLoadingMore, runSearch, page]);
 
   if (!isOpen) return null;
 
@@ -243,15 +291,22 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                   {nearby.map((r, idx) => (
                     <RestaurantRow key={r.id} restaurant={r} rank={idx + 1} />
                   ))}
-                  <div className="pt-2 pb-4 text-center">
-                    <button
-                      onClick={startSearch}
-                      className="text-[11px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 mx-auto"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      Tìm lại
-                    </button>
-                  </div>
+
+                  {hasMore ? (
+                    <div ref={sentinelRef} className="py-6 flex justify-center">
+                      <Loader2 className="h-6 w-6 text-emerald-500 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="pt-2 pb-4 text-center">
+                      <button
+                        onClick={startSearch}
+                        className="text-[11px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 mx-auto"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Tìm lại
+                      </button>
+                    </div>
+                  )}
                 </>
               ) : (
                 <EmptyNearby km={RADIUS_KM} onRetry={startSearch} />
@@ -287,7 +342,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 };
 
 // ─── RestaurantRow ────────────────────────────────────────────────────────────
-const RestaurantRow: React.FC<{
+export const RestaurantRow: React.FC<{
   restaurant: NearbyRestaurant;
   rank: number;
 }> = ({ restaurant: r, rank }) => {

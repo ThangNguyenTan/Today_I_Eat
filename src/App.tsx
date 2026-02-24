@@ -55,7 +55,6 @@ function App() {
     search,
   } = useRestaurants(user);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [suggestion, setSuggestion] = useState<Restaurant | null>(null);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [greeting, setGreeting] = useState("");
@@ -155,17 +154,10 @@ function App() {
     maxPull: 120,
   });
 
-  const handleSuggest = async (filter?: MealTime) => {
+  const handleSuggest = (filter?: MealTime) => {
     const mealTime = filter || getCurrentMealTime();
     setCurrentFilter(mealTime);
     setIsSuggestionModalOpen(true);
-    const random = await getRandomRestaurant(mealTime);
-    setSuggestion(random);
-  };
-
-  const handleShuffle = async () => {
-    const random = await getRandomRestaurant(currentFilter);
-    setSuggestion(random);
   };
 
   // Client-side favorite filter on top of server results
@@ -874,9 +866,7 @@ function App() {
       {/* Suggestion Modal */}
       <SuggestionModal
         isOpen={isSuggestionModalOpen}
-        restaurant={suggestion}
         onClose={() => setIsSuggestionModalOpen(false)}
-        onShuffle={handleShuffle}
       />
 
       {/* Nearby Modal */}

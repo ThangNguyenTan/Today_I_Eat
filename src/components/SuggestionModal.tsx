@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,27 +6,23 @@ import {
   DialogTitle,
   DialogDescription,
 } from "./ui/dialog";
-import type { Restaurant } from "@/types";
 import { Button } from "./ui/button";
 import {
   Sparkles,
-  MapPin,
   Utensils,
-  ExternalLink,
   RefreshCw,
-  Heart,
   Loader2,
   RotateCw,
   PartyPopper,
+  AlertCircle,
   Navigation,
 } from "lucide-react";
 import { FOOD_TYPES } from "@/constants";
+import { RestaurantRow, type NearbyRestaurant } from "./NearbyModal";
 
 interface SuggestionModalProps {
-  restaurant: Restaurant | null;
   isOpen: boolean;
   onClose: () => void;
-  onShuffle: () => void;
 }
 
 // Confetti particle component
@@ -49,33 +45,125 @@ const ConfettiParticle = ({
 );
 
 export const SuggestionModal: React.FC<SuggestionModalProps> = ({
-  restaurant,
   isOpen,
   onClose,
-  onShuffle,
 }) => {
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [spinningType, setSpinningType] = useState<string>("");
-  const [spinningName, setSpinningName] = useState<string>("");
+  type Phase = "idle" | "spinning" | "locating" | "loading" | "done" | "error";
+
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
+  const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && restaurant) {
-      startSpinning();
-    }
-  }, [isOpen, restaurant?.id]);
+  const [spinningType, setSpinningType] = useState<string>("");
+  const [spinningName, setSpinningName] = useState<string>("");
 
-  const startSpinning = () => {
-    setIsSpinning(true);
+  const isCancelledRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const RADIUS_KM = 5;
+  const LIMIT = 15;
+
+  const runSearch = useCallback(
+    async (lat: number, lon: number, type: string, pageNum = 1) => {
+      isCancelledRef.current = false;
+      if (pageNum === 1) {
+        setPhase("loading");
+        setNearby([]);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      try {
+        const params = new URLSearchParams({
+          lat: String(lat),
+          lon: String(lon),
+          radiusKm: String(RADIUS_KM),
+          limit: String(LIMIT),
+          page: String(pageNum),
+          type,
+        });
+        const resp = await fetch(`/api/restaurants/nearby?${params}`);
+        if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+        const data = await resp.json();
+
+        if (!isCancelledRef.current) {
+          if (pageNum === 1) {
+            setNearby(data.restaurants as NearbyRestaurant[]);
+          } else {
+            setNearby((prev) => [
+              ...prev,
+              ...(data.restaurants as NearbyRestaurant[]),
+            ]);
+          }
+
+          setHasMore(pageNum * LIMIT < data.total);
+          setPage(pageNum);
+          setPhase("done");
+          setIsLoadingMore(false);
+        }
+      } catch (err) {
+        if (!isCancelledRef.current) {
+          setErrorMsg("Không thể tải dữ liệu từ máy chủ");
+          setPhase("error");
+          setIsLoadingMore(false);
+        }
+      }
+    },
+    [],
+  );
+
+  const locateAndSearch = useCallback(
+    (typeToSearch: string) => {
+      setPhase("locating");
+      setNearby([]);
+      setPage(1);
+      setHasMore(true);
+      setErrorMsg("");
+
+      if (!navigator.geolocation) {
+        setPhase("error");
+        setErrorMsg("Trình duyệt không hỗ trợ định vị GPS");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setUserCoords([latitude, longitude]);
+          runSearch(latitude, longitude, typeToSearch, 1);
+        },
+        (err) => {
+          let msg = "Lỗi định vị";
+          if (err.code === 1) msg = "Bạn đã từ chối quyền truy cập vị trí";
+          else if (err.code === 2) msg = "Không thể xác định vị trí của bạn";
+          else if (err.code === 3) msg = "Hết thời gian yêu cầu định vị";
+          setPhase("error");
+          setErrorMsg(msg);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
+      );
+    },
+    [runSearch],
+  );
+
+  const startSpinning = useCallback(() => {
+    setPhase("spinning");
     setShowConfetti(false);
     let count = 0;
-    const maxCount = 25;
+    const maxCount = 20;
     const intervalTime = 60;
 
+    // In background, we already get location to save time if we want, but doing sequence is easier
+
     const interval = setInterval(() => {
-      setSpinningType(
-        FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)],
-      );
+      const randomType =
+        FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)];
+      setSpinningType(randomType);
+
       const placeholders = [
         "Đang chọn...",
         "Chờ tí nhé...",
@@ -91,16 +179,50 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
       count++;
       if (count >= maxCount) {
         clearInterval(interval);
-        setIsSpinning(false);
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 2000);
+        // Spin done, begin location/search
+        locateAndSearch(randomType);
       }
     }, intervalTime);
-  };
+  }, [locateAndSearch]);
 
-  const handleShuffle = () => {
-    onShuffle();
-  };
+  useEffect(() => {
+    if (isOpen) {
+      startSpinning();
+    } else {
+      isCancelledRef.current = true;
+      setPhase("idle");
+      setNearby([]);
+      setPage(1);
+      setHasMore(true);
+      setSpinningType("");
+    }
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!hasMore || phase !== "done" || !userCoords) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          runSearch(userCoords[0], userCoords[1], spinningType, page + 1);
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" },
+    );
+
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [
+    hasMore,
+    phase,
+    userCoords,
+    isLoadingMore,
+    runSearch,
+    page,
+    spinningType,
+  ]);
 
   const confettiColors = [
     "#F97316",
@@ -110,6 +232,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     "#60A5FA",
     "#A78BFA",
   ];
+  const isSpinning = phase === "spinning";
 
   return (
     <Dialog
@@ -126,7 +249,6 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
 
         {/* Header with gradient and animations */}
         <div className="bg-gradient-to-br from-primary via-orange-500 to-amber-500 p-6 pt-10 text-center text-white relative flex-none overflow-hidden">
-          {/* Animated background patterns */}
           <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
             <div
               className="absolute top-4 left-4 w-20 h-20 border-4 border-white/30 rounded-full animate-ping"
@@ -146,7 +268,6 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             />
           </div>
 
-          {/* Confetti effect */}
           {showConfetti && (
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
               {confettiColors.flatMap((color, i) =>
@@ -181,7 +302,6 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             </p>
           </DialogHeader>
 
-          {/* Food type reveal card */}
           <div
             className={`transition-all duration-500 transform ${isSpinning ? "scale-95" : "scale-100"}`}
           >
@@ -195,7 +315,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
               <h2
                 className={`text-3xl font-black text-white leading-tight transition-all duration-300 ${isSpinning ? "" : "animate-in slide-in-from-bottom-2"}`}
               >
-                {isSpinning ? spinningType : restaurant?.type || "Đang chọn..."}
+                {spinningType || "Đang chọn..."}
                 <span className="inline-block ml-2 animate-bounce">✨</span>
               </h2>
             </div>
@@ -218,76 +338,118 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             </div>
           )}
 
-          {restaurant ? (
-            <>
-              <div className="space-y-4">
-                {/* Restaurant info card */}
-                <div className="flex items-start gap-4 p-5 rounded-[1.75rem] bg-white border border-gray-100 shadow-lg shadow-black/5 hover:shadow-xl transition-shadow duration-300">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-primary to-orange-500 text-white shadow-lg shadow-primary/20 flex-none">
-                    <MapPin className="h-6 w-6" />
-                  </div>
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-black text-xl text-[#1A1A1A] truncate">
-                        {restaurant.name}
-                      </h3>
-                      {restaurant.isFavorite && (
-                        <Heart className="h-5 w-5 fill-red-500 text-red-500 flex-none animate-pulse" />
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                      {restaurant.location}
+          {phase === "locating" && (
+            <div className="py-12 flex flex-col items-center gap-5">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center">
+                  <Navigation className="h-9 w-9 text-orange-500 animate-pulse" />
+                </div>
+                <div className="absolute inset-0 rounded-full border-4 border-orange-300/50 animate-ping" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="font-black text-gray-800">
+                  Đang tìm quán {spinningType} gần bạn...
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Vui lòng cho phép truy cập GPS
+                </p>
+              </div>
+            </div>
+          )}
+
+          {phase === "loading" && (
+            <div className="py-12 flex flex-col items-center gap-5">
+              <div className="relative">
+                <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="font-black text-gray-800">
+                  Đang tải danh sách quán...
+                </p>
+                <p className="text-sm text-muted-foreground">Chờ chút nhé 🍽️</p>
+              </div>
+            </div>
+          )}
+
+          {phase === "done" && (
+            <div className="space-y-3">
+              {nearby.length > 0 ? (
+                <>
+                  <div className="flex items-center justify-between px-1 mb-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      Top quán {spinningType} quanh bạn
                     </p>
                   </div>
-                </div>
+                  {nearby.map((r, idx) => (
+                    <RestaurantRow key={r.id} restaurant={r} rank={idx + 1} />
+                  ))}
 
-                {/* Google Maps button */}
-                {restaurant.googleMapsUrl && (
-                  <a
-                    href={restaurant.googleMapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-gradient-to-r from-[#1A1A1A] to-gray-800 text-sm font-bold text-white hover:from-primary hover:to-orange-500 transition-all duration-500 shadow-xl shadow-black/10 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]"
+                  {hasMore ? (
+                    <div ref={sentinelRef} className="py-6 flex justify-center">
+                      <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="pt-2 pb-4 text-center">
+                      <p className="text-[11px] font-bold text-gray-300 uppercase tracking-widest">
+                        ✨ Đã hết danh sách ✨
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3 pt-6 pb-2">
+                    <Button
+                      onClick={startSpinning}
+                      className="h-14 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-300 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <RotateCw className="h-4 w-4" />
+                      Tìm món khác
+                    </Button>
+                    <Button
+                      onClick={onClose}
+                      className="h-14 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white text-sm font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:-translate-y-1 active:scale-95"
+                    >
+                      Đóng
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Utensils className="h-10 w-10 text-gray-300" />
+                  </div>
+                  <p className="text-gray-800 font-bold mb-1">Rất tiếc...</p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Không tìm thấy quán {spinningType} nào quanh vị trí của bạn.
+                  </p>
+                  <Button
+                    onClick={startSpinning}
+                    variant="outline"
+                    className="h-12 rounded-xl"
                   >
-                    <Navigation className="h-5 w-5 group-hover:animate-bounce" />
-                    Dẫn đường trên Maps
-                    <ExternalLink className="h-4 w-4 opacity-60 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                  </a>
-                )}
-              </div>
+                    <RotateCw className="mr-2 h-4 w-4" /> Quán món khác
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
-              {/* Action buttons */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <Button
-                  onClick={handleShuffle}
-                  disabled={isSpinning}
-                  variant="outline"
-                  className="h-14 rounded-2xl border-2 border-gray-100 text-sm font-bold hover:bg-gray-50 hover:border-gray-200 gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isSpinning ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`}
-                  />
-                  Thử lại
-                </Button>
-                <Button
-                  onClick={onClose}
-                  disabled={isSpinning}
-                  className="h-14 rounded-2xl bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-primary text-white text-sm font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Đi thôi! 🚀
-                </Button>
+          {phase === "error" && (
+            <div className="py-12 flex flex-col items-center gap-5 text-center px-6">
+              <div className="w-16 h-16 rounded-[1.25rem] bg-red-50 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-red-400" />
               </div>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                <Utensils className="h-10 w-10 text-gray-300" />
+              <div className="space-y-1">
+                <p className="font-black text-gray-800">Đã xảy ra lỗi</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {errorMsg}
+                </p>
               </div>
-              <p className="text-muted-foreground font-medium">
-                Có gì đó sai sai rồi...
-              </p>
-              <Button onClick={onClose} className="mt-6 w-full rounded-2xl">
-                Đóng
+              <Button
+                onClick={() => locateAndSearch(spinningType)}
+                className="mt-2 rounded-xl"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
               </Button>
             </div>
           )}

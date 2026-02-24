@@ -243,22 +243,28 @@ app.get("/api/restaurants/nearby", async (req, res) => {
   const lat = parseFloat(req.query.lat);
   const lon = parseFloat(req.query.lon);
   const radiusKm = parseFloat(req.query.radiusKm ?? "5");
+  const type = req.query.type || "";
   const limit = Math.min(
     50,
     Math.max(1, parseInt(req.query.limit ?? "20", 10)),
   );
+  const page = Math.max(1, parseInt(req.query.page ?? "1", 10));
+  const skip = (page - 1) * limit;
 
   if (isNaN(lat) || isNaN(lon)) {
     return res.status(400).json({ error: "lat and lon are required" });
   }
 
   try {
-    // Only fetch docs that have a position (reduces scan dramatically)
-    const docs = await collection
-      .find({ "position.latitude": { $exists: true, $ne: null } })
-      .toArray();
+    const filter = { "position.latitude": { $exists: true, $ne: null } };
+    if (type) {
+      // Allow searching by exact or partial keyword
+      filter.keyword = { $regex: type, $options: "i" };
+    }
 
-    const results = docs
+    const docs = await collection.find(filter).toArray();
+
+    const filtered = docs
       .map(transformRestaurant)
       .filter((r) => r.position?.latitude && r.position?.longitude)
       .map((r) => ({
@@ -271,10 +277,11 @@ app.get("/api/restaurants/nearby", async (req, res) => {
         ),
       }))
       .filter((r) => r.distanceKm <= radiusKm)
-      .sort((a, b) => a.distanceKm - b.distanceKm)
-      .slice(0, limit);
+      .sort((a, b) => a.distanceKm - b.distanceKm);
 
-    res.json({ restaurants: results, total: results.length });
+    const results = filtered.slice(skip, skip + limit);
+
+    res.json({ restaurants: results, total: filtered.length, page, limit });
   } catch (err) {
     console.error("GET /api/restaurants/nearby error:", err);
     res.status(500).json({ error: "Internal server error" });
