@@ -175,7 +175,7 @@ app.get("/api/restaurants", async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page ?? "1", 10));
     const limit = Math.min(
       100,
-      Math.max(1, parseInt(req.query.limit ?? "20", 10)),
+      Math.max(1, parseInt(req.query.limit ?? "10", 10)),
     );
     const skip = (page - 1) * limit;
 
@@ -185,12 +185,10 @@ app.get("/api/restaurants", async (req, res) => {
 
     // Keyword / food-type filter
     if (req.query.type) {
-      // If a type is specified, we narrow down but still keep the exclusion
       filter.keyword = {
-        $and: [
-          { $nin: EXCLUDE_DRINKS },
-          { $regex: req.query.type, $options: "i" },
-        ],
+        $nin: EXCLUDE_DRINKS,
+        $regex: req.query.type,
+        $options: "i",
       };
     }
 
@@ -297,9 +295,10 @@ app.get("/api/restaurants/nearby", async (req, res) => {
       keyword: { $nin: EXCLUDE_DRINKS },
     };
     if (type) {
-      // Allow searching by exact or partial keyword
       filter.keyword = {
-        $and: [{ $nin: EXCLUDE_DRINKS }, { $regex: type, $options: "i" }],
+        $nin: EXCLUDE_DRINKS,
+        $regex: type,
+        $options: "i",
       };
     }
 

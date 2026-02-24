@@ -104,6 +104,18 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
 
           <DialogHeader className="relative z-10 text-center items-center">
+            {/* hidden subtle reset action in header */}
+            <button
+              onClick={handleReset}
+              className={`absolute top-0 right-0 z-20 flex items-center gap-1.5 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 shadow-sm border border-white/50 bg-white/40 backdrop-blur-md ${
+                isResetable
+                  ? "text-red-500 opacity-100 hover:bg-white active:scale-95 translate-x-4 -translate-y-4"
+                  : "text-gray-400 opacity-0 pointer-events-none"
+              }`}
+            >
+              <RotateCcw className="h-3 w-3" />
+              Xóa hết
+            </button>
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl shadow-primary/10">
               <Filter className="h-8 w-8 text-primary" />
             </div>
@@ -116,23 +128,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           </DialogHeader>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar p-8 space-y-10 bg-white">
-          {/* reset button */}
-          <div className="flex justify-end">
-            <button
-              onClick={handleReset}
-              className={`flex items-center gap-2 py-2 px-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${
-                isResetable
-                  ? "text-red-500 bg-red-50 hover:bg-red-100 opacity-100"
-                  : "text-gray-300 bg-gray-50 opacity-50 cursor-not-allowed"
-              }`}
-              disabled={!isResetable}
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Làm mới
-            </button>
-          </div>
-
+        <div className="flex-1 overflow-y-auto no-scrollbar p-8 pt-2 space-y-10 bg-white">
           {/* Location Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5 px-1">

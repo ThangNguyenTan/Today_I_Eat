@@ -459,7 +459,7 @@ function App() {
                 {loading
                   ? "Đang tải..."
                   : searchQuery || activeType !== "Tất cả"
-                    ? `Tìm thấy ${displayedRestaurants.length} địa điểm`
+                    ? `Tìm thấy ${totalCount.toLocaleString()} địa điểm`
                     : `Có ${totalCount.toLocaleString()} địa điểm quanh bạn`}
               </p>
             </div>

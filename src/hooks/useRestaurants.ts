@@ -37,7 +37,7 @@ export const useRestaurants = (user: User | null) => {
   const [favoritePrefs, setFavoritePrefs] = useState<Record<string, boolean>>(
     {},
   );
-  const ITEMS_PER_PAGE = 20;
+  const ITEMS_PER_PAGE = 10;
 
   const applyFavorites = useCallback(
     (list: Restaurant[], prefs: Record<string, boolean>) => {
