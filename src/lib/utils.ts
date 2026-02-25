@@ -1,8 +1,100 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { MealTime } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export const getCurrentMealTime = (): MealTime => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return "Sáng";
+  if (hour >= 11 && hour < 15) return "Trưa";
+  if (hour >= 15 && hour < 18) return "Chiều";
+  if (hour >= 18 && hour < 22) return "Tối";
+  return "Khuya";
+};
+
+export const getRestaurantKey = (r: { name: string; location: string }) => {
+  const name = r.name.trim();
+  const location = r.location.trim();
+  return btoa(unescape(encodeURIComponent(`${name}-${location}`))).replace(
+    /[/+=]/g,
+    "_",
+  );
+};
+
+// Food emoji mapping for visual appeal
+export const FOOD_EMOJIS: Record<string, string> = {
+  // Common types
+  phở: "🍜",
+  bún: "🍜",
+  cơm: "🍚",
+  "bánh mì": "🥖",
+  "hủ tiếu": "🍲",
+  lẩu: "🫕",
+  bbq: "🥩",
+  "hải sản": "🦐",
+  chay: "🥬",
+  cafe: "☕",
+  "cà phê": "☕",
+  "trà sữa": "🧋",
+  kem: "🍦",
+  "ăn vặt": "🍿",
+  "món hàn": "🍱",
+  "món nhật": "🍣",
+  "món thái": "🍛",
+  "món hoa": "🥟",
+  pizza: "🍕",
+  burger: "🍔",
+  "đồ nướng": "🥩",
+  ốc: "🐚",
+  mì: "🍝",
+  chè: "🍧",
+  "bánh cuốn": "🍥",
+  "bún đậu": "🥒",
+  "bún đậu mắm tôm": "🥒",
+  "nước & cafe": "🥤",
+  "bánh xèo": "🥞",
+  "bánh khọt": "🥞",
+  "gỏi cuốn": "🥗",
+  "chả giò": "🥓",
+  "nem rán": "🥓",
+  "bún chả": "🍜",
+  "bún bò huế": "🍜",
+  "cơm tấm": "🍚",
+  "cao lầu": "🍜",
+  "bánh bao": " dumpling",
+  xôi: "🍚",
+  "bún riêu": "🍜",
+  "bò kho": "🥘",
+  "nem nướng": "🍢",
+  "bánh tráng nướng": "🍕",
+  "bánh bèo": "🍥",
+  "bánh canh": "🍜",
+  "bánh mì xíu mại": "🥖",
+  "bún thịt nướng": "🍜",
+  "mì quảng": "🍝",
+  "cơm gà": "🍗",
+  "cơm chiên": "🍚",
+  "bún mắm": "🍜",
+  "cháo lòng": "🥣",
+};
+
+export function getEmoji(type?: string): string {
+  if (!type) return "🍽️";
+  const lower = type.toLowerCase();
+  // Try exact match first
+  if (FOOD_EMOJIS[lower]) return FOOD_EMOJIS[lower];
+  // Then try inclusion
+  const match = Object.entries(FOOD_EMOJIS).find(([k]) => lower.includes(k));
+  return match?.[1] ?? "🍽️";
+}
+
+export function getDistanceColor(km: number): string {
+  if (km <= 1) return "text-emerald-600 bg-emerald-50 border-emerald-200";
+  if (km <= 2.5) return "text-blue-600 bg-blue-50 border-blue-200";
+  return "text-orange-600 bg-orange-50 border-orange-200";
 }
 
 export function getGoogleMapsUrl(

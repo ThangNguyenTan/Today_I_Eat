@@ -13,63 +13,14 @@ import {
   Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
+import {
+  getGoogleMapsUrl,
+  formatOperatingHours,
+  formatDistance,
+  getEmoji,
+  getDistanceColor,
+} from "@/lib/utils";
 import { LazyImage } from "./ui/LazyImage";
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function formatDistance(km: number): string {
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(1)} km`;
-}
-
-function getDistanceColor(km: number): string {
-  if (km <= 1) return "text-emerald-600 bg-emerald-50 border-emerald-200";
-  if (km <= 2.5) return "text-blue-600 bg-blue-50 border-blue-200";
-  return "text-orange-600 bg-orange-50 border-orange-200";
-}
-
-const foodEmojis: Record<string, string> = {
-  Phở: "🍜",
-  "Bánh Mì": "🥖",
-  "Gỏi Cuốn": "🥗",
-  "Chả Giò": "🥓",
-  "Nem Rán": "🥓",
-  "Bún Chả": "🍜",
-  "Bún Bò Huế": "🍜",
-  "Cơm Tấm": "🍚",
-  "Cao Lầu": "🍜",
-  "Bánh Cuốn": "🍥",
-  "Bánh Xèo": "🥞",
-  "Bánh Khọt": "🥞",
-  "Bún Đậu Mắm Tôm": "🥒",
-  "Bánh Bao": "🥟",
-  Xôi: "🍚",
-  "Bún Riêu": "🍜",
-  "Bò Kho": "🥘",
-  "Nem Nướng": "🍢",
-  "Bánh Tráng Nướng": "🍕",
-  "Bánh Bèo": "🍥",
-  "Bánh Canh": "🍜",
-  "Bánh Mì Xíu Mại": "🥖",
-  "Bún Thịt Nướng": "🍜",
-  "Mì Quảng": "🍝",
-  "Hủ Tiếu": "🍲",
-  "Cơm Gà": "🍗",
-  "Cơm Chiên": "🍚",
-  "Bún Mắm": "🍜",
-  "Cháo Lòng": "🥣",
-  Ốc: "🐚",
-  Lẩu: "🫕",
-  "Trà Sữa": "🧋",
-  "Cà Phê": "☕",
-  Chè: "🍧",
-};
-
-function getEmoji(type: string): string {
-  const lower = type.toLowerCase();
-  const match = Object.entries(foodEmojis).find(([k]) => lower.includes(k));
-  return match?.[1] ?? "🍽️";
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Phase = "idle" | "locating" | "loading" | "done" | "error";

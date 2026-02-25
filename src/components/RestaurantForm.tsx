@@ -21,7 +21,7 @@ import {
   Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getCurrentMealTime } from "@/hooks/useRestaurants";
+import { getCurrentMealTime } from "@/lib/utils";
 import type { MealTime } from "@/types";
 import { FOOD_TYPES, MEAL_TIMES } from "@/constants";
 

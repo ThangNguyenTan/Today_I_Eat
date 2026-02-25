@@ -13,6 +13,7 @@ import {
   getGoogleMapsUrl,
   formatOperatingHours,
   formatDistance,
+  getEmoji,
   cn,
 } from "@/lib/utils";
 import { LazyImage } from "./ui/LazyImage";
@@ -21,43 +22,6 @@ interface RestaurantCardProps {
   restaurant: Restaurant;
   onToggleFavorite?: () => void;
   onClick?: () => void;
-}
-
-// Food emoji mapping for visual appeal
-const foodEmojis: Record<string, string> = {
-  phở: "🍜",
-  bún: "🍜",
-  cơm: "🍚",
-  "bánh mì": "🥖",
-  "hủ tiếu": "🍲",
-  lẩu: "🫕",
-  bbq: "🥩",
-  "hải sản": "🦐",
-  chay: "🥬",
-  cafe: "☕",
-  "trà sữa": "🧋",
-  kem: "🍦",
-  "ăn vặt": "🍿",
-  "món hàn": "🍱",
-  "món nhật": "🍣",
-  "món thái": "🍛",
-  "món hoa": "🥟",
-  pizza: "🍕",
-  burger: "🍔",
-  "đồ nướng": "🥩",
-  ốc: "🐚",
-  mì: "🍝",
-  chè: "🍧",
-  "bánh cuốn": "🍥",
-  "bún đậu": "🥒",
-  "nước & cafe": "🥤",
-  "bánh xèo": "🥞",
-};
-
-function getEmoji(type: string): string {
-  const lower = type.toLowerCase();
-  const match = Object.entries(foodEmojis).find(([k]) => lower.includes(k));
-  return match?.[1] ?? "🍽️";
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({

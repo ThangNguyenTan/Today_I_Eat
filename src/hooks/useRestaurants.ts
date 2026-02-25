@@ -4,24 +4,7 @@ import { db } from "@/lib/firebase";
 import type { User } from "firebase/auth";
 import type { Restaurant, MealTime, RestaurantsApiResponse } from "@/types";
 
-export const getCurrentMealTime = (): MealTime => {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 11) return "Sáng";
-  if (hour >= 11 && hour < 15) return "Trưa";
-  if (hour >= 15 && hour < 18) return "Chiều";
-  if (hour >= 18 && hour < 22) return "Tối";
-  return "Khuya";
-};
-
-// ─── Firebase preference key helper ──────────────────────────────────────────
-const getRestaurantKey = (r: { name: string; location: string }) => {
-  const name = r.name.trim();
-  const location = r.location.trim();
-  return btoa(unescape(encodeURIComponent(`${name}-${location}`))).replace(
-    /[/+=]/g,
-    "_",
-  );
-};
+import { getRestaurantKey } from "@/lib/utils";
 
 // ─── API base URL (proxied by Vite to http://localhost:3001) ─────────────────
 const API_BASE = "/api";
