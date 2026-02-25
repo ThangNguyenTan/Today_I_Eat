@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRestaurants } from "@/hooks/useRestaurants";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useToast } from "@/context/ToastContext";
 import { RestaurantForm } from "@/components/RestaurantForm";
@@ -33,7 +34,7 @@ function App() {
   const {
     restaurants,
     totalCount,
-    loading,
+    loading: apiLoading,
     isSyncing,
     currentPage,
     totalPages,
@@ -42,6 +43,16 @@ function App() {
     goToPage,
     search,
   } = useRestaurants(user);
+  const {
+    latitude,
+    longitude,
+    area,
+    loading: geoLoading,
+    error: geoError,
+    hasAttempted: geoAttempted,
+    isFallback,
+    getLocation,
+  } = useGeolocation();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [greeting, setGreeting] = useState("");
@@ -57,7 +68,7 @@ function App() {
     lat: number;
     lon: number;
   } | null>(null);
-  const [isSortingByDistance, setIsSortingByDistance] = useState(true);
+  const [isSortingByDistance, setIsSortingByDistance] = useState(false);
 
   // Debounced server search when filters change
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,14 +121,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 11) setGreeting("Chào buổi sáng ☕");
-    else if (hour < 14) setGreeting("Chúc bạn bữa trưa ngon miệng 🍱");
-    else if (hour < 18) setGreeting("Chiều rồi, làm chút ăn vặt nhỉ? 🍰");
-    else setGreeting("Bữa tối ấm cúng nhé 🍜");
-  }, []);
-
-  useEffect(() => {
     if (!user) {
       setShowFavoritesOnly(false);
       setIsFormOpen(false);
@@ -153,36 +156,16 @@ function App() {
   });
 
   const toggleDistanceSort = useCallback(() => {
-    if (isSortingByDistance) {
+    if (isSortingByDistance && userLocation) {
       setIsSortingByDistance(false);
       return;
     }
 
-    if (userLocation) {
-      setIsSortingByDistance(true);
-      return;
+    if (!userLocation) {
+      getLocation();
     }
-
-    if (!navigator.geolocation) {
-      info("Trình duyệt không hỗ trợ định vị");
-      return;
-    }
-
-    info("Đang xác định vị trí để sắp xếp...");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        });
-        setIsSortingByDistance(true);
-      },
-      () => {
-        info("Không thể lấy vị trí của bạn");
-      },
-      { enableHighAccuracy: true },
-    );
-  }, [isSortingByDistance, userLocation, info]);
+    setIsSortingByDistance(true);
+  }, [isSortingByDistance, userLocation, getLocation]);
 
   const handleSuggest = () => {
     setIsSuggestionModalOpen(true);
@@ -210,26 +193,26 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
-  // Handle automatic location retrieval on mount
-  useEffect(() => {
-    if (isSortingByDistance && !userLocation && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserLocation({
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-          });
-        },
-        () => {
-          // If failed, we just stay in default mode but keep the flag true for UI
-          console.warn("Could not get default location");
-        },
-        { enableHighAccuracy: false }, // Use faster/lower power for initial
-      );
-    }
-  }, [isSortingByDistance, userLocation]);
+  // No automatic location retrieval on mount to save resources
 
-  // Re-trigger search specifically when location or sort mode changes
+  // Update userLocation when geolocation state changes
+  useEffect(() => {
+    if (latitude && longitude) {
+      setUserLocation({ lat: latitude, lon: longitude });
+    }
+    if (area) {
+      setManualArea(area);
+    }
+  }, [latitude, longitude, area]);
+
+  // Show Toast for location fallback
+  useEffect(() => {
+    if (geoAttempted && isFallback && geoError) {
+      info(geoError, 4000);
+    }
+  }, [geoAttempted, isFallback, geoError, info]);
+
+  // Re-trigger search when location or sort mode changes
   useEffect(() => {
     triggerSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -481,11 +464,11 @@ function App() {
               <h3 className="text-3xl font-black tracking-tight">Khám phá</h3>
               <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
                 <Info className="h-3.5 w-3.5 text-primary/60" />
-                {loading
+                {apiLoading || geoLoading
                   ? "Đang tải..."
                   : searchQuery || activeType !== "Tất cả"
                     ? `Tìm thấy ${totalCount.toLocaleString()} địa điểm`
-                    : `Có ${totalCount.toLocaleString()} địa điểm quanh bạn`}
+                    : `Có ${totalCount.toLocaleString()} địa điểm`}
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
@@ -621,7 +604,7 @@ function App() {
                 favOnly: showFavoritesOnly,
               });
             }}
-            isLoading={loading}
+            isLoading={apiLoading}
           />
         </section>
       </main>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { User } from "firebase/auth";
@@ -38,6 +38,7 @@ export const useRestaurants = (user: User | null) => {
     {},
   );
   const ITEMS_PER_PAGE = 10;
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const applyFavorites = useCallback(
     (list: Restaurant[], prefs: Record<string, boolean>) => {
@@ -62,6 +63,11 @@ export const useRestaurants = (user: User | null) => {
         favOnly?: boolean;
       } = {},
     ): Promise<RestaurantsApiResponse> => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
       const params = new URLSearchParams({
         page: String(page),
         limit: String(ITEMS_PER_PAGE),
@@ -76,58 +82,54 @@ export const useRestaurants = (user: User | null) => {
         params.set("radiusKm", "50"); // Large radius if sorting by distance
       }
 
-      const resp = await fetch(`${API_BASE}/restaurants?${params}`);
+      const resp = await fetch(`${API_BASE}/restaurants?${params}`, {
+        signal: abortControllerRef.current.signal,
+      });
       if (!resp.ok) throw new Error(`API error: ${resp.status}`);
       return resp.json();
     },
     [],
   );
 
-  // ── Initial load + cloud preference sync ──────────────────────────────────
+  // Initial cloud preference sync only (no auto-fetch)
   useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
-      setLoading(true);
+    const loadPrefs = async () => {
+      if (!user) {
+        setFavoritePrefs({});
+        return;
+      }
+
+      setIsSyncing(true);
       try {
-        const data = await fetchPage(1);
-        if (cancelled) return;
-
-        let fetchedPrefs: Record<string, boolean> = {};
-
-        // Apply cloud favorites if logged in
-        if (user) {
-          setIsSyncing(true);
-          try {
-            const prefRef = collection(db, "users", user.uid, "preferences");
-            const prefSnap = await getDocs(prefRef);
-            prefSnap.forEach((d) => {
-              fetchedPrefs[d.id] = d.data().isFavorite;
-            });
-          } finally {
-            if (!cancelled) setIsSyncing(false);
-          }
-        }
+        const fetchedPrefs: Record<string, boolean> = {};
+        const prefRef = collection(db, "users", user.uid, "preferences");
+        const prefSnap = await getDocs(prefRef);
+        prefSnap.forEach((d) => {
+          fetchedPrefs[d.id] = d.data().isFavorite;
+        });
 
         if (!cancelled) {
           setFavoritePrefs(fetchedPrefs);
-          setRestaurants(applyFavorites(data.restaurants, fetchedPrefs));
-          setTotalCount(data.total);
-          setCurrentPage(1);
-          setHasMore(data.total > data.restaurants.length);
-          setLoading(false);
+          // Re-apply favorites to existing restaurants if any
+          setRestaurants((prev) => applyFavorites(prev, fetchedPrefs));
         }
       } catch (err) {
-        console.error("Failed to load restaurants from API:", err);
-        if (!cancelled) setLoading(false);
+        console.error("Failed to sync preferences:", err);
+      } finally {
+        if (!cancelled) {
+          setIsSyncing(false);
+          setLoading(false); // Done with initial preference check
+        }
       }
     };
 
-    load();
+    loadPrefs();
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, fetchPage]);
+  }, [user?.uid, applyFavorites]);
 
   // ── Go to specific page ───────────────────────────────────────────────────
   const goToPage = useCallback(
@@ -150,6 +152,7 @@ export const useRestaurants = (user: User | null) => {
         setHasMore(page * ITEMS_PER_PAGE < data.total);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
         console.error(`Failed to load page ${page}:`, err);
       } finally {
         setLoading(false);
@@ -177,6 +180,9 @@ export const useRestaurants = (user: User | null) => {
         setTotalCount(data.total);
         setCurrentPage(1);
         setHasMore(data.total > data.restaurants.length);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        console.error("Search failed:", err);
       } finally {
         setLoading(false);
       }

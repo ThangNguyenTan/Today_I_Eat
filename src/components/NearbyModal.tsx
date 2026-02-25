@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import type { Restaurant } from "@/types";
 import {
   MapPin,
@@ -87,11 +88,19 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 }) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const {
+    latitude,
+    longitude,
+    loading: geoLoading,
+    error: geoError,
+    hasAttempted,
+    getLocation,
+  } = useGeolocation();
 
   const isCancelledRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -146,40 +155,17 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
     [],
   );
 
-  const startSearch = useCallback(() => {
-    setPhase("locating");
-    setNearby([]);
-    setPage(1);
-    setHasMore(true);
-    setErrorMsg("");
-
-    if (!navigator.geolocation) {
-      setPhase("error");
-      setErrorMsg("Trình duyệt không hỗ trợ định vị GPS");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setUserCoords([latitude, longitude]);
-        runSearch(latitude, longitude);
-      },
-      (err) => {
-        let msg = "Lỗi định vị";
-        if (err.code === 1) msg = "Bạn đã từ chối quyền truy cập vị trí";
-        else if (err.code === 2) msg = "Không thể xác định vị trí của bạn";
-        else if (err.code === 3) msg = "Hết thời gian yêu cầu định vị";
-        setPhase("error");
-        setErrorMsg(msg);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
-    );
-  }, [runSearch]);
-
   useEffect(() => {
     if (isOpen) {
-      startSearch();
+      if (!hasAttempted && phase === "idle") {
+        setPhase("locating");
+        getLocation();
+      } else if (latitude && longitude && phase === "locating") {
+        runSearch(latitude, longitude);
+      } else if (geoError && phase === "locating") {
+        setPhase("error");
+        setErrorMsg(geoError);
+      }
     } else {
       isCancelledRef.current = true;
       setPhase("idle");
@@ -187,15 +173,30 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
       setPage(1);
       setHasMore(true);
     }
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    isOpen,
+    hasAttempted,
+    latitude,
+    longitude,
+    geoError,
+    getLocation,
+    runSearch,
+    phase,
+  ]);
 
   useEffect(() => {
-    if (!hasMore || phase !== "done" || !userCoords) return;
+    if (geoLoading) {
+      setPhase("locating");
+    }
+  }, [geoLoading]);
+
+  useEffect(() => {
+    if (!hasMore || phase !== "done" || !latitude || !longitude) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !isLoadingMore) {
-          runSearch(userCoords[0], userCoords[1], page + 1);
+          runSearch(latitude, longitude, page + 1);
         }
       },
       { threshold: 0.1, rootMargin: "100px" },
@@ -203,7 +204,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 
     if (sentinelRef.current) observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [hasMore, phase, userCoords, isLoadingMore, runSearch, page]);
+  }, [hasMore, phase, latitude, longitude, isLoadingMore, runSearch, page]);
 
   if (!isOpen) return null;
 
@@ -291,9 +292,9 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                       {nearby.length} quán trong {RADIUS_KM} km
                     </p>
-                    {userCoords && (
+                    {latitude && longitude && (
                       <a
-                        href={`https://www.google.com/maps/search/restaurants/@${userCoords[0]},${userCoords[1]},15z`}
+                        href={`https://www.google.com/maps/search/restaurants/@${latitude},${longitude},15z`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 hover:underline"
@@ -315,7 +316,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                   ) : (
                     <div className="pt-2 pb-4 text-center">
                       <button
-                        onClick={startSearch}
+                        onClick={getLocation}
                         className="text-[11px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 mx-auto"
                       >
                         <RefreshCw className="h-3 w-3" />
@@ -325,7 +326,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                   )}
                 </>
               ) : (
-                <EmptyNearby km={RADIUS_KM} onRetry={startSearch} />
+                <EmptyNearby km={RADIUS_KM} onRetry={getLocation} />
               )}
             </div>
           )}
@@ -343,7 +344,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                 </p>
               </div>
               <Button
-                onClick={startSearch}
+                onClick={getLocation}
                 className="rounded-xl px-8 font-black uppercase tracking-widest gap-2"
               >
                 <RefreshCw className="h-4 w-4" />

@@ -18,6 +18,7 @@ import {
   Navigation,
 } from "lucide-react";
 import { FOOD_TYPES } from "@/constants";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { RestaurantRow, type NearbyRestaurant } from "./NearbyModal";
 
 interface SuggestionModalProps {
@@ -44,15 +45,23 @@ const ConfettiParticle = ({
   />
 );
 
+type Phase = "idle" | "spinning" | "locating" | "loading" | "done" | "error";
+
 export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  type Phase = "idle" | "spinning" | "locating" | "loading" | "done" | "error";
+  const {
+    latitude,
+    longitude,
+    hasAttempted,
+    loading: geoLoading,
+    error: geoError,
+    getLocation,
+  } = useGeolocation();
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -116,39 +125,37 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     [],
   );
 
-  const locateAndSearch = useCallback(
-    (typeToSearch: string) => {
-      setPhase("locating");
-      setNearby([]);
-      setPage(1);
-      setHasMore(true);
-      setErrorMsg("");
+  const locateAndSearch = useCallback(() => {
+    setPhase("locating");
+    setNearby([]);
+    setPage(1);
+    setHasMore(true);
+    setErrorMsg("");
 
-      if (!navigator.geolocation) {
+    if (!hasAttempted && !geoLoading) {
+      getLocation();
+    }
+  }, [hasAttempted, geoLoading, getLocation]);
+
+  // Handle geolocation updates during "locating" phase
+  useEffect(() => {
+    if (phase === "locating" && hasAttempted) {
+      if (latitude && longitude) {
+        runSearch(latitude, longitude, spinningType, 1);
+      } else if (geoError) {
         setPhase("error");
-        setErrorMsg("Trình duyệt không hỗ trợ định vị GPS");
-        return;
+        setErrorMsg(geoError);
       }
-
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setUserCoords([latitude, longitude]);
-          runSearch(latitude, longitude, typeToSearch, 1);
-        },
-        (err) => {
-          let msg = "Lỗi định vị";
-          if (err.code === 1) msg = "Bạn đã từ chối quyền truy cập vị trí";
-          else if (err.code === 2) msg = "Không thể xác định vị trí của bạn";
-          else if (err.code === 3) msg = "Hết thời gian yêu cầu định vị";
-          setPhase("error");
-          setErrorMsg(msg);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
-      );
-    },
-    [runSearch],
-  );
+    }
+  }, [
+    phase,
+    hasAttempted,
+    latitude,
+    longitude,
+    geoError,
+    runSearch,
+    spinningType,
+  ]);
 
   const startSpinning = useCallback(() => {
     setPhase("spinning");
@@ -182,7 +189,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 2000);
         // Spin done, begin location/search
-        locateAndSearch(randomType);
+        locateAndSearch();
       }
     }, intervalTime);
   }, [locateAndSearch]);
@@ -201,12 +208,12 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!hasMore || phase !== "done" || !userCoords) return;
+    if (!hasMore || phase !== "done" || !latitude || !longitude) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !isLoadingMore) {
-          runSearch(userCoords[0], userCoords[1], spinningType, page + 1);
+          runSearch(latitude, longitude, spinningType, page + 1);
         }
       },
       { threshold: 0.1, rootMargin: "100px" },
@@ -217,7 +224,8 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   }, [
     hasMore,
     phase,
-    userCoords,
+    latitude,
+    longitude,
     isLoadingMore,
     runSearch,
     page,
@@ -439,10 +447,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                     {errorMsg}
                   </p>
                 </div>
-                <Button
-                  onClick={() => locateAndSearch(spinningType)}
-                  className="mt-2 rounded-xl"
-                >
+                <Button onClick={locateAndSearch} className="mt-2 rounded-xl">
                   <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
                 </Button>
               </div>

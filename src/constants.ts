@@ -61,3 +61,9 @@ export const HCM_DISTRICTS = [
   "Bình Chánh",
   "Cần Giờ",
 ];
+
+export const DEFAULT_LOCATION = {
+  latitude: 10.7769,
+  longitude: 106.7009,
+  area: "Quận 1",
+};
