@@ -9,6 +9,7 @@ import {
   Clock,
   Tag,
 } from "lucide-react";
+import { getGoogleMapsUrl } from "@/lib/utils";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -59,6 +60,12 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   const emoji = getEmoji(restaurant.type);
   const hasThumb = Boolean(restaurant.thumbnailUrl);
   const isOpen = restaurant.isOpen ?? true;
+  const mapsUrl = getGoogleMapsUrl(
+    restaurant.name,
+    restaurant.location,
+    restaurant.position?.latitude,
+    restaurant.position?.longitude,
+  );
 
   return (
     <Card className="group relative overflow-hidden border-0 bg-white shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 rounded-[2rem]">
@@ -246,23 +253,21 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
         )}
 
         {/* Maps CTA */}
-        {restaurant.googleMapsUrl && (
-          <div className="pt-1">
-            <a
-              href={restaurant.googleMapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gray-50 text-xs font-bold text-gray-600 overflow-hidden group/btn hover:text-white transition-colors duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-orange-500 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-              <span className="relative z-10 flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5" />
-                Xem trên bản đồ
-                <ExternalLink className="h-3 w-3 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform duration-300" />
-              </span>
-            </a>
-          </div>
-        )}
+        <div className="pt-1">
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gray-50 text-xs font-bold text-gray-600 overflow-hidden group/btn hover:text-white transition-colors duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-primary to-orange-500 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+            <span className="relative z-10 flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5" />
+              Xem trên bản đồ
+              <ExternalLink className="h-3 w-3 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform duration-300" />
+            </span>
+          </a>
+        </div>
       </CardContent>
     </Card>
   );

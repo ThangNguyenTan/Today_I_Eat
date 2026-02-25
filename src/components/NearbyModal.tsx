@@ -13,6 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getGoogleMapsUrl } from "@/lib/utils";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatDistance(km: number): string {
@@ -465,18 +466,21 @@ export const RestaurantRow: React.FC<{
         )}
 
         {/* CTA link */}
-        {r.googleMapsUrl && (
-          <a
-            href={r.googleMapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-emerald-600 hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="h-3 w-3" />
-            Chỉ đường
-          </a>
-        )}
+        <a
+          href={getGoogleMapsUrl(
+            r.name,
+            r.location,
+            r.position?.latitude,
+            r.position?.longitude,
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-emerald-600 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ExternalLink className="h-3 w-3" />
+          Chỉ đường
+        </a>
       </div>
     </div>
   );
