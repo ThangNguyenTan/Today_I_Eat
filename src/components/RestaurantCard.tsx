@@ -9,7 +9,7 @@ import {
   Clock,
   Tag,
 } from "lucide-react";
-import { getGoogleMapsUrl } from "@/lib/utils";
+import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -59,12 +59,20 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 }) => {
   const emoji = getEmoji(restaurant.type);
   const hasThumb = Boolean(restaurant.thumbnailUrl);
-  const isOpen = restaurant.isOpen ?? true;
   const mapsUrl = getGoogleMapsUrl(
     restaurant.name,
     restaurant.location,
     restaurant.position?.latitude,
     restaurant.position?.longitude,
+  );
+
+  const isPermanentlyClosed =
+    restaurant.operating?.status === 2 &&
+    !restaurant.operating?.next_available_time;
+
+  const hours = formatOperatingHours(
+    restaurant.operating?.openTime,
+    restaurant.operating?.closeTime,
   );
 
   return (
@@ -84,16 +92,17 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-          {/* Open / closed pill */}
-          <div
-            className={`absolute top-3 left-3 text-[9px] font-black uppercase px-2 py-1 rounded-full backdrop-blur-sm ${
-              isOpen
-                ? "bg-emerald-500/90 text-white"
-                : "bg-gray-600/80 text-gray-200"
-            }`}
-          >
-            {isOpen ? "● Đang mở" : "● Đóng cửa"}
-          </div>
+          {/* Operating hours / permanently closed pill */}
+          {isPermanentlyClosed ? (
+            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-xl backdrop-blur-md bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+              ● Đã Đóng Vĩnh Viễn
+            </div>
+          ) : hours ? (
+            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-xl backdrop-blur-md bg-black/40 text-white text-[10px] font-black tracking-tight shadow-md border border-white/20 flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              {hours}
+            </div>
+          ) : null}
 
           {/* Favorite button overlaid on image */}
           {onToggleFavorite && (
@@ -153,17 +162,20 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
             </button>
           )}
 
-          {/* Open badge (no thumbnail) */}
+          {/* Status badge (no thumbnail) */}
           {!hasThumb && (
-            <span
-              className={`text-[9px] font-black uppercase px-2 py-1 rounded-full ${
-                isOpen
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-gray-100 text-gray-400"
-              }`}
-            >
-              {isOpen ? "● Đang mở" : "● Đóng"}
-            </span>
+            <div className="mt-1">
+              {isPermanentlyClosed ? (
+                <span className="inline-flex px-3 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-wider border border-red-100">
+                  ● Đã Đóng Vĩnh Viễn
+                </span>
+              ) : hours ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-50 text-gray-600 text-[10px] font-bold border border-gray-100">
+                  <Clock className="h-3 w-3 text-primary/60" />
+                  {hours}
+                </span>
+              ) : null}
+            </div>
           )}
         </div>
 
@@ -217,14 +229,6 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
             </span>
           </div>
         </div>
-
-        {/* Meal times */}
-        {restaurant.mealTimes && restaurant.mealTimes.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-            <span>{restaurant.mealTimes.join(" · ")}</span>
-          </div>
-        )}
 
         {/* Promotions */}
         {restaurant.promotionGroups &&

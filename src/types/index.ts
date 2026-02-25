@@ -60,6 +60,7 @@ export interface OperatingInfo {
   color?: string;
   openTime: string; // "HH:MM:SS"
   closeTime: string; // "HH:MM:SS"
+  next_available_time?: string;
 }
 
 export interface PromotionGroup {

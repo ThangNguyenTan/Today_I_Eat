@@ -13,7 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getGoogleMapsUrl } from "@/lib/utils";
+import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatDistance(km: number): string {
@@ -366,7 +366,13 @@ export const RestaurantRow: React.FC<{
 }> = ({ restaurant: r, rank }) => {
   const emoji = getEmoji(r.type);
   const distColor = getDistanceColor(r.distanceKm);
-  const isOpen = r.isOpen ?? true;
+  const isPermanentlyClosed =
+    r.operating?.status === 2 && !r.operating?.next_available_time;
+
+  const hours = formatOperatingHours(
+    r.operating?.openTime,
+    r.operating?.closeTime,
+  );
 
   return (
     <div className="group flex items-start gap-3 p-3.5 rounded-2xl bg-white border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
@@ -396,29 +402,39 @@ export const RestaurantRow: React.FC<{
             <p className="font-black text-sm text-gray-900 leading-tight line-clamp-1 group-hover:text-emerald-700 transition-colors duration-200">
               {r.name}
             </p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-[10px] font-bold text-primary/70 uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
                 {r.type}
-              </span>
-              {/* Open/closed badge */}
-              <span
-                className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${
-                  isOpen
-                    ? "bg-emerald-50 text-emerald-600"
-                    : "bg-gray-100 text-gray-400"
-                }`}
-              >
-                {isOpen ? "Đang mở" : "Đóng cửa"}
               </span>
             </div>
           </div>
           {/* Distance badge */}
           <span
-            className={`flex-shrink-0 text-[11px] font-black px-2 py-1 rounded-lg border ${distColor}`}
+            className={`flex-shrink-0 text-[11px] font-black px-2 py-1.5 rounded-xl border-2 self-start ${distColor} shadow-sm`}
           >
             {formatDistance(r.distanceKm)}
           </span>
         </div>
+
+        {/* Operating hours area (moved to its own line for better spacing) */}
+        {!isPermanentlyClosed && hours && (
+          <div className="flex items-center gap-1.5 mt-2 text-muted-foreground/80">
+            <div className="p-1 rounded-md bg-gray-50 border border-gray-100 italic">
+              <Clock className="h-3 w-3" />
+            </div>
+            <span className="text-[11px] font-bold tracking-tight">
+              {hours}
+            </span>
+          </div>
+        )}
+
+        {isPermanentlyClosed && (
+          <div className="mt-2">
+            <span className="inline-flex px-2 py-0.5 rounded-md bg-red-50 text-red-500 text-[9px] font-black uppercase tracking-wider border border-red-100">
+              Đã đóng vĩnh viễn
+            </span>
+          </div>
+        )}
 
         {/* Rating */}
         {r.rating && r.rating.avg > 0 && (
@@ -440,16 +456,6 @@ export const RestaurantRow: React.FC<{
             {r.location}
           </p>
         </div>
-
-        {/* Meal times */}
-        {r.mealTimes && r.mealTimes.length > 0 && (
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-            <p className="text-[11px] text-muted-foreground">
-              {r.mealTimes.join(" · ")}
-            </p>
-          </div>
-        )}
 
         {/* Promotions */}
         {r.promotionGroups && r.promotionGroups.length > 0 && (

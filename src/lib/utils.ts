@@ -22,3 +22,18 @@ export function getGoogleMapsUrl(
 
   return `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
 }
+
+export function formatOperatingHours(
+  openTime?: string,
+  closeTime?: string,
+): string | null {
+  if (!openTime || !closeTime) return null;
+
+  const formatTime = (timeStr: string) => {
+    const parts = timeStr.split(":");
+    if (parts.length < 2) return timeStr;
+    return `${parts[0]}:${parts[1]}`;
+  };
+
+  return `${formatTime(openTime)} - ${formatTime(closeTime)}`;
+}
