@@ -72,13 +72,13 @@ export const Pagination: React.FC<PaginationProps> = ({
             ) : (
               <Button
                 key={page}
-                variant={currentPage === page ? "default" : "outline"}
+                variant={currentPage === page ? "luxury" : "outline"}
                 size="icon"
                 onClick={() => onPageChange(page)}
                 disabled={isLoading}
                 className={`rounded-xl w-9 h-9 sm:w-10 sm:h-10 font-bold transition-all duration-300 shadow-sm ${
                   currentPage === page
-                    ? "shadow-lg shadow-primary/25 scale-110 z-10"
+                    ? "scale-110 z-10 border-0"
                     : "hover:bg-primary/10 hover:text-primary hover:border-primary/30"
                 }`}
               >

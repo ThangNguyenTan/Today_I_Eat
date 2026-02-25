@@ -2,10 +2,10 @@
 export default {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
   ],
   theme: {
     container: {
@@ -65,13 +65,21 @@ export default {
           from: { height: "var(--radix-ui-accordion-content-height)" },
           to: { height: "0" },
         },
+        "shimmer-text": {
+          to: { "background-position": "200% center" },
+        },
+        "radar-ping": {
+          "0%": { transform: "scale(1)", opacity: "0.8" },
+          "100%": { transform: "scale(2.5)", opacity: "0" },
+        },
       },
-      animations: {
+      animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "shimmer-text": "shimmer-text 5s linear infinite",
+        "radar-ping": "radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite",
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
-
+};

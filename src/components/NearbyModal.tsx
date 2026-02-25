@@ -249,12 +249,17 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-6">
           {/* Locating GPS */}
           {phase === "locating" && (
-            <div className="py-20 flex flex-col items-center gap-5">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <Navigation className="h-11 w-11 text-emerald-500 animate-pulse" />
+            <div className="py-20 flex flex-col items-center gap-10">
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <div className="radar-ring" style={{ animationDelay: "0s" }} />
+                <div
+                  className="radar-ring"
+                  style={{ animationDelay: "0.5s" }}
+                />
+                <div className="radar-ring" style={{ animationDelay: "1s" }} />
+                <div className="relative z-10 w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40">
+                  <Navigation className="h-8 w-8 text-white animate-pulse" />
                 </div>
-                <div className="absolute inset-0 rounded-full border-4 border-emerald-300/50 animate-ping" />
               </div>
               <div className="text-center space-y-1">
                 <p className="font-black text-gray-800 text-lg">
@@ -345,11 +350,12 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                 </p>
               </div>
               <Button
+                variant="luxury"
                 onClick={getLocation}
-                className="rounded-xl px-8 font-black uppercase tracking-widest gap-2"
+                className="rounded-xl px-10 h-12 shadow-xl"
               >
-                <RefreshCw className="h-4 w-4" />
-                Thử lại
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Thử lại ngay
               </Button>
             </div>
           )}

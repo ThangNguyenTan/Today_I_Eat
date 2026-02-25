@@ -82,24 +82,24 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
       {/* Thumbnail / hero image */}
       {hasThumb ? (
-        <div className="relative w-full h-36 overflow-hidden rounded-t-[2rem]">
+        <div className="relative w-full h-44 overflow-hidden rounded-t-[2rem]">
           <img
             src={restaurant.thumbnailUrl!}
             alt={restaurant.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             loading="lazy"
           />
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
 
-          {/* Operating hours / permanently closed pill */}
+          {/* Operating hours pill */}
           {isPermanentlyClosed ? (
-            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-xl backdrop-blur-md bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl backdrop-blur-md bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
               ● Đã Đóng Vĩnh Viễn
             </div>
           ) : hours ? (
-            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-xl backdrop-blur-md bg-black/40 text-white text-[10px] font-black tracking-tight shadow-md border border-white/20 flex items-center gap-2">
-              <Clock className="h-3 w-3" />
+            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl backdrop-blur-md bg-black/40 text-white text-[10px] font-black tracking-tight shadow-md border border-white/20 flex items-center gap-2">
+              <Clock className="h-3 w-3 text-primary" />
               {hours}
             </div>
           ) : null}
@@ -111,14 +111,14 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
                 e.preventDefault();
                 onToggleFavorite();
               }}
-              className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-125 active:scale-90 ${
+              className={`absolute top-4 right-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 hover:scale-125 active:scale-90 shadow-xl ${
                 restaurant.isFavorite
-                  ? "bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-lg shadow-red-500/30"
-                  : "bg-white/70 text-gray-500 hover:text-red-500"
+                  ? "bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-red-500/40"
+                  : "bg-white/80 text-gray-500 hover:text-red-500"
               }`}
             >
               <Heart
-                className={`h-4 w-4 ${restaurant.isFavorite ? "fill-current" : ""}`}
+                className={`h-4.5 w-4.5 ${restaurant.isFavorite ? "fill-current" : ""}`}
               />
               {restaurant.isFavorite && (
                 <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
@@ -126,7 +126,52 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
             </button>
           )}
         </div>
-      ) : null}
+      ) : (
+        /* Premium gradient placeholder for no-image restaurants */
+        <div className="relative w-full h-32 overflow-hidden rounded-t-[2rem] bg-gradient-to-br from-orange-50 via-white to-amber-50 group-hover:from-orange-100 group-hover:to-amber-100 transition-colors duration-500">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-5xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-700 ease-out opacity-20 group-hover:opacity-40">
+              {emoji}
+            </div>
+          </div>
+
+          {/* Operating hours pill */}
+          {isPermanentlyClosed ? (
+            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+              ● Đã Đóng Vĩnh Viễn
+            </div>
+          ) : hours ? (
+            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-white/80 text-gray-600 text-[10px] font-bold tracking-tight shadow-md border border-gray-100 flex items-center gap-2">
+              <Clock className="h-3 w-3 text-primary" />
+              {hours}
+            </div>
+          ) : null}
+
+          {/* Favorite button over placeholder */}
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onToggleFavorite();
+              }}
+              className={`absolute top-4 right-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 hover:scale-125 active:scale-90 shadow-xl ${
+                restaurant.isFavorite
+                  ? "bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-red-500/40"
+                  : "bg-white/90 text-gray-500 hover:text-red-500"
+              }`}
+            >
+              <Heart
+                className={`h-4.5 w-4.5 ${restaurant.isFavorite ? "fill-current" : ""}`}
+              />
+              {restaurant.isFavorite && (
+                <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
+              )}
+            </button>
+          )}
+
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(249,115,22,0.1),transparent)]" />
+        </div>
+      )}
 
       <CardHeader
         className={`relative flex flex-col items-start space-y-3 p-6 ${hasThumb ? "pb-2 pt-4" : "pb-2"}`}
@@ -139,44 +184,6 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               {restaurant.type}
             </span>
           </div>
-
-          {/* Favorite button (no thumbnail case) */}
-          {!hasThumb && onToggleFavorite && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onToggleFavorite();
-              }}
-              className={`relative p-2.5 rounded-full transition-all duration-300 hover:scale-125 active:scale-90 ${
-                restaurant.isFavorite
-                  ? "bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-lg shadow-red-500/30"
-                  : "hover:bg-gray-100 text-gray-300 hover:text-gray-400"
-              }`}
-            >
-              <Heart
-                className={`h-4 w-4 transition-transform ${restaurant.isFavorite ? "fill-current scale-110" : ""}`}
-              />
-              {restaurant.isFavorite && (
-                <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
-              )}
-            </button>
-          )}
-
-          {/* Status badge (no thumbnail) */}
-          {!hasThumb && (
-            <div className="mt-1">
-              {isPermanentlyClosed ? (
-                <span className="inline-flex px-3 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-wider border border-red-100">
-                  ● Đã Đóng Vĩnh Viễn
-                </span>
-              ) : hours ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-50 text-gray-600 text-[10px] font-bold border border-gray-100">
-                  <Clock className="h-3 w-3 text-primary/60" />
-                  {hours}
-                </span>
-              ) : null}
-            </div>
-          )}
         </div>
 
         <CardTitle className="text-xl font-black tracking-tight text-[#1A1A1A] group-hover:text-primary transition-colors duration-300 line-clamp-1">

@@ -6,6 +6,7 @@ import { useToast } from "@/context/ToastContext";
 import { RestaurantForm } from "@/components/RestaurantForm";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { RestaurantCard } from "@/components/RestaurantCard";
+import { RestaurantCardSkeleton } from "@/components/RestaurantCardSkeleton";
 import { SuggestionModal } from "@/components/SuggestionModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,7 @@ import {
   X,
   Navigation,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { NearbyModal } from "@/components/NearbyModal";
 import { UserMenu } from "@/components/UserMenu";
@@ -264,7 +266,7 @@ function App() {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full glass border-b-0">
+      <header className="sticky top-0 z-40 w-full glass-premium border-b-0">
         <div className="container flex h-16 items-center justify-between px-6">
           <div
             className="flex items-center gap-3 group cursor-pointer"
@@ -359,8 +361,9 @@ function App() {
 
             <Button
               size="xl"
+              variant="luxury"
               onClick={() => handleSuggest()}
-              className="relative h-20 px-12 rounded-[2.5rem] bg-gradient-to-r from-primary via-orange-500 to-amber-500 hover:from-amber-500 hover:via-orange-500 hover:to-primary transition-all duration-500 hover:scale-105 active:scale-95 shadow-2xl shadow-primary/40 border-4 border-white"
+              className="relative h-20 px-12 rounded-[2.5rem] shadow-2xl shadow-primary/40 border-4 border-white"
             >
               {/* Shimmer effect */}
               <div className="absolute inset-0 rounded-[2.25rem] overflow-hidden">
@@ -439,7 +442,11 @@ function App() {
 
             <div className="relative flex items-center bg-white rounded-[2rem] shadow-xl shadow-black/5 transition-all duration-300 group-focus-within:shadow-2xl group-focus-within:shadow-primary/20 group-focus-within:-translate-y-1">
               <div className="pl-6 text-muted-foreground group-focus-within:text-primary transition-colors duration-300">
-                <Search className="h-6 w-6" />
+                {apiLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                ) : (
+                  <Search className="h-6 w-6" />
+                )}
               </div>
               <input
                 type="text"
@@ -507,7 +514,11 @@ function App() {
         {/* Restaurant List */}
         <section className="space-y-8">
           <div className="grid gap-6 sm:grid-cols-2">
-            {displayedRestaurants.length > 0 ? (
+            {apiLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <RestaurantCardSkeleton key={`skeleton-${i}`} />
+              ))
+            ) : displayedRestaurants.length > 0 ? (
               displayedRestaurants.map((res) => (
                 <RestaurantCard
                   key={res.id}

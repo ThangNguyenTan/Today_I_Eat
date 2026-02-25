@@ -69,15 +69,16 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   const [showConfetti, setShowConfetti] = useState(false);
 
   const [spinningType, setSpinningType] = useState<string>("");
-  const [spinningName, setSpinningName] = useState<string>("");
 
   const isCancelledRef = useRef(false);
+  const spinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const RADIUS_KM = 5;
   const LIMIT = 15;
 
   const runSearch = useCallback(
     async (lat: number, lon: number, type: string, pageNum = 1) => {
+      console.log(`[SuggestionModal] runSearch: ${lat}, ${lon}, type: ${type}`);
       isCancelledRef.current = false;
       if (pageNum === 1) {
         setPhase("loading");
@@ -116,6 +117,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
         }
       } catch (err) {
         if (!isCancelledRef.current) {
+          console.error("[SuggestionModal] runSearch error:", err);
           setErrorMsg("Không thể tải dữ liệu từ máy chủ");
           setPhase("error");
           setIsLoadingMore(false);
@@ -126,6 +128,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   );
 
   const locateAndSearch = useCallback(() => {
+    console.log("[SuggestionModal] locateAndSearch called");
     setPhase("locating");
     setNearby([]);
     setPage(1);
@@ -133,6 +136,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     setErrorMsg("");
 
     if (!hasAttempted && !geoLoading) {
+      console.log("[SuggestionModal] Getting location...");
       getLocation();
     }
   }, [hasAttempted, geoLoading, getLocation]);
@@ -140,6 +144,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   // Handle geolocation updates during "locating" phase
   useEffect(() => {
     if (phase === "locating" && hasAttempted) {
+      console.log("[SuggestionModal] Locating done, calling runSearch");
       if (latitude && longitude) {
         runSearch(latitude, longitude, spinningType, 1);
       } else if (geoError) {
@@ -158,54 +163,67 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   ]);
 
   const startSpinning = useCallback(() => {
+    console.log("[SuggestionModal] startSpinning called");
+    isCancelledRef.current = false;
     setPhase("spinning");
     setShowConfetti(false);
+
+    if (spinTimeoutRef.current) {
+      clearTimeout(spinTimeoutRef.current);
+    }
+
     let count = 0;
-    const maxCount = 20;
-    const intervalTime = 60;
+    const maxCount = 16;
 
-    // In background, we already get location to save time if we want, but doing sequence is easier
+    const spin = (delay: number) => {
+      if (isCancelledRef.current) {
+        console.log("[SuggestionModal] spin cancelled");
+        return;
+      }
 
-    const interval = setInterval(() => {
       const randomType =
         FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)];
       setSpinningType(randomType);
 
-      const placeholders = [
-        "Đang chọn...",
-        "Chờ tí nhé...",
-        "Hôm nay ăn gì?",
-        "Suỵt...",
-        "Tèn tèn ten...",
-        "Sắp xong rồi!",
-      ];
-      setSpinningName(
-        placeholders[Math.floor(Math.random() * placeholders.length)],
-      );
-
       count++;
       if (count >= maxCount) {
-        clearInterval(interval);
+        console.log("[SuggestionModal] spin reached maxCount, resolving...");
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 2000);
-        // Spin done, begin location/search
         locateAndSearch();
+      } else {
+        const nextDelay = count < 8 ? delay : delay * 1.2;
+        spinTimeoutRef.current = setTimeout(() => spin(nextDelay), nextDelay);
       }
-    }, intervalTime);
+    };
+
+    spin(50);
   }, [locateAndSearch]);
 
   useEffect(() => {
     if (isOpen) {
       startSpinning();
     } else {
+      console.log("[SuggestionModal] closing, cleaning up");
       isCancelledRef.current = true;
+      if (spinTimeoutRef.current) {
+        clearTimeout(spinTimeoutRef.current);
+        spinTimeoutRef.current = null;
+      }
       setPhase("idle");
       setNearby([]);
       setPage(1);
       setHasMore(true);
       setSpinningType("");
+      setShowConfetti(false);
     }
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      isCancelledRef.current = true;
+      if (spinTimeoutRef.current) {
+        clearTimeout(spinTimeoutRef.current);
+      }
+    };
+  }, [isOpen, startSpinning]);
 
   useEffect(() => {
     if (!hasMore || phase !== "done" || !latitude || !longitude) return;
@@ -301,14 +319,12 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
               )}
             </div>
             <DialogTitle
-              className={`text-3xl font-black tracking-tight text-white mb-2 transition-all duration-500 ${isSpinning ? "animate-pulse" : "animate-in zoom-in-95"}`}
+              className={`text-3xl font-black tracking-tight text-white mb-2 transition-all duration-500 ${isSpinning ? "" : "animate-in zoom-in-95"}`}
             >
               {isSpinning ? "Đang quay..." : "🎉 Tìm thấy rồi!"}
             </DialogTitle>
             <p className="text-white/80 text-[11px] font-bold uppercase tracking-[0.25em]">
-              {isSpinning
-                ? spinningName || "Đang quay..."
-                : "Gợi ý hoàn hảo cho bạn"}
+              {isSpinning ? "Đang tìm món ngon..." : "Gợi ý hoàn hảo cho bạn"}
             </p>
           </DialogHeader>
 
@@ -335,12 +351,23 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
         {!isSpinning && (
           <div className="flex-1 overflow-y-auto no-scrollbar p-6 pb-8 space-y-6 bg-gradient-to-b from-white to-gray-50/50 relative min-h-[100px] animate-in fade-in zoom-in-95 duration-500">
             {phase === "locating" && (
-              <div className="py-12 flex flex-col items-center gap-5">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center">
-                    <Navigation className="h-9 w-9 text-orange-500 animate-pulse" />
+              <div className="py-16 flex flex-col items-center gap-8">
+                <div className="relative w-24 h-24 flex items-center justify-center">
+                  <div
+                    className="radar-ring"
+                    style={{ animationDelay: "0s" }}
+                  />
+                  <div
+                    className="radar-ring"
+                    style={{ animationDelay: "0.5s" }}
+                  />
+                  <div
+                    className="radar-ring"
+                    style={{ animationDelay: "1s" }}
+                  />
+                  <div className="relative z-10 w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
+                    <Navigation className="h-8 w-8 text-white animate-pulse" />
                   </div>
-                  <div className="absolute inset-0 rounded-full border-4 border-orange-300/50 animate-ping" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="font-black text-gray-800">
