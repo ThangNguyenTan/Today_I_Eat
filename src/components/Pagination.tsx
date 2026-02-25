@@ -19,46 +19,53 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   const getPages = () => {
     const pages: (number | "ellipsis")[] = [];
-    const maxVisible = 5;
 
-    if (totalPages <= maxVisible) {
+    if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1);
-      if (currentPage > 3) pages.push("ellipsis");
 
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
+      const leftSide = currentPage > 3;
+      const rightSide = currentPage < totalPages - 2;
 
-      for (let i = start; i <= end; i++) {
-        if (!pages.includes(i)) pages.push(i);
+      if (leftSide && rightSide) {
+        pages.push("ellipsis");
+        pages.push(currentPage);
+        pages.push("ellipsis");
+      } else if (!leftSide) {
+        // 1, 2, 3, 4, ..., total
+        for (let i = 2; i <= 4; i++) pages.push(i);
+        pages.push("ellipsis");
+      } else {
+        // 1, ..., total-3, total-2, total-1, total
+        pages.push("ellipsis");
+        for (let i = totalPages - 3; i <= totalPages - 1; i++) pages.push(i);
       }
 
-      if (currentPage < totalPages - 2) pages.push("ellipsis");
-      if (!pages.includes(totalPages)) pages.push(totalPages);
+      pages.push(totalPages);
     }
     return pages;
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 mt-12 pb-10">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col items-center gap-4 mt-8 sm:mt-12 pb-10">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <Button
           variant="outline"
           size="icon"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1 || isLoading}
-          className="rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
+          className="rounded-xl w-9 h-9 sm:w-10 sm:h-10 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {getPages().map((page, index) =>
             page === "ellipsis" ? (
               <div
                 key={`ellipsis-${index}`}
-                className="w-10 h-10 flex items-center justify-center text-muted-foreground"
+                className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-muted-foreground"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </div>
@@ -69,9 +76,9 @@ export const Pagination: React.FC<PaginationProps> = ({
                 size="icon"
                 onClick={() => onPageChange(page)}
                 disabled={isLoading}
-                className={`rounded-xl w-10 h-10 font-bold transition-all duration-300 ${
+                className={`rounded-xl w-9 h-9 sm:w-10 sm:h-10 font-bold transition-all duration-300 shadow-sm ${
                   currentPage === page
-                    ? "shadow-lg shadow-primary/25 scale-110"
+                    ? "shadow-lg shadow-primary/25 scale-110 z-10"
                     : "hover:bg-primary/10 hover:text-primary hover:border-primary/30"
                 }`}
               >
@@ -86,14 +93,16 @@ export const Pagination: React.FC<PaginationProps> = ({
           size="icon"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || isLoading}
-          className="rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
+          className="rounded-xl w-9 h-9 sm:w-10 sm:h-10 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-        Trang {currentPage} / {totalPages}
-      </p>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+          Trang {currentPage} / {totalPages}
+        </p>
+      </div>
     </div>
   );
 };
