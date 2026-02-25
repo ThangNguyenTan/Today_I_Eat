@@ -29,15 +29,17 @@ import { Pagination } from "@/components/Pagination";
 import { useAuth } from "@/context/AuthContext";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { FilterModal } from "@/components/FilterModal";
-import type { FoodType } from "@/types";
+import { PersonalityQuiz } from "@/components/PersonalityQuiz";
+import { LoginOverlay } from "@/components/LoginOverlay";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import type { FoodType, FoodiePersona } from "@/types";
 
 function App() {
-  const { user, login, logout } = useAuth();
+  const { user, loading: authLoading, login, logout } = useAuth();
   const {
     restaurants,
     totalCount,
     loading: apiLoading,
-    isSyncing,
     currentPage,
     totalPages,
     addRestaurant,
@@ -71,6 +73,16 @@ function App() {
     lon: number;
   } | null>(null);
   const [isSortingByDistance, setIsSortingByDistance] = useState(false);
+  const { profile, updatePersona } = useUserProfile(user);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+
+  // Automatically open quiz for new users without a persona
+  useEffect(() => {
+    if (user && profile && !profile.persona && !isQuizOpen) {
+      const timer = setTimeout(() => setIsQuizOpen(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [user, profile, isQuizOpen]);
 
   // Debounced server search when filters change
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -250,6 +262,21 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
+        <div className="relative">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginOverlay onLogin={login} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-32 font-sans selection:bg-primary/20">
       {/* Background Decorative Elements */}
@@ -304,7 +331,7 @@ function App() {
               }
               onLogin={login}
               onLogout={logout}
-              isSyncing={isSyncing}
+              onOpenQuiz={() => setIsQuizOpen(true)}
             />
             <div className="w-[1px] h-6 bg-gray-100 mx-1 hidden sm:block" />
             <Button
@@ -643,10 +670,21 @@ function App() {
         <ChevronUp className="h-6 w-6 stroke-[3px]" />
       </button>
 
+      {/* Personality Quiz Modal */}
+      <PersonalityQuiz
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        onComplete={(persona: FoodiePersona) => {
+          updatePersona(persona);
+          success("Đã lưu hồ sơ ẩm thực của bạn! ✨");
+        }}
+      />
+
       {/* Suggestion Modal */}
       <SuggestionModal
         isOpen={isSuggestionModalOpen}
         onClose={() => setIsSuggestionModalOpen(false)}
+        persona={profile?.persona}
       />
 
       {/* Nearby Modal */}

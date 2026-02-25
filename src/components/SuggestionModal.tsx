@@ -20,10 +20,12 @@ import {
 import { FOOD_TYPES } from "@/constants";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { RestaurantRow, type NearbyRestaurant } from "./NearbyModal";
+import type { FoodiePersona } from "@/types";
 
 interface SuggestionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  persona?: FoodiePersona;
 }
 
 // Confetti particle component
@@ -50,6 +52,7 @@ type Phase = "idle" | "spinning" | "locating" | "loading" | "done" | "error";
 export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   isOpen,
   onClose,
+  persona,
 }) => {
   const {
     latitude,
@@ -175,14 +178,19 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     let count = 0;
     const maxCount = 16;
 
+    // Use persona favorite cuisines if available, else use all
+    const pool =
+      persona?.favoriteCuisines && persona.favoriteCuisines.length > 0
+        ? persona.favoriteCuisines
+        : FOOD_TYPES;
+
     const spin = (delay: number) => {
       if (isCancelledRef.current) {
         console.log("[SuggestionModal] spin cancelled");
         return;
       }
 
-      const randomType =
-        FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)];
+      const randomType = pool[Math.floor(Math.random() * pool.length)];
       setSpinningType(randomType);
 
       count++;
@@ -198,7 +206,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     };
 
     spin(50);
-  }, [locateAndSearch]);
+  }, [locateAndSearch, persona]);
 
   useEffect(() => {
     if (isOpen) {

@@ -31,7 +31,6 @@ export const useRestaurants = (user: User | null) => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [favoritePrefs, setFavoritePrefs] = useState<Record<string, boolean>>(
@@ -101,7 +100,6 @@ export const useRestaurants = (user: User | null) => {
         return;
       }
 
-      setIsSyncing(true);
       try {
         const fetchedPrefs: Record<string, boolean> = {};
         const prefRef = collection(db, "users", user.uid, "preferences");
@@ -119,7 +117,6 @@ export const useRestaurants = (user: User | null) => {
         console.error("Failed to sync preferences:", err);
       } finally {
         if (!cancelled) {
-          setIsSyncing(false);
           setLoading(false); // Done with initial preference check
         }
       }
@@ -158,7 +155,7 @@ export const useRestaurants = (user: User | null) => {
         setLoading(false);
       }
     },
-    [fetchPage],
+    [fetchPage, applyFavorites, favoritePrefs],
   );
 
   // ── Search / filter (resets to page 1) ───────────────────────────────────
@@ -187,7 +184,7 @@ export const useRestaurants = (user: User | null) => {
         setLoading(false);
       }
     },
-    [fetchPage],
+    [fetchPage, applyFavorites, favoritePrefs],
   );
 
   // ── Add restaurant (user-generated, still stored in Firestore) ───────────
@@ -202,7 +199,6 @@ export const useRestaurants = (user: User | null) => {
     setRestaurants((prev) => [newRestaurant, ...prev]);
 
     if (user) {
-      setIsSyncing(true);
       try {
         const key = getRestaurantKey(newRestaurant);
         await setDoc(
@@ -211,8 +207,6 @@ export const useRestaurants = (user: User | null) => {
         );
       } catch (error) {
         console.error("Failed to save custom restaurant to Firestore:", error);
-      } finally {
-        setIsSyncing(false);
       }
     }
   };
@@ -258,7 +252,6 @@ export const useRestaurants = (user: User | null) => {
     setFavoritePrefs((prev) => ({ ...prev, [key]: newStatus }));
 
     if (user) {
-      setIsSyncing(true);
       try {
         const key = getRestaurantKey(restaurant);
         await setDoc(
@@ -273,8 +266,6 @@ export const useRestaurants = (user: User | null) => {
         );
       } catch (error) {
         console.error("Failed to sync favorite to Firestore:", error);
-      } finally {
-        setIsSyncing(false);
       }
     }
   };
@@ -283,7 +274,6 @@ export const useRestaurants = (user: User | null) => {
     restaurants,
     totalCount,
     loading,
-    isSyncing,
     hasMore,
     currentPage,
     totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),

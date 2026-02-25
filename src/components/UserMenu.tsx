@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogIn, LogOut, Cloud, Heart, Sparkles, User } from "lucide-react";
+import { LogIn, LogOut, Heart, Sparkles, User } from "lucide-react";
 
 interface UserMenuProps {
   user: {
@@ -18,14 +18,14 @@ interface UserMenuProps {
   } | null;
   onLogin: () => void;
   onLogout: () => void;
-  isSyncing?: boolean;
+  onOpenQuiz?: () => void;
 }
 
 export const UserMenu: React.FC<UserMenuProps> = ({
   user,
   onLogin,
   onLogout,
-  isSyncing,
+  onOpenQuiz,
 }) => {
   if (!user) {
     return (
@@ -44,16 +44,6 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
   return (
     <div className="flex items-center gap-3">
-      {/* Sync indicator */}
-      {isSyncing && (
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-full border border-green-100 animate-in fade-in slide-in-from-right-2 shadow-sm">
-          <Cloud className="h-3.5 w-3.5 text-green-500 animate-bounce" />
-          <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">
-            Đã đồng bộ
-          </span>
-        </div>
-      )}
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="relative group outline-none">
@@ -110,6 +100,22 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
           {/* Menu items */}
           <div className="space-y-1">
+            <DropdownMenuItem
+              onClick={onOpenQuiz}
+              className="rounded-xl py-3.5 px-4 cursor-pointer gap-3 focus:bg-gradient-to-r focus:from-primary/5 focus:to-orange-500/5 transition-all duration-200 group"
+            >
+              <div className="p-2 rounded-xl bg-orange-50 text-orange-500 group-focus:bg-orange-100 transition-colors">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col flex-1">
+                <span className="font-bold text-sm">Hồ sơ ẩm thực</span>
+                <span className="text-[10px] text-muted-foreground">
+                  AI tinh chỉnh gợi ý theo gu của bạn
+                </span>
+              </div>
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            </DropdownMenuItem>
+
             <DropdownMenuItem className="rounded-xl py-3.5 px-4 cursor-pointer gap-3 focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 transition-all duration-200 group">
               <div className="p-2 rounded-xl bg-red-50 text-red-500 group-focus:bg-red-100 transition-colors">
                 <Heart className="h-4 w-4" />
@@ -117,12 +123,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               <div className="flex flex-col flex-1">
                 <span className="font-bold text-sm">Quán ruột của tôi</span>
                 <span className="text-[10px] text-muted-foreground">
-                  Danh sách đã lưu • Tự động đồng bộ
+                  Danh sách đã lưu
                 </span>
-              </div>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                <Cloud className="h-2.5 w-2.5" />
-                Sync
               </div>
             </DropdownMenuItem>
 
