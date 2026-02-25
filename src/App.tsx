@@ -17,8 +17,6 @@ import {
   ChevronUp,
   Heart,
   MapPin,
-  Search,
-  X,
   Navigation,
   ExternalLink,
   Loader2,
@@ -33,6 +31,8 @@ import { PersonalityQuiz } from "@/components/PersonalityQuiz";
 import { LoginOverlay } from "@/components/LoginOverlay";
 import { RestaurantPocketView } from "@/components/RestaurantPocketView";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { SearchBar } from "@/components/SearchBar";
+import { motion, AnimatePresence } from "framer-motion";
 import type { FoodType, FoodiePersona, Restaurant } from "@/types";
 
 function App() {
@@ -466,35 +466,11 @@ function App() {
 
         {/* Search & Filter Section */}
         <section className="mb-10 space-y-6">
-          <div className="relative group z-30">
-            {/* Gradient border effect */}
-            <div className="absolute -inset-0.5 rounded-[2.2rem] bg-gradient-to-r from-primary/50 via-orange-400/50 to-amber-500/50 opacity-20 group-hover:opacity-100 blur transition duration-500 group-focus-within:opacity-100 group-focus-within:blur-md" />
-
-            <div className="relative flex items-center bg-white rounded-[2rem] shadow-xl shadow-black/5 transition-all duration-300 group-focus-within:shadow-2xl group-focus-within:shadow-primary/20 group-focus-within:-translate-y-1">
-              <div className="pl-6 text-muted-foreground group-focus-within:text-primary transition-colors duration-300">
-                {apiLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                ) : (
-                  <Search className="h-6 w-6" />
-                )}
-              </div>
-              <input
-                type="text"
-                placeholder="Tìm tên quán, món ăn hoặc địa chỉ..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-16 pl-4 pr-14 rounded-[2rem] bg-transparent border-0 focus:ring-0 text-base font-medium placeholder:text-muted-foreground/50"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute inset-y-0 right-4 my-auto h-8 w-8 flex items-center justify-center rounded-full bg-gray-100 text-muted-foreground hover:bg-primary hover:text-white transition-all duration-300 hover:rotate-90"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
+          <SearchBar
+            query={searchQuery}
+            onChange={setSearchQuery}
+            isLoading={apiLoading}
+          />
 
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-2">
             <div>
@@ -544,90 +520,110 @@ function App() {
         {/* Restaurant List */}
         <section className="space-y-8">
           <div className="grid gap-6 sm:grid-cols-2">
-            {apiLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <RestaurantCardSkeleton key={`skeleton-${i}`} />
-              ))
-            ) : displayedRestaurants.length > 0 ? (
-              displayedRestaurants.map((res) => (
-                <RestaurantCard
-                  key={res.id}
-                  restaurant={res}
-                  onToggleFavorite={
-                    user
-                      ? () => {
-                          toggleFavorite(res.id);
-                          if (!res.isFavorite) {
-                            success(`Đã thêm "${res.name}" vào quán ruột! ❤️`);
-                          } else {
-                            info(`Đã xóa "${res.name}" khỏi quán ruột.`);
-                          }
-                        }
-                      : undefined
-                  }
-                  onClick={() => setSelectedRestaurant(res)}
-                />
-              ))
-            ) : (
-              <div className="col-span-full py-24 text-center glass rounded-[2.5rem] border-dashed border-2 border-gray-100 flex flex-col items-center justify-center group overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
+            <AnimatePresence mode="popLayout">
+              {apiLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <motion.div
+                    key={`skeleton-${i}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2, delay: i * 0.05 }}
+                  >
+                    <RestaurantCardSkeleton />
+                  </motion.div>
+                ))
+              ) : displayedRestaurants.length > 0 ? (
+                displayedRestaurants.map((res, i) => (
+                  <motion.div
+                    key={res.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3, delay: i * 0.05 }}
+                  >
+                    <RestaurantCard
+                      restaurant={res}
+                      onToggleFavorite={
+                        user
+                          ? () => {
+                              toggleFavorite(res.id);
+                              if (!res.isFavorite) {
+                                success(
+                                  `Đã thêm "${res.name}" vào quán ruột! ❤️`,
+                                );
+                              } else {
+                                info(`Đã xóa "${res.name}" khỏi quán ruột.`);
+                              }
+                            }
+                          : undefined
+                      }
+                      onClick={() => setSelectedRestaurant(res)}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full py-24 text-center glass rounded-[2.5rem] border-dashed border-2 border-gray-100 flex flex-col items-center justify-center group overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
 
-                <div className="relative mb-8">
-                  <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                  <div className="relative h-28 w-28 flex items-center justify-center rounded-[2.5rem] bg-gradient-to-br from-white to-gray-50 shadow-2xl shadow-primary/10 border-4 border-white transform transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
-                    <Heart className="h-12 w-12 text-gray-200 fill-gray-50 transition-colors duration-500 group-hover:text-red-400 group-hover:fill-red-100" />
+                  <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
+                    <div className="relative h-28 w-28 flex items-center justify-center rounded-[2.5rem] bg-gradient-to-br from-white to-gray-50 shadow-2xl shadow-primary/10 border-4 border-white transform transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+                      <Heart className="h-12 w-12 text-gray-200 fill-gray-50 transition-colors duration-500 group-hover:text-red-400 group-hover:fill-red-100" />
+                    </div>
+                    {/* Floating particles */}
+                    <div
+                      className="absolute -top-2 -right-2 h-8 w-8 bg-red-100 rounded-full flex items-center justify-center animate-bounce shadow-lg"
+                      style={{ animationDelay: "0.2s" }}
+                    >
+                      <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+                    </div>
+                    <div
+                      className="absolute -bottom-2 -left-2 h-6 w-6 bg-orange-100 rounded-full flex items-center justify-center animate-bounce shadow-lg"
+                      style={{ animationDelay: "0.4s" }}
+                    >
+                      <UtensilsCrossed className="h-3 w-3 text-orange-500" />
+                    </div>
                   </div>
-                  {/* Floating particles */}
-                  <div
-                    className="absolute -top-2 -right-2 h-8 w-8 bg-red-100 rounded-full flex items-center justify-center animate-bounce shadow-lg"
-                    style={{ animationDelay: "0.2s" }}
-                  >
-                    <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-                  </div>
-                  <div
-                    className="absolute -bottom-2 -left-2 h-6 w-6 bg-orange-100 rounded-full flex items-center justify-center animate-bounce shadow-lg"
-                    style={{ animationDelay: "0.4s" }}
-                  >
-                    <UtensilsCrossed className="h-3 w-3 text-orange-500" />
-                  </div>
+
+                  {user ? (
+                    <div className="relative z-10 max-w-sm px-4">
+                      <h4 className="text-2xl font-black mb-3 text-gray-800">
+                        Chưa có "quán ruột" nào?
+                      </h4>
+                      <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+                        Đừng để bụng đói! Hãy thêm những quán ăn yêu thích của
+                        bạn để chúng tôi có thể gợi ý cho bữa sau nhé.
+                      </p>
+                      <Button
+                        onClick={() => setIsFormOpen(true)}
+                        className="rounded-xl px-8 h-12 bg-primary text-white font-bold shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                      >
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Thêm quán ngay
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="relative z-10 max-w-sm px-4">
+                      <h4 className="text-2xl font-black mb-3 text-gray-800">
+                        Bạn chưa đăng nhập
+                      </h4>
+                      <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+                        Đăng nhập để lưu lại những địa điểm ăn uống yêu thích và
+                        đồng bộ trên mọi thiết bị của bạn.
+                      </p>
+                      <Button
+                        onClick={login}
+                        className="rounded-xl px-10 h-12 font-black uppercase tracking-widest bg-gradient-to-r from-primary to-orange-500 text-white shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
+                      >
+                        Đăng nhập ngay
+                      </Button>
+                    </div>
+                  )}
                 </div>
-
-                {user ? (
-                  <div className="relative z-10 max-w-sm px-4">
-                    <h4 className="text-2xl font-black mb-3 text-gray-800">
-                      Chưa có "quán ruột" nào?
-                    </h4>
-                    <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-                      Đừng để bụng đói! Hãy thêm những quán ăn yêu thích của bạn
-                      để chúng tôi có thể gợi ý cho bữa sau nhé.
-                    </p>
-                    <Button
-                      onClick={() => setIsFormOpen(true)}
-                      className="rounded-xl px-8 h-12 bg-primary text-white font-bold shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-                    >
-                      <PlusCircle className="mr-2 h-5 w-5" />
-                      Thêm quán ngay
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="relative z-10 max-w-sm px-4">
-                    <h4 className="text-2xl font-black mb-3 text-gray-800">
-                      Bạn chưa đăng nhập
-                    </h4>
-                    <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-                      Đăng nhập để lưu lại những địa điểm ăn uống yêu thích và
-                      đồng bộ trên mọi thiết bị của bạn.
-                    </p>
-                    <Button
-                      onClick={login}
-                      className="rounded-xl px-10 h-12 font-black uppercase tracking-widest bg-gradient-to-r from-primary to-orange-500 text-white shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
-                    >
-                      Đăng nhập ngay
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Pagination UI */}

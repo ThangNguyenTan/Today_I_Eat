@@ -6,10 +6,16 @@ import {
   Quote,
   Heart,
   Star,
-  Clock,
   Tag,
+  Clock,
 } from "lucide-react";
-import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
+import {
+  getGoogleMapsUrl,
+  formatOperatingHours,
+  formatDistance,
+  cn,
+} from "@/lib/utils";
+import { LazyImage } from "./ui/LazyImage";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -88,26 +94,39 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
       {/* Thumbnail / hero image */}
       {hasThumb ? (
         <div className="relative w-full h-44 overflow-hidden rounded-t-[2rem]">
-          <img
+          <LazyImage
             src={restaurant.thumbnailUrl!}
             alt={restaurant.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            loading="lazy"
+            containerClassName="w-full h-full"
           />
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
 
-          {/* Operating hours pill */}
-          {isPermanentlyClosed ? (
-            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl backdrop-blur-md bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
-              ● Đã Đóng Vĩnh Viễn
-            </div>
-          ) : hours ? (
-            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl backdrop-blur-md bg-black/40 text-white text-[10px] font-black tracking-tight shadow-md border border-white/20 flex items-center gap-2">
-              <Clock className="h-3 w-3 text-primary" />
-              {hours}
-            </div>
-          ) : null}
+          {/* Operating hours & Distance pill */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            {isPermanentlyClosed ? (
+              <div className="px-3 py-1.5 rounded-xl backdrop-blur-md bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+                ● Đã Đóng Vĩnh Viễn
+              </div>
+            ) : hours ? (
+              <div
+                className={cn(
+                  "px-3 py-1.5 rounded-xl backdrop-blur-md bg-black/40 text-white text-[10px] font-black tracking-tight shadow-md border border-white/20 flex items-center gap-1.5",
+                )}
+              >
+                <Clock className="h-3 w-3 opacity-80" />
+                <span className="font-bold">{hours}</span>
+              </div>
+            ) : null}
+
+            {restaurant.distanceKm !== undefined && (
+              <div className="w-fit px-3 py-1.5 rounded-xl backdrop-blur-md bg-white/20 text-white text-[10px] font-black tracking-widest shadow-md border border-white/10 flex items-center gap-1.5 uppercase">
+                <MapPin className="h-3 w-3" />
+                {formatDistance(restaurant.distanceKm)}
+              </div>
+            )}
+          </div>
 
           {/* Favorite button overlaid on image */}
           {onToggleFavorite && (
@@ -140,17 +159,30 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
             </div>
           </div>
 
-          {/* Operating hours pill */}
-          {isPermanentlyClosed ? (
-            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
-              ● Đã Đóng Vĩnh Viễn
-            </div>
-          ) : hours ? (
-            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-white/80 text-gray-600 text-[10px] font-bold tracking-tight shadow-md border border-gray-100 flex items-center gap-2">
-              <Clock className="h-3 w-3 text-primary" />
-              {hours}
-            </div>
-          ) : null}
+          {/* Operating hours & Distance pill */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            {isPermanentlyClosed ? (
+              <div className="px-3 py-1.5 rounded-xl bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+                ● Đã Đóng Vĩnh Viễn
+              </div>
+            ) : hours ? (
+              <div
+                className={cn(
+                  "px-3 py-1.5 rounded-xl bg-gray-800/80 text-white text-[10px] font-black tracking-tight shadow-md border border-white/10 flex items-center gap-1.5",
+                )}
+              >
+                <Clock className="h-3 w-3 opacity-80" />
+                <span className="font-bold">{hours}</span>
+              </div>
+            ) : null}
+
+            {restaurant.distanceKm !== undefined && (
+              <div className="w-fit px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 text-[10px] font-black tracking-widest shadow-sm border border-gray-200 flex items-center gap-1.5 uppercase">
+                <MapPin className="h-3 w-3" />
+                {formatDistance(restaurant.distanceKm)}
+              </div>
+            )}
+          </div>
 
           {/* Favorite button over placeholder */}
           {onToggleFavorite && (

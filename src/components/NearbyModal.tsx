@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
+import { LazyImage } from "./ui/LazyImage";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatDistance(km: number): string {
@@ -400,11 +401,11 @@ export const RestaurantRow: React.FC<{
 
       {/* Thumbnail or emoji */}
       {r.thumbnailUrl ? (
-        <img
+        <LazyImage
           src={r.thumbnailUrl}
           alt={r.name}
           className="flex-shrink-0 w-12 h-12 rounded-2xl object-cover bg-gray-100 mt-0.5"
-          loading="lazy"
+          containerClassName="flex-shrink-0 w-12 h-12 rounded-2xl mt-0.5"
         />
       ) : (
         <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/10 to-orange-500/10 flex items-center justify-center text-2xl mt-0.5">

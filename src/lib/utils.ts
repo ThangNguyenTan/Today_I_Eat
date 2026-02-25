@@ -38,6 +38,15 @@ export function formatOperatingHours(
   return `${formatTime(openTime)} - ${formatTime(closeTime)}`;
 }
 
+export function formatDistance(km?: number): string | null {
+  if (km === undefined) return null;
+  if (km < 1) {
+    const meters = Math.round(km * 1000);
+    return `${meters}m`;
+  }
+  return `${km.toFixed(1)}km`;
+}
+
 import type { Restaurant } from "@/types";
 
 export function getAIHighlights(r: Restaurant): string[] {
