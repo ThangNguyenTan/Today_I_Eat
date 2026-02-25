@@ -31,8 +31,9 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { FilterModal } from "@/components/FilterModal";
 import { PersonalityQuiz } from "@/components/PersonalityQuiz";
 import { LoginOverlay } from "@/components/LoginOverlay";
+import { RestaurantPocketView } from "@/components/RestaurantPocketView";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import type { FoodType, FoodiePersona } from "@/types";
+import type { FoodType, FoodiePersona, Restaurant } from "@/types";
 
 function App() {
   const { user, loading: authLoading, login, logout } = useAuth();
@@ -75,6 +76,8 @@ function App() {
   const [isSortingByDistance, setIsSortingByDistance] = useState(false);
   const { profile, updatePersona } = useUserProfile(user);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] =
+    useState<Restaurant | null>(null);
 
   // Automatically open quiz for new users without a persona
   useEffect(() => {
@@ -562,6 +565,7 @@ function App() {
                         }
                       : undefined
                   }
+                  onClick={() => setSelectedRestaurant(res)}
                 />
               ))
             ) : (
@@ -687,10 +691,22 @@ function App() {
         persona={profile?.persona}
       />
 
+      {/* Restaurant Pocket View (Details) */}
+      <RestaurantPocketView
+        restaurant={selectedRestaurant}
+        isOpen={!!selectedRestaurant}
+        onClose={() => setSelectedRestaurant(null)}
+        onToggleFavorite={toggleFavorite}
+      />
+
       {/* Nearby Modal */}
       <NearbyModal
         isOpen={isNearbyModalOpen}
         onClose={() => setIsNearbyModalOpen(false)}
+        onSelectRestaurant={(r) => {
+          setSelectedRestaurant(r);
+          setIsNearbyModalOpen(false);
+        }}
       />
 
       {/* Filter Modal */}

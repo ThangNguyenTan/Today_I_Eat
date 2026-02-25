@@ -14,6 +14,7 @@ import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
 interface RestaurantCardProps {
   restaurant: Restaurant;
   onToggleFavorite?: () => void;
+  onClick?: () => void;
 }
 
 // Food emoji mapping for visual appeal
@@ -56,6 +57,7 @@ function getEmoji(type: string): string {
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   restaurant,
   onToggleFavorite,
+  onClick,
 }) => {
   const emoji = getEmoji(restaurant.type);
   const hasThumb = Boolean(restaurant.thumbnailUrl);
@@ -76,7 +78,10 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   );
 
   return (
-    <Card className="group relative overflow-hidden border-0 bg-white shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 rounded-[2rem]">
+    <Card
+      onClick={onClick}
+      className="group relative overflow-hidden border-0 bg-white shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 rounded-[2rem] cursor-pointer"
+    >
       {/* Gradient border glow */}
       <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/20 via-orange-500/20 to-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl scale-105" />
 

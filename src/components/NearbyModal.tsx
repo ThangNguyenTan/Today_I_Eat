@@ -80,12 +80,14 @@ export interface NearbyRestaurant extends Restaurant {
 interface NearbyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSelectRestaurant?: (r: Restaurant) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export const NearbyModal: React.FC<NearbyModalProps> = ({
   isOpen,
   onClose,
+  onSelectRestaurant,
 }) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -312,7 +314,12 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                     )}
                   </div>
                   {nearby.map((r, idx) => (
-                    <RestaurantRow key={r.id} restaurant={r} rank={idx + 1} />
+                    <RestaurantRow
+                      key={r.id}
+                      restaurant={r}
+                      rank={idx + 1}
+                      onClick={() => onSelectRestaurant?.(r)}
+                    />
                   ))}
 
                   {hasMore ? (
@@ -369,7 +376,8 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 export const RestaurantRow: React.FC<{
   restaurant: NearbyRestaurant;
   rank: number;
-}> = ({ restaurant: r, rank }) => {
+  onClick?: () => void;
+}> = ({ restaurant: r, rank, onClick }) => {
   const emoji = getEmoji(r.type);
   const distColor = getDistanceColor(r.distanceKm);
   const isPermanentlyClosed =
@@ -381,7 +389,10 @@ export const RestaurantRow: React.FC<{
   );
 
   return (
-    <div className="group flex items-start gap-3 p-3.5 rounded-2xl bg-white border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+    <div
+      onClick={onClick}
+      className="group flex items-start gap-3 p-3.5 rounded-2xl bg-white border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+    >
       {/* Rank number */}
       <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-[11px] font-black text-gray-400 mt-0.5">
         {rank}
