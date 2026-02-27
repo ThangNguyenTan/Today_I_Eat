@@ -72,6 +72,12 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   const [showConfetti, setShowConfetti] = useState(false);
 
   const [spinningType, setSpinningType] = useState<string>("");
+  const spinningTypeRef = useRef("");
+
+  // Keep ref in sync for use in stale closures
+  useEffect(() => {
+    spinningTypeRef.current = spinningType;
+  }, [spinningType]);
 
   const isCancelledRef = useRef(false);
   const spinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -97,7 +103,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
           radiusKm: String(RADIUS_KM),
           limit: String(LIMIT),
           page: String(pageNum),
-          type,
+          type: type || spinningTypeRef.current, // Fallback to ref if type is still empty
         });
         const resp = await fetch(`/api/restaurants/nearby?${params}`);
         if (!resp.ok) throw new Error(`API error: ${resp.status}`);
@@ -134,6 +140,8 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     console.log(
       "[SuggestionModal] locateAndSearch called status:",
       permissionStatus,
+      "type:",
+      spinningTypeRef.current,
     );
 
     if (permissionStatus === "denied") {
@@ -151,42 +159,26 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     if (permissionStatus === "prompt") {
       getLocation();
     } else if (permissionStatus === "granted") {
-      // If granted but no lat/lon yet, trigger it
       if (!latitude || !longitude) {
         getLocation();
       } else {
-        runSearch(latitude, longitude, spinningType, 1);
+        runSearch(latitude, longitude, spinningTypeRef.current, 1);
       }
     }
-  }, [
-    permissionStatus,
-    getLocation,
-    latitude,
-    longitude,
-    runSearch,
-    spinningType,
-  ]);
+  }, [permissionStatus, getLocation, latitude, longitude, runSearch]);
 
   // Handle geolocation updates during "locating" phase
   useEffect(() => {
     if (phase === "locating" && hasAttempted) {
       console.log("[SuggestionModal] Locating done, calling runSearch");
       if (latitude && longitude) {
-        runSearch(latitude, longitude, spinningType, 1);
+        runSearch(latitude, longitude, spinningTypeRef.current, 1);
       } else if (geoError) {
         setPhase("error");
         setErrorMsg(geoError);
       }
     }
-  }, [
-    phase,
-    hasAttempted,
-    latitude,
-    longitude,
-    geoError,
-    runSearch,
-    spinningType,
-  ]);
+  }, [phase, hasAttempted, latitude, longitude, geoError, runSearch]);
 
   const startSpinning = useCallback(() => {
     console.log("[SuggestionModal] startSpinning called");

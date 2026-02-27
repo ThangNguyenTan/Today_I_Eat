@@ -404,7 +404,10 @@ app.get("/api/restaurants/nearby", async (req, res) => {
         if (EXCLUDE_DRINKS.includes(r.type)) return false;
         if (r.operating && !isCurrentlyOpen(r.operating, currentTotalMinutes))
           return false;
-        if (type && !r.keyword.toLowerCase().includes(type)) return false;
+        if (type) {
+          const kw = r.keyword.toLowerCase();
+          if (!kw.includes(type) && !type.includes(kw)) return false;
+        }
         if (!r.position?.latitude || !r.position?.longitude) return false;
         return true;
       })
