@@ -60,6 +60,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     hasAttempted,
     loading: geoLoading,
     error: geoError,
+    permissionStatus,
     getLocation,
   } = useGeolocation();
 
@@ -131,18 +132,41 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   );
 
   const locateAndSearch = useCallback(() => {
-    console.log("[SuggestionModal] locateAndSearch called");
+    console.log(
+      "[SuggestionModal] locateAndSearch called status:",
+      permissionStatus,
+    );
+
+    if (permissionStatus === "denied") {
+      setPhase("error");
+      setErrorMsg("Quyền truy cập vị trí bị từ chối");
+      return;
+    }
+
     setPhase("locating");
     setNearby([]);
     setPage(1);
     setHasMore(true);
     setErrorMsg("");
 
-    if (!hasAttempted && !geoLoading) {
-      console.log("[SuggestionModal] Getting location...");
+    if (permissionStatus === "prompt") {
       getLocation();
+    } else if (permissionStatus === "granted") {
+      // If granted but no lat/lon yet, trigger it
+      if (!latitude || !longitude) {
+        getLocation();
+      } else {
+        runSearch(latitude, longitude, spinningType, 1);
+      }
     }
-  }, [hasAttempted, geoLoading, getLocation]);
+  }, [
+    permissionStatus,
+    getLocation,
+    latitude,
+    longitude,
+    runSearch,
+    spinningType,
+  ]);
 
   // Handle geolocation updates during "locating" phase
   useEffect(() => {
@@ -231,7 +255,8 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
         clearTimeout(spinTimeoutRef.current);
       }
     };
-  }, [isOpen, startSpinning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
     if (!hasMore || phase !== "done" || !latitude || !longitude) return;
@@ -247,16 +272,8 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
 
     if (sentinelRef.current) observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [
-    hasMore,
-    phase,
-    latitude,
-    longitude,
-    isLoadingMore,
-    runSearch,
-    page,
-    spinningType,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, phase, latitude, longitude, isLoadingMore, page]);
 
   const confettiColors = [
     "#F97316",
@@ -275,7 +292,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     >
       <DialogContent
         aria-describedby={undefined}
-        className="fixed left-[50%] top-[50%] z-50 w-[92vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl max-h-[92vh] flex flex-col"
+        className="fixed left-[50%] top-[50%] z-50 w-[92vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl max-h-[92dvh] flex flex-col"
       >
         <DialogDescription className="sr-only">
           Kết quả gợi ý món ăn dành cho bạn
@@ -472,19 +489,56 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             )}
 
             {phase === "error" && (
-              <div className="py-12 flex flex-col items-center gap-5 text-center px-6">
-                <div className="w-16 h-16 rounded-[1.25rem] bg-red-50 flex items-center justify-center">
-                  <AlertCircle className="h-8 w-8 text-red-400" />
+              <div className="py-8 flex flex-col items-center gap-4 text-center px-6 animate-in fade-in zoom-in-95 duration-500">
+                <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center">
+                  <AlertCircle className="h-7 w-7 text-red-400" />
                 </div>
-                <div className="space-y-1">
-                  <p className="font-black text-gray-800">Đã xảy ra lỗi</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {errorMsg}
-                  </p>
-                </div>
-                <Button onClick={locateAndSearch} className="mt-2 rounded-xl">
-                  <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
-                </Button>
+                {permissionStatus === "denied" ? (
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <p className="font-black text-gray-800 text-lg">
+                        Vị trí bị chặn
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Bạn đã chặn vị trí. Để gợi ý món ngon, vui lòng mở lại
+                        trong cài đặt trình duyệt.
+                      </p>
+                    </div>
+                    <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-left">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 font-black">
+                        Cách mở nhanh:
+                      </p>
+                      <ol className="text-[11px] text-gray-600 space-y-1 ml-4 list-decimal leading-snug">
+                        <li>Bấm biểu tượng 🔒 hoặc ⚙️ ở thanh địa chỉ</li>
+                        <li>Bật "Vị trí" thành "Cho phép" (Allow)</li>
+                        <li>Tải lại trang web</li>
+                      </ol>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => window.location.reload()}
+                      className="w-full h-12 rounded-xl mt-1 font-black text-xs uppercase tracking-widest gap-2"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Tải lại trang
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-1">
+                      <p className="font-black text-gray-800">Đã xảy ra lỗi</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {errorMsg}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={locateAndSearch}
+                      className="mt-2 rounded-xl h-12 px-8 font-bold"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -54,6 +54,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
     loading: geoLoading,
     error: geoError,
     hasAttempted,
+    permissionStatus,
     getLocation,
   } = useGeolocation();
 
@@ -112,7 +113,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (!hasAttempted && phase === "idle") {
+      if (permissionStatus === "granted" && !hasAttempted && phase === "idle") {
         setPhase("locating");
         getLocation();
       } else if (latitude && longitude && phase === "locating") {
@@ -137,6 +138,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
     getLocation,
     runSearch,
     phase,
+    permissionStatus,
   ]);
 
   useEffect(() => {
@@ -201,8 +203,71 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-6">
+          {/* Permission Prompt */}
+          {permissionStatus === "prompt" && phase === "idle" && (
+            <div className="py-16 flex flex-col items-center gap-8 text-center px-6 animate-in fade-in zoom-in-95 duration-500">
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl animate-pulse" />
+                <div className="relative h-20 w-20 flex items-center justify-center rounded-[2rem] bg-gradient-to-br from-white to-emerald-50 shadow-2xl border-4 border-white">
+                  <MapPin className="h-10 w-10 text-emerald-500" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-gray-900">
+                  Tìm quán ngon gần bạn?
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Để hiển thị danh sách các quán ăn quanh đây, chúng tôi cần bạn
+                  cấp quyền truy cập vị trí.
+                </p>
+              </div>
+              <Button
+                onClick={getLocation}
+                className="w-full h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                Tiếp tục
+              </Button>
+            </div>
+          )}
+
+          {/* Blocked Permission */}
+          {permissionStatus === "denied" && (
+            <div className="py-8 flex flex-col items-center gap-4 text-center px-6 animate-in fade-in zoom-in-95 duration-500">
+              <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-red-400" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black text-gray-900">
+                  Vị trí bị chặn
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Bạn đã từ chối quyền truy cập vị trí. Để tiếp tục, vui lòng
+                  bật lại trong cài đặt trình duyệt.
+                </p>
+                <div className="mt-4 p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-left">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                    Cách mở lại nhanh:
+                  </p>
+                  <ol className="text-[11px] text-gray-600 space-y-1 ml-4 list-decimal leading-snug">
+                    <li>Nhấn vào biểu tượng 🔒 hoặc ⚙️ ở thanh địa chỉ</li>
+                    <li>Ở phần "Vị trí", chọn "Cho phép" (Allow)</li>
+                    <li>Tải lại trang web</li>
+                  </ol>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+                className="w-full h-12 rounded-xl font-black uppercase tracking-[0.1em] gap-2 text-[11px]"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Tải lại trang
+              </Button>
+            </div>
+          )}
+
           {/* Locating GPS */}
-          {phase === "locating" && (
+          {phase === "locating" && permissionStatus !== "denied" && (
             <div className="py-20 flex flex-col items-center gap-10">
               <div className="relative w-24 h-24 flex items-center justify-center">
                 <div className="radar-ring" style={{ animationDelay: "0s" }} />

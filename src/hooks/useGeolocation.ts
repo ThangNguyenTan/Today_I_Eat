@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { DEFAULT_LOCATION } from "../constants";
 
 export interface GeolocationState {
@@ -9,6 +9,7 @@ export interface GeolocationState {
   error: string | null;
   hasAttempted: boolean;
   isFallback: boolean;
+  permissionStatus: PermissionState | "loading";
 }
 
 export const useGeolocation = () => {
@@ -20,12 +21,42 @@ export const useGeolocation = () => {
     error: null,
     hasAttempted: false,
     isFallback: false,
+    permissionStatus: "loading",
   });
+
+  // Check permission status on mount and when it changes
+  useEffect(() => {
+    if (!navigator.permissions) {
+      setState((prev) => ({ ...prev, permissionStatus: "prompt" }));
+      return;
+    }
+
+    let permissionObj: PermissionStatus | null = null;
+
+    const updateStatus = () => {
+      if (permissionObj) {
+        setState((prev) => ({
+          ...prev,
+          permissionStatus: permissionObj!.state,
+        }));
+      }
+    };
+
+    navigator.permissions.query({ name: "geolocation" }).then((status) => {
+      permissionObj = status;
+      updateStatus();
+      status.onchange = updateStatus;
+    });
+
+    return () => {
+      if (permissionObj) permissionObj.onchange = null;
+    };
+  }, []);
 
   const getAreaName = useCallback(
     async (lat: number, lon: number) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // reduced to 3s for faster fallback
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       try {
         const response = await fetch(
@@ -52,10 +83,7 @@ export const useGeolocation = () => {
           address.town ||
           address.suburb;
 
-        const cityName =
-          address.city || address.province || address.state || "";
-        const isPickCity = !candidateArea || candidateArea === cityName;
-        const district = isPickCity ? null : candidateArea;
+        const district = candidateArea || null;
 
         setState((prev) => ({
           ...prev,
@@ -83,21 +111,24 @@ export const useGeolocation = () => {
         }));
       }
     },
-    [DEFAULT_LOCATION, setState],
+    [DEFAULT_LOCATION],
   );
 
-  const setFallbackLocation = useCallback((errorMsg: string) => {
-    setState((prev) => ({
-      ...prev,
-      latitude: DEFAULT_LOCATION.latitude,
-      longitude: DEFAULT_LOCATION.longitude,
-      area: DEFAULT_LOCATION.area,
-      loading: false,
-      error: `${errorMsg}. Đã chuyển sang Quận 1.`,
-      hasAttempted: true,
-      isFallback: true,
-    }));
-  }, []);
+  const setFallbackLocation = useCallback(
+    (errorMsg: string) => {
+      setState((prev) => ({
+        ...prev,
+        latitude: DEFAULT_LOCATION.latitude,
+        longitude: DEFAULT_LOCATION.longitude,
+        area: DEFAULT_LOCATION.area,
+        loading: false,
+        error: errorMsg,
+        hasAttempted: true,
+        isFallback: true,
+      }));
+    },
+    [DEFAULT_LOCATION],
+  );
 
   const getLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -115,7 +146,7 @@ export const useGeolocation = () => {
 
     const options: PositionOptions = {
       enableHighAccuracy: true,
-      timeout: 10000, // Reduced slightly for better UX
+      timeout: 8000,
       maximumAge: 60000,
     };
 
@@ -125,34 +156,18 @@ export const useGeolocation = () => {
     };
 
     const errorCallback = (error: GeolocationPositionError) => {
-      // If high accuracy timed out, try one more time with low accuracy
-      if (error.code === 3 && options.enableHighAccuracy) {
-        console.warn(
-          "High accuracy timed out, falling back to low accuracy...",
-        );
-        navigator.geolocation.getCurrentPosition(
-          successCallback,
-          (secondError) => {
-            let errorMsg = "Lỗi định vị";
-            if (secondError.code === 1)
-              errorMsg = "Bạn đã từ chối quyền truy cập vị trí";
-            else if (secondError.code === 2)
-              errorMsg = "Không thể xác định vị trí";
-            else if (secondError.code === 3)
-              errorMsg = "Hết thời gian yêu cầu vị trí";
-
-            setFallbackLocation(errorMsg);
-          },
-          { ...options, enableHighAccuracy: false, timeout: 5000 },
-        );
-      } else {
-        let errorMsg = "Lỗi định vị";
-        if (error.code === 1) errorMsg = "Bạn đã từ chối quyền truy cập vị trí";
-        else if (error.code === 2) errorMsg = "Không thể xác định vị trí";
-        else if (error.code === 3) errorMsg = "Hết thời gian yêu cầu vị trí";
-
-        setFallbackLocation(errorMsg);
+      let errorMsg = "Lỗi định vị";
+      if (error.code === 1) {
+        errorMsg = "Quyền truy cập vị trí bị từ chối";
+        // If they denied, we should update status just in case Permissions API didn't
+        setState((prev) => ({ ...prev, permissionStatus: "denied" }));
+      } else if (error.code === 2) {
+        errorMsg = "Không thể xác định vị trí";
+      } else if (error.code === 3) {
+        errorMsg = "Hết thời gian yêu cầu vị trí";
       }
+
+      setFallbackLocation(errorMsg);
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -163,7 +178,8 @@ export const useGeolocation = () => {
   }, [getAreaName, setFallbackLocation]);
 
   const reset = useCallback(() => {
-    setState({
+    setState((prev) => ({
+      ...prev,
       latitude: null,
       longitude: null,
       area: null,
@@ -171,7 +187,7 @@ export const useGeolocation = () => {
       error: null,
       hasAttempted: false,
       isFallback: false,
-    });
+    }));
   }, []);
 
   return { ...state, getLocation, reset };

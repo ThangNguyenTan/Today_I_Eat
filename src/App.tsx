@@ -58,6 +58,7 @@ function App() {
     error: geoError,
     hasAttempted: geoAttempted,
     isFallback,
+    permissionStatus,
     getLocation,
   } = useGeolocation();
 
@@ -195,9 +196,18 @@ function App() {
       setIsSortingByDistance(false);
       return;
     }
+
+    if (permissionStatus === "denied") {
+      info(
+        "Vị trí bị chặn. Vui lòng bật lại trong cài đặt trình duyệt để sắp xếp.",
+        5000,
+      );
+      return;
+    }
+
     if (!userLocation) getLocation();
     setIsSortingByDistance(true);
-  }, [isSortingByDistance, userLocation, getLocation]);
+  }, [isSortingByDistance, userLocation, getLocation, permissionStatus, info]);
 
   const handleApplyFilters = (filters: {
     type: FoodType | "Tất cả";
