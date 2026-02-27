@@ -24,7 +24,7 @@ import {
 import { FOOD_TYPES } from "@/constants";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { type NearbyRestaurant } from "./NearbyModal";
-import type { FoodiePersona, Restaurant } from "@/types";
+import type { FoodiePersona } from "@/types";
 import { LazyImage } from "./ui/LazyImage";
 import {
   formatDistance,
@@ -646,7 +646,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                       </p>
                     </div>
                     <Button
-                      onClick={locateAndSearch}
+                      onClick={() => locateAndSearch()}
                       className="mt-2 rounded-xl h-12 px-8 font-bold"
                     >
                       <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
