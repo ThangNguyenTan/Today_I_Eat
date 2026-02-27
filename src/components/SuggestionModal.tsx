@@ -58,7 +58,6 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     latitude,
     longitude,
     hasAttempted,
-    loading: geoLoading,
     error: geoError,
     permissionStatus,
     getLocation,

@@ -455,8 +455,6 @@ function App() {
         activeType={activeType}
         showFavoritesOnly={showFavoritesOnly}
         manualArea={manualArea}
-        isLoggedIn={!!user}
-        onLogin={login}
         onApply={handleApplyFilters}
       />
 

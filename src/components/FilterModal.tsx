@@ -44,8 +44,6 @@ interface FilterModalProps {
     favOnly: boolean;
     area: string | null;
   }) => void;
-  isLoggedIn: boolean;
-  onLogin: () => void;
 }
 
 export const FilterModal: React.FC<FilterModalProps> = ({
@@ -55,8 +53,6 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   showFavoritesOnly,
   manualArea,
   onApply,
-  isLoggedIn,
-  onLogin,
 }) => {
   const [localType, setLocalType] = useState<FoodType | "Tất cả">(activeType);
   const [localFav, setLocalFav] = useState(showFavoritesOnly);
