@@ -32,6 +32,8 @@ import {
   getEmoji,
   getDistanceColor,
   getGoogleMapsUrl,
+  getAIHighlights,
+  cn,
 } from "@/lib/utils";
 
 interface SuggestionModalProps {
