@@ -66,7 +66,6 @@ export const Header: React.FC<HeaderProps> = ({
             size="icon"
             onClick={onToggleForm}
             className={`rounded-full transition-all duration-300 ${isFormOpen ? "bg-primary text-white scale-110 rotate-45" : "hover:bg-primary/10 hover:scale-110"} hidden sm:flex`}
-            title={!user ? "Đăng nhập để thêm quán" : ""}
           >
             <PlusCircle className="h-6 w-6" />
           </Button>

@@ -16,7 +16,6 @@ import { useAuth } from "@/context/AuthContext";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { FilterModal } from "@/components/FilterModal";
 import { PersonalityQuiz } from "@/components/PersonalityQuiz";
-import { LoginOverlay } from "@/components/LoginOverlay";
 import { RestaurantPocketView } from "@/components/RestaurantPocketView";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { motion, AnimatePresence } from "framer-motion";
@@ -240,10 +239,6 @@ function App() {
     );
   }
 
-  if (!user) {
-    return <LoginOverlay onLogin={login} />;
-  }
-
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-32 font-sans selection:bg-primary/20">
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -348,20 +343,14 @@ function App() {
                   >
                     <RestaurantCard
                       restaurant={res}
-                      onToggleFavorite={
-                        user
-                          ? () => {
-                              toggleFavorite(res.id);
-                              if (!res.isFavorite) {
-                                success(
-                                  `Đã thêm "${res.name}" vào quán ruột! ❤️`,
-                                );
-                              } else {
-                                info(`Đã xóa "${res.name}" khỏi quán ruột.`);
-                              }
-                            }
-                          : undefined
-                      }
+                      onToggleFavorite={() => {
+                        toggleFavorite(res.id);
+                        if (!res.isFavorite) {
+                          success(`Đã thêm "${res.name}" vào quán ruột! ❤️`);
+                        } else {
+                          info(`Đã xóa "${res.name}" khỏi quán ruột.`);
+                        }
+                      }}
                       onClick={() => setSelectedRestaurant(res)}
                     />
                   </motion.div>

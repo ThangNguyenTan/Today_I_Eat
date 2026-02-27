@@ -205,7 +205,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
               </span>
             </div>
             <button
-              onClick={() => (isLoggedIn ? setLocalFav(!localFav) : onLogin())}
+              onClick={() => setLocalFav(!localFav)}
               className={`w-full flex items-center justify-between px-6 py-4 rounded-[1.25rem] text-sm font-bold transition-all border-2 ${
                 localFav
                   ? "bg-pink-50/30 border-pink-100 text-pink-500 shadow-sm"
