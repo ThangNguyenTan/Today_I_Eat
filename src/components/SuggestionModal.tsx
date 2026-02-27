@@ -16,17 +16,127 @@ import {
   PartyPopper,
   AlertCircle,
   Navigation,
+  Star,
+  MapPin,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 import { FOOD_TYPES } from "@/constants";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { RestaurantRow, type NearbyRestaurant } from "./NearbyModal";
-import type { FoodiePersona } from "@/types";
+import { type NearbyRestaurant } from "./NearbyModal";
+import type { FoodiePersona, Restaurant } from "@/types";
+import { LazyImage } from "./ui/LazyImage";
+import {
+  formatDistance,
+  formatOperatingHours,
+  getEmoji,
+  getDistanceColor,
+  getGoogleMapsUrl,
+} from "@/lib/utils";
 
 interface SuggestionModalProps {
   isOpen: boolean;
   onClose: () => void;
   persona?: FoodiePersona;
 }
+
+// ─── SuggestionCard ────────────────────────────────────────────────────────────
+const SuggestionCard: React.FC<{
+  restaurant: NearbyRestaurant;
+  rank: number;
+}> = ({ restaurant: r, rank }) => {
+  const emoji = getEmoji(r.type);
+  const distColor = getDistanceColor(r.distanceKm);
+  const hours = formatOperatingHours(
+    r.operating?.openTime,
+    r.operating?.closeTime,
+  );
+
+  return (
+    <div className="group relative bg-white rounded-[2rem] border border-gray-100 p-4 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+      {/* Rank Badge */}
+      <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-primary text-white font-black text-xs flex items-center justify-center shadow-lg border-2 border-white z-10">
+        #{rank}
+      </div>
+
+      <div className="flex gap-4">
+        {/* Visual Content */}
+        <div className="relative flex-none">
+          {r.thumbnailUrl ? (
+            <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-inner bg-gray-50">
+              <LazyImage
+                src={r.thumbnailUrl}
+                alt={r.name}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            </div>
+          ) : (
+            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/10 to-orange-500/10 flex items-center justify-center text-4xl shadow-inner border border-primary/5">
+              {emoji}
+            </div>
+          )}
+          {r.rating && r.rating.avg > 0 && (
+            <div className="absolute -bottom-2 right-0 bg-white shadow-md rounded-full px-2 py-0.5 border border-gray-100 flex items-center gap-1">
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              <span className="text-[10px] font-black">{r.rating.avg}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Text Content */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          <div className="space-y-1">
+            <h3 className="font-black text-gray-900 leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+              {r.name}
+            </h3>
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <span className="text-[9px] font-black text-primary/80 uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
+                {r.type}
+              </span>
+              <span
+                className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${distColor}`}
+              >
+                {formatDistance(r.distanceKm)}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1 mt-2">
+            <div className="flex items-start gap-1 text-muted-foreground">
+              <MapPin className="h-3 w-3 mt-0.5 flex-none" />
+              <p className="text-[10px] line-clamp-1 leading-tight">
+                {r.location}
+              </p>
+            </div>
+            {hours && (
+              <div className="flex items-center gap-1 text-emerald-600">
+                <Clock className="h-3 w-3 flex-none" />
+                <p className="text-[10px] font-bold">{hours}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="flex flex-col justify-end">
+          <a
+            href={getGoogleMapsUrl(
+              r.name,
+              r.location,
+              r.position?.latitude,
+              r.position?.longitude,
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Confetti particle component
 const ConfettiParticle = ({
@@ -136,36 +246,40 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     [],
   );
 
-  const locateAndSearch = useCallback(() => {
-    console.log(
-      "[SuggestionModal] locateAndSearch called status:",
-      permissionStatus,
-      "type:",
-      spinningTypeRef.current,
-    );
+  const locateAndSearch = useCallback(
+    (winner?: string) => {
+      const typeToSearch = winner || spinningTypeRef.current;
+      console.log(
+        "[SuggestionModal] locateAndSearch called status:",
+        permissionStatus,
+        "type:",
+        typeToSearch,
+      );
 
-    if (permissionStatus === "denied") {
-      setPhase("error");
-      setErrorMsg("Quyền truy cập vị trí bị từ chối");
-      return;
-    }
-
-    setPhase("locating");
-    setNearby([]);
-    setPage(1);
-    setHasMore(true);
-    setErrorMsg("");
-
-    if (permissionStatus === "prompt") {
-      getLocation();
-    } else if (permissionStatus === "granted") {
-      if (!latitude || !longitude) {
-        getLocation();
-      } else {
-        runSearch(latitude, longitude, spinningTypeRef.current, 1);
+      if (permissionStatus === "denied") {
+        setPhase("error");
+        setErrorMsg("Quyền truy cập vị trí bị từ chối");
+        return;
       }
-    }
-  }, [permissionStatus, getLocation, latitude, longitude, runSearch]);
+
+      setPhase("locating");
+      setNearby([]);
+      setPage(1);
+      setHasMore(true);
+      setErrorMsg("");
+
+      if (permissionStatus === "prompt") {
+        getLocation();
+      } else if (permissionStatus === "granted") {
+        if (!latitude || !longitude) {
+          getLocation();
+        } else {
+          runSearch(latitude, longitude, typeToSearch, 1);
+        }
+      }
+    },
+    [permissionStatus, getLocation, latitude, longitude, runSearch],
+  );
 
   // Handle geolocation updates during "locating" phase
   useEffect(() => {
@@ -210,10 +324,13 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
 
       count++;
       if (count >= maxCount) {
-        console.log("[SuggestionModal] spin reached maxCount, resolving...");
+        console.log(
+          "[SuggestionModal] spin reached maxCount, winner:",
+          randomType,
+        );
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 2000);
-        locateAndSearch();
+        locateAndSearch(randomType); // Pass winner explicitly to prevent stale closure mismatch
       } else {
         const nextDelay = count < 8 ? delay : delay * 1.2;
         spinTimeoutRef.current = setTimeout(() => spin(nextDelay), nextDelay);
@@ -414,17 +531,23 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             )}
 
             {phase === "done" && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {nearby.length > 0 ? (
                   <>
-                    <div className="flex items-center justify-between px-1 mb-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                        Top quán {spinningType} quanh bạn
+                    <div className="flex items-center justify-between px-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                        Top {spinningType} quanh bạn
                       </p>
                     </div>
-                    {nearby.map((r, idx) => (
-                      <RestaurantRow key={r.id} restaurant={r} rank={idx + 1} />
-                    ))}
+                    <div className="space-y-4">
+                      {nearby.map((r, idx) => (
+                        <SuggestionCard
+                          key={r.id}
+                          restaurant={r}
+                          rank={idx + 1}
+                        />
+                      ))}
+                    </div>
 
                     {hasMore ? (
                       <div
