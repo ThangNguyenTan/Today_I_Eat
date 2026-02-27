@@ -52,73 +52,95 @@ const SuggestionCard: React.FC<{
     r.operating?.closeTime,
   );
 
+  // Get one highlight to show why it's suggested
+  const highlights = getAIHighlights(r);
+  const mainHighlight = highlights[0];
+
   return (
-    <div className="group relative bg-white rounded-[2rem] border border-gray-100 p-4 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+    <div className="group relative bg-white rounded-[2.5rem] border border-gray-100 p-5 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 overflow-hidden">
+      {/* Premium Glow Effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
       {/* Rank Badge */}
-      <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-primary text-white font-black text-xs flex items-center justify-center shadow-lg border-2 border-white z-10">
-        #{rank}
+      <div className="absolute top-0 right-0 p-4">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-orange-500 text-white font-black text-xs flex items-center justify-center shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform duration-500">
+          #{rank}
+        </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="relative z-10 flex flex-col sm:flex-row gap-5">
         {/* Visual Content */}
-        <div className="relative flex-none">
+        <div className="relative flex-none mx-auto sm:mx-0">
           {r.thumbnailUrl ? (
-            <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-inner bg-gray-50">
+            <div className="w-32 h-32 rounded-[2rem] overflow-hidden shadow-xl bg-gray-50 border-4 border-white">
               <LazyImage
                 src={r.thumbnailUrl}
                 alt={r.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
             </div>
           ) : (
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/10 to-orange-500/10 flex items-center justify-center text-4xl shadow-inner border border-primary/5">
+            <div className="w-32 h-32 rounded-[2rem] bg-gradient-to-br from-primary/10 to-orange-500/10 flex items-center justify-center text-5xl shadow-inner border-4 border-white">
               {emoji}
             </div>
           )}
+
           {r.rating && r.rating.avg > 0 && (
-            <div className="absolute -bottom-2 right-0 bg-white shadow-md rounded-full px-2 py-0.5 border border-gray-100 flex items-center gap-1">
-              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-              <span className="text-[10px] font-black">{r.rating.avg}</span>
+            <div className="absolute -bottom-2 -right-2 bg-white shadow-xl rounded-2xl px-3 py-1.5 border border-gray-100 flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 font-black" />
+              <span className="text-xs font-black text-gray-800">
+                {r.rating.avg.toFixed(1)}
+              </span>
             </div>
           )}
         </div>
 
         {/* Text Content */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-          <div className="space-y-1">
-            <h3 className="font-black text-gray-900 leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="mb-3">
+            <h3 className="font-black text-xl text-gray-900 leading-tight group-hover:text-primary transition-colors mb-2">
               {r.name}
             </h3>
-            <div className="flex flex-wrap gap-1.5 items-center">
-              <span className="text-[9px] font-black text-primary/80 uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.15em] bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
                 {r.type}
               </span>
               <span
-                className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${distColor}`}
+                className={cn(
+                  "text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-widest",
+                  distColor,
+                )}
               >
                 {formatDistance(r.distanceKm)}
               </span>
             </div>
           </div>
 
-          <div className="space-y-1 mt-2">
-            <div className="flex items-start gap-1 text-muted-foreground">
-              <MapPin className="h-3 w-3 mt-0.5 flex-none" />
-              <p className="text-[10px] line-clamp-1 leading-tight">
-                {r.location}
+          {/* AI Highlight / Why this one? */}
+          {mainHighlight && (
+            <div className="mb-4 p-3 rounded-2xl bg-gray-50 border border-gray-100/50 relative group/highlight">
+              <p className="text-[11px] font-bold text-gray-600 leading-relaxed italic pr-2">
+                "{mainHighlight}"
               </p>
             </div>
+          )}
+
+          <div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-gray-50">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 text-primary/60" />
+              <p className="text-[11px] font-bold line-clamp-1">{r.location}</p>
+            </div>
             {hours && (
-              <div className="flex items-center gap-1 text-emerald-600">
-                <Clock className="h-3 w-3 flex-none" />
-                <p className="text-[10px] font-bold">{hours}</p>
+              <div className="flex items-center gap-1.5 text-emerald-600">
+                <Clock className="h-3.5 w-3.5" />
+                <p className="text-[11px] font-black">{hours}</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Action Button */}
-        <div className="flex flex-col justify-end">
+        <div className="flex items-center justify-center sm:pl-2">
           <a
             href={getGoogleMapsUrl(
               r.name,
@@ -128,9 +150,12 @@ const SuggestionCard: React.FC<{
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-900 text-white hover:bg-primary transition-all shadow-lg hover:shadow-primary/30 group/btn"
           >
-            <ExternalLink className="h-4 w-4" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">
+              Chỉ đường
+            </span>
+            <ExternalLink className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </a>
         </div>
       </div>
