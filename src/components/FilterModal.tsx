@@ -9,7 +9,6 @@ import {
 import { Button } from "./ui/button";
 import {
   MapPin,
-  Heart,
   UtensilsCrossed,
   RotateCcw,
   Check,
@@ -31,60 +30,46 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import type { FoodType } from "@/types";
 
 interface FilterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  activeType: FoodType | "Tất cả";
-  showFavoritesOnly: boolean;
+  activeTypes: string[];
   manualArea: string | null;
-  onApply: (filters: {
-    type: FoodType | "Tất cả";
-    favOnly: boolean;
-    area: string | null;
-  }) => void;
+  onApply: (filters: { types: string[]; area: string | null }) => void;
 }
 
 export const FilterModal: React.FC<FilterModalProps> = ({
   isOpen,
   onClose,
-  activeType,
-  showFavoritesOnly,
+  activeTypes,
   manualArea,
   onApply,
 }) => {
-  const [localType, setLocalType] = useState<FoodType | "Tất cả">(activeType);
-  const [localFav, setLocalFav] = useState(showFavoritesOnly);
+  const [localTypes, setLocalTypes] = useState<string[]>(activeTypes);
   const [localArea, setLocalArea] = useState<string | null>(manualArea);
   const [isAreaOpen, setIsAreaOpen] = useState(false);
 
-  // Sync with props when modal opens
+  // Sync with props ONLY when they actually change, preserving unapplied state across opens
   useEffect(() => {
-    if (isOpen) {
-      setLocalType(activeType);
-      setLocalFav(showFavoritesOnly);
-      setLocalArea(manualArea);
-    }
-  }, [isOpen, activeType, showFavoritesOnly, manualArea]);
+    setLocalTypes(activeTypes);
+    setLocalArea(manualArea);
+  }, [activeTypes, manualArea]);
 
   const handleApply = () => {
     onApply({
-      type: localType,
-      favOnly: localFav,
+      types: localTypes,
       area: localArea,
     });
     onClose();
   };
 
   const handleReset = () => {
-    setLocalType("Tất cả");
-    setLocalFav(false);
+    setLocalTypes([]);
     setLocalArea(null);
   };
 
-  const isResetable =
-    localType !== "Tất cả" || localFav !== false || localArea !== null;
+  const isResetable = localTypes.length > 0 || localArea !== null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -100,18 +85,6 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
 
           <DialogHeader className="relative z-10 text-center items-center">
-            {/* hidden subtle reset action in header */}
-            <button
-              onClick={handleReset}
-              className={`absolute top-0 right-0 z-20 flex items-center gap-1.5 py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 shadow-sm border border-white/50 bg-white/40 backdrop-blur-md ${
-                isResetable
-                  ? "text-red-500 opacity-100 hover:bg-white active:scale-95 translate-x-4 -translate-y-4"
-                  : "text-gray-400 opacity-0 pointer-events-none"
-              }`}
-            >
-              <RotateCcw className="h-3 w-3" />
-              Xóa hết
-            </button>
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl shadow-primary/10">
               <Filter className="h-8 w-8 text-primary" />
             </div>
@@ -124,7 +97,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           </DialogHeader>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar p-8 pt-2 space-y-10 bg-white">
+        <div className="flex-1 overflow-y-auto p-8 pt-2 space-y-10 bg-white">
           {/* Location Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5 px-1">
@@ -135,7 +108,11 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 Khu vực
               </span>
             </div>
-            <Popover open={isAreaOpen} onOpenChange={setIsAreaOpen}>
+            <Popover
+              open={isAreaOpen}
+              onOpenChange={setIsAreaOpen}
+              modal={true}
+            >
               <PopoverTrigger asChild>
                 <button
                   className={`w-full flex items-center justify-between px-6 py-4 rounded-[1.25rem] text-sm font-bold transition-all border-2 ${
@@ -151,16 +128,23 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 </button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[calc(100vw-4rem)] max-w-[320px] p-0 rounded-3xl border-gray-100 shadow-2xl z-[60]"
+                className="w-[calc(100vw-4rem)] max-w-[320px] p-0 rounded-3xl border-gray-100 shadow-2xl z-[60] pointer-events-auto"
+                style={{ touchAction: "none" }}
                 align="center"
                 sideOffset={10}
+                onInteractOutside={() => {
+                  // Don't close or prevent interactions when it's outside
+                }}
               >
                 <Command>
                   <CommandInput
                     placeholder="Tìm Quận..."
                     className="h-14 text-sm border-none focus:ring-0"
                   />
-                  <CommandList className="max-h-[280px] p-2 no-scrollbar">
+                  <CommandList
+                    className="max-h-[280px] p-2 overflow-y-auto"
+                    style={{ touchAction: "pan-y" }}
+                  >
                     <CommandEmpty className="text-sm py-8 text-center text-muted-foreground">
                       Không tìm thấy khu vực này 📍
                     </CommandEmpty>
@@ -190,41 +174,6 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             </Popover>
           </div>
 
-          {/* Preferences Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2.5 px-1">
-              <div className="p-1.5 rounded-lg bg-pink-50 text-pink-500">
-                <Heart className="h-4 w-4" />
-              </div>
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">
-                Lựa chọn
-              </span>
-            </div>
-            <button
-              onClick={() => setLocalFav(!localFav)}
-              className={`w-full flex items-center justify-between px-6 py-4 rounded-[1.25rem] text-sm font-bold transition-all border-2 ${
-                localFav
-                  ? "bg-pink-50/30 border-pink-100 text-pink-500 shadow-sm"
-                  : "bg-gray-50/50 border-transparent text-gray-500 hover:bg-gray-100/50"
-              }`}
-            >
-              <span className="uppercase tracking-widest">
-                Danh sách quán ruột
-              </span>
-              <div
-                className={`h-6 w-11 rounded-full transition-all duration-500 flex items-center px-1 ${
-                  localFav ? "bg-pink-500" : "bg-gray-200"
-                }`}
-              >
-                <div
-                  className={`h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-300 ${
-                    localFav ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </div>
-            </button>
-          </div>
-
           {/* Categories Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
@@ -239,9 +188,9 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setLocalType("Tất cả")}
+                onClick={() => setLocalTypes([])}
                 className={`px-4 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 border-2 ${
-                  localType === "Tất cả"
+                  localTypes.length === 0
                     ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
                     : "bg-white border-gray-100 text-gray-400 hover:border-primary/30 hover:text-primary"
                 }`}
@@ -292,15 +241,21 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 return (
                   <button
                     key={type}
-                    onClick={() => setLocalType(type)}
-                    className={`px-4 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 border-2 truncate ${
-                      localType === type
+                    onClick={() => {
+                      if (localTypes.includes(type)) {
+                        setLocalTypes(localTypes.filter((t) => t !== type));
+                      } else {
+                        setLocalTypes([...localTypes, type]);
+                      }
+                    }}
+                    className={`px-4 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 border-2 truncate flex items-center justify-center gap-2 ${
+                      localTypes.includes(type)
                         ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
                         : "bg-white border-gray-100 text-gray-400 hover:border-primary/30 hover:text-primary"
                     }`}
                   >
-                    <span className="mr-2">{emoji}</span>
-                    {type}
+                    <span>{emoji}</span>
+                    <span className="truncate">{type}</span>
                   </button>
                 );
               })}
@@ -308,10 +263,22 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           </div>
         </div>
 
-        <div className="p-8 bg-gray-50/50 border-t border-gray-100 flex-none">
+        <div className="p-6 bg-white border-t border-gray-100 flex-none flex items-center gap-3">
+          <button
+            onClick={handleReset}
+            disabled={!isResetable}
+            className={`flex items-center justify-center gap-2 h-[60px] px-6 rounded-[1.25rem] font-black uppercase tracking-widest transition-all border-2 ${
+              isResetable
+                ? "bg-red-50 border-red-100 text-red-500 hover:bg-red-100 hover:border-red-200"
+                : "bg-gray-50 border-gray-100 text-gray-300 pointer-events-none"
+            }`}
+          >
+            <RotateCcw className="h-5 w-5" />
+            Xóa
+          </button>
           <Button
             onClick={handleApply}
-            className="w-full h-16 rounded-[1.25rem] bg-gradient-to-r from-primary to-orange-500 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 gap-3"
+            className="flex-1 h-[60px] rounded-[1.25rem] bg-gradient-to-r from-primary to-orange-500 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 gap-3"
           >
             <Search className="h-5 w-5" />
             Tìm kiếm ngay

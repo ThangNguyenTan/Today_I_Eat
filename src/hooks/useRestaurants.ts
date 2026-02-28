@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { doc, setDoc, collection, getDocs } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { User } from "firebase/auth";
 import type { Restaurant, MealTime, RestaurantsApiResponse } from "@/types";
@@ -16,21 +16,8 @@ export const useRestaurants = (user: User | null) => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [favoritePrefs, setFavoritePrefs] = useState<Record<string, boolean>>(
-    {},
-  );
   const ITEMS_PER_PAGE = 10;
   const abortControllerRef = useRef<AbortController | null>(null);
-
-  const applyFavorites = useCallback(
-    (list: Restaurant[], prefs: Record<string, boolean>) => {
-      return list.map((r) => {
-        const key = getRestaurantKey(r);
-        return prefs[key] !== undefined ? { ...r, isFavorite: prefs[key] } : r;
-      });
-    },
-    [],
-  );
 
   // ─── Fetch a page from the API ──────────────────────────────────────────────
   const fetchPage = useCallback(
@@ -42,7 +29,6 @@ export const useRestaurants = (user: User | null) => {
         district?: string;
         lat?: number;
         lon?: number;
-        favOnly?: boolean;
       } = {},
     ): Promise<RestaurantsApiResponse> => {
       if (abortControllerRef.current) {
@@ -73,43 +59,10 @@ export const useRestaurants = (user: User | null) => {
     [],
   );
 
-  // Initial cloud preference sync only (no auto-fetch)
+  // Initial component mount
   useEffect(() => {
-    let cancelled = false;
-
-    const loadPrefs = async () => {
-      if (!user) {
-        setFavoritePrefs({});
-        return;
-      }
-
-      try {
-        const fetchedPrefs: Record<string, boolean> = {};
-        const prefRef = collection(db, "users", user.uid, "preferences");
-        const prefSnap = await getDocs(prefRef);
-        prefSnap.forEach((d) => {
-          fetchedPrefs[d.id] = d.data().isFavorite;
-        });
-
-        if (!cancelled) {
-          setFavoritePrefs(fetchedPrefs);
-          // Re-apply favorites to existing restaurants if any
-          setRestaurants((prev) => applyFavorites(prev, fetchedPrefs));
-        }
-      } catch (err) {
-        console.error("Failed to sync preferences:", err);
-      } finally {
-        if (!cancelled) {
-          setLoading(false); // Done with initial preference check
-        }
-      }
-    };
-
-    loadPrefs();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.uid, applyFavorites]);
+    setLoading(false);
+  }, [user?.uid]);
 
   // ── Go to specific page ───────────────────────────────────────────────────
   const goToPage = useCallback(
@@ -121,13 +74,12 @@ export const useRestaurants = (user: User | null) => {
         district?: string;
         lat?: number;
         lon?: number;
-        favOnly?: boolean;
       } = {},
     ) => {
       setLoading(true);
       try {
         const data = await fetchPage(page, filters);
-        setRestaurants(applyFavorites(data.restaurants, favoritePrefs));
+        setRestaurants(data.restaurants);
         setCurrentPage(page);
         setHasMore(page * ITEMS_PER_PAGE < data.total);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -138,7 +90,7 @@ export const useRestaurants = (user: User | null) => {
         setLoading(false);
       }
     },
-    [fetchPage, applyFavorites, favoritePrefs],
+    [fetchPage],
   );
 
   // ── Search / filter (resets to page 1) ───────────────────────────────────
@@ -150,13 +102,12 @@ export const useRestaurants = (user: User | null) => {
         district?: string;
         lat?: number;
         lon?: number;
-        favOnly?: boolean;
       } = {},
     ) => {
       setLoading(true);
       try {
         const data = await fetchPage(1, filters);
-        setRestaurants(applyFavorites(data.restaurants, favoritePrefs));
+        setRestaurants(data.restaurants);
         setTotalCount(data.total);
         setCurrentPage(1);
         setHasMore(data.total > data.restaurants.length);
@@ -167,7 +118,7 @@ export const useRestaurants = (user: User | null) => {
         setLoading(false);
       }
     },
-    [fetchPage, applyFavorites, favoritePrefs],
+    [fetchPage],
   );
 
   // ── Add restaurant (user-generated, still stored in Firestore) ───────────
@@ -221,38 +172,6 @@ export const useRestaurants = (user: User | null) => {
     [restaurants],
   );
 
-  // ── Toggle favorite (still stored in Firestore) ───────────────────────────
-  const toggleFavorite = async (id: string) => {
-    const restaurant = restaurants.find((r) => r.id === id);
-    if (!restaurant) return;
-    const newStatus = !restaurant.isFavorite;
-
-    setRestaurants((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isFavorite: newStatus } : r)),
-    );
-
-    const key = getRestaurantKey(restaurant);
-    setFavoritePrefs((prev) => ({ ...prev, [key]: newStatus }));
-
-    if (user) {
-      try {
-        const key = getRestaurantKey(restaurant);
-        await setDoc(
-          doc(db, "users", user.uid, "preferences", key),
-          {
-            name: restaurant.name,
-            location: restaurant.location,
-            isFavorite: newStatus,
-            updatedAt: Date.now(),
-          },
-          { merge: true },
-        );
-      } catch (error) {
-        console.error("Failed to sync favorite to Firestore:", error);
-      }
-    }
-  };
-
   return {
     restaurants,
     totalCount,
@@ -262,7 +181,6 @@ export const useRestaurants = (user: User | null) => {
     totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
     addRestaurant,
     getRandomRestaurant,
-    toggleFavorite,
     goToPage,
     search,
   };

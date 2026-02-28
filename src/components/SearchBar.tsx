@@ -72,9 +72,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className="relative group z-30 w-full" ref={containerRef}>
-      {/* Gradient border effect */}
+      {/* Soft ambient glow effect */}
       <div
-        className={`absolute -inset-0.5 rounded-[2.2rem] bg-gradient-to-r from-primary/50 via-orange-400/50 to-amber-500/50 blur transition duration-500 ${isFocused ? "opacity-100 blur-md" : "opacity-20 group-hover:opacity-100"}`}
+        className={`absolute inset-0 rounded-[2.2rem] bg-gradient-to-r from-primary/30 via-orange-400/30 to-amber-500/30 blur-2xl transition-all duration-500 ${isFocused ? "opacity-100 scale-105" : "opacity-0 group-hover:opacity-60 group-hover:scale-105"}`}
       />
 
       <div
@@ -96,7 +96,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onFocus={() => setIsFocused(true)}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full h-16 pl-4 pr-14 rounded-[2rem] bg-transparent border-0 focus:ring-0 text-base font-medium placeholder:text-muted-foreground/50"
+          className="w-full h-16 pl-4 pr-14 rounded-[2rem] bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base font-medium placeholder:text-muted-foreground/50"
         />
         {query && (
           <button

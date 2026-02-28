@@ -5,7 +5,6 @@ import {
   Clock,
   Star,
   Share2,
-  Heart,
   Navigation,
   Utensils,
   Phone,
@@ -23,14 +22,12 @@ interface RestaurantPocketViewProps {
   restaurant: Restaurant | null;
   isOpen: boolean;
   onClose: () => void;
-  onToggleFavorite?: (id: string) => void;
 }
 
 export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
   restaurant: r,
   isOpen,
   onClose,
-  onToggleFavorite,
 }) => {
   if (!r) return null;
 
@@ -87,19 +84,6 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
               className="p-3 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/20 text-white shadow-2xl hover:bg-white hover:text-gray-900 transition-all active:scale-90"
             >
               <Share2 className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => onToggleFavorite?.(r.id)}
-              className={cn(
-                "p-3 rounded-2xl backdrop-blur-xl border shadow-2xl transition-all active:scale-90",
-                r.isFavorite
-                  ? "bg-red-500 border-red-400 text-white"
-                  : "bg-white/20 border-white/20 text-white hover:bg-white hover:text-red-500",
-              )}
-            >
-              <Heart
-                className={cn("h-5 w-5", r.isFavorite && "fill-current")}
-              />
             </button>
           </div>
         </div>

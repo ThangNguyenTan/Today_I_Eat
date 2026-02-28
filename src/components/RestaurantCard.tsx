@@ -1,14 +1,6 @@
 import type { Restaurant } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import {
-  MapPin,
-  ExternalLink,
-  Quote,
-  Heart,
-  Star,
-  Tag,
-  Clock,
-} from "lucide-react";
+import { MapPin, ExternalLink, Quote, Star, Tag, Clock } from "lucide-react";
 import {
   getGoogleMapsUrl,
   formatOperatingHours,
@@ -20,13 +12,11 @@ import { LazyImage } from "./ui/LazyImage";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
-  onToggleFavorite?: () => void;
   onClick?: () => void;
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   restaurant,
-  onToggleFavorite,
   onClick,
 }) => {
   const emoji = getEmoji(restaurant.type);
@@ -91,28 +81,6 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               </div>
             )}
           </div>
-
-          {/* Favorite button overlaid on image */}
-          {onToggleFavorite && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onToggleFavorite();
-              }}
-              className={`absolute top-4 right-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 hover:scale-125 active:scale-90 shadow-xl ${
-                restaurant.isFavorite
-                  ? "bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-red-500/40"
-                  : "bg-white/80 text-gray-500 hover:text-red-500"
-              }`}
-            >
-              <Heart
-                className={`h-4.5 w-4.5 ${restaurant.isFavorite ? "fill-current" : ""}`}
-              />
-              {restaurant.isFavorite && (
-                <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
-              )}
-            </button>
-          )}
         </div>
       ) : (
         /* Premium gradient placeholder for no-image restaurants */
@@ -147,28 +115,6 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               </div>
             )}
           </div>
-
-          {/* Favorite button over placeholder */}
-          {onToggleFavorite && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onToggleFavorite();
-              }}
-              className={`absolute top-4 right-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 hover:scale-125 active:scale-90 shadow-xl ${
-                restaurant.isFavorite
-                  ? "bg-gradient-to-br from-red-500 to-pink-500 text-white shadow-red-500/40"
-                  : "bg-white/90 text-gray-500 hover:text-red-500"
-              }`}
-            >
-              <Heart
-                className={`h-4.5 w-4.5 ${restaurant.isFavorite ? "fill-current" : ""}`}
-              />
-              {restaurant.isFavorite && (
-                <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
-              )}
-            </button>
-          )}
 
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(249,115,22,0.1),transparent)]" />
         </div>

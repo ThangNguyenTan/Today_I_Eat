@@ -305,7 +305,13 @@ app.get("/api/restaurants", async (req, res) => {
     const currentTotalMinutes = vnTime.getHours() * 60 + vnTime.getMinutes();
 
     // 1. Prepare Filter Params
-    const type = req.query.type?.toLowerCase();
+    const typeQuery = req.query.type?.toLowerCase();
+    const typesArr = typeQuery
+      ? typeQuery
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : null;
     const district = req.query.district?.toLowerCase();
     const q = req.query.q?.toLowerCase();
     const lat = parseFloat(req.query.lat);
@@ -329,7 +335,12 @@ app.get("/api/restaurants", async (req, res) => {
         continue;
 
       // Filter matches (using pre-calculated lowercased keys)
-      if (type && !r._keywordLower.includes(type)) continue;
+      if (typesArr && typesArr.length > 0) {
+        const hasMatch = typesArr.some(
+          (t) => r._keywordLower.includes(t) || t.includes(r._keywordLower),
+        );
+        if (!hasMatch) continue;
+      }
 
       // For district and q, we check against the combined searchKey
       if (district && !r.location.toLowerCase().includes(district)) continue;
@@ -379,7 +390,13 @@ app.get("/api/restaurants/nearby", async (req, res) => {
   const lat = parseFloat(req.query.lat);
   const lon = parseFloat(req.query.lon);
   const radiusKm = parseFloat(req.query.radiusKm ?? "5");
-  const type = req.query.type?.toLowerCase() || "";
+  const typeQuery = req.query.type?.toLowerCase() || "";
+  const typesArr = typeQuery
+    ? typeQuery
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : null;
   const limit = Math.min(
     50,
     Math.max(1, parseInt(req.query.limit ?? "20", 10)),
@@ -404,9 +421,12 @@ app.get("/api/restaurants/nearby", async (req, res) => {
         if (EXCLUDE_DRINKS.includes(r.type)) return false;
         if (r.operating && !isCurrentlyOpen(r.operating, currentTotalMinutes))
           return false;
-        if (type) {
+        if (typesArr && typesArr.length > 0) {
           const kw = r.keyword.toLowerCase();
-          if (!kw.includes(type) && !type.includes(kw)) return false;
+          const hasMatch = typesArr.some(
+            (t) => kw.includes(t) || t.includes(kw),
+          );
+          if (!hasMatch) return false;
         }
         if (!r.position?.latitude || !r.position?.longitude) return false;
         return true;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRestaurants } from "@/hooks/useRestaurants";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -19,7 +19,7 @@ import { PersonalityQuiz } from "@/components/PersonalityQuiz";
 import { RestaurantPocketView } from "@/components/RestaurantPocketView";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { motion, AnimatePresence } from "framer-motion";
-import type { FoodType, FoodiePersona, Restaurant } from "@/types";
+import type { FoodiePersona, Restaurant } from "@/types";
 
 // Layout & Section Components
 import { Header } from "@/components/layout/Header";
@@ -44,7 +44,6 @@ function App() {
     currentPage,
     totalPages,
     addRestaurant,
-    toggleFavorite,
     goToPage,
     search,
   } = useRestaurants(user);
@@ -69,8 +68,7 @@ function App() {
   // Functional State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
-  const [activeType, setActiveType] = useState<FoodType | "Tất cả">("Tất cả");
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [manualArea, setManualArea] = useState<string | null>(null);
@@ -92,37 +90,34 @@ function App() {
   const triggerSearch = useCallback(
     (
       overrides: {
-        type?: FoodType | "Tất cả";
+        types?: string[];
         q?: string;
         district?: string;
-        favOnly?: boolean;
       } = {},
     ) => {
-      const type = overrides.type ?? activeType;
+      const types =
+        overrides.types !== undefined ? overrides.types : activeTypes;
       const q = overrides.q ?? searchQuery;
       const district =
         overrides.district ??
         (showNearbyOnly ? (manualArea ?? undefined) : undefined);
-      const favOnly = overrides.favOnly ?? showFavoritesOnly;
 
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
       searchTimeoutRef.current = setTimeout(() => {
         search({
-          type: type !== "Tất cả" ? type : undefined,
+          type: types.length > 0 ? types.join(",") : undefined,
           q: q || undefined,
           district: district || undefined,
           lat: isSortingByDistance ? userLocation?.lat : undefined,
           lon: isSortingByDistance ? userLocation?.lon : undefined,
-          favOnly: favOnly,
         });
       }, 300);
     },
     [
-      activeType,
+      activeTypes,
       searchQuery,
       showNearbyOnly,
       manualArea,
-      showFavoritesOnly,
       search,
       isSortingByDistance,
       userLocation,
@@ -176,8 +171,7 @@ function App() {
 
   const handleRefresh = useCallback(async () => {
     setSearchQuery("");
-    setActiveType("Tất cả");
-    setShowFavoritesOnly(false);
+    setActiveTypes([]);
     setShowNearbyOnly(false);
     setManualArea(null);
 
@@ -210,28 +204,20 @@ function App() {
   }, [isSortingByDistance, userLocation, getLocation, permissionStatus, info]);
 
   const handleApplyFilters = (filters: {
-    type: FoodType | "Tất cả";
-    favOnly: boolean;
+    types: string[];
     area: string | null;
   }) => {
-    setActiveType(filters.type);
-    setShowFavoritesOnly(filters.favOnly);
+    setActiveTypes(filters.types);
     setManualArea(filters.area);
     setShowNearbyOnly(!!filters.area);
 
     triggerSearch({
-      type: filters.type,
-      favOnly: filters.favOnly,
+      types: filters.types,
       district: filters.area || undefined,
     });
   };
 
   // ─── Render Helpers ────────────────────────────────────────────────────────
-
-  const displayedRestaurants = useMemo(() => {
-    if (showFavoritesOnly) return restaurants.filter((r) => r.isFavorite);
-    return restaurants;
-  }, [restaurants, showFavoritesOnly]);
 
   if (authLoading) {
     return (
@@ -317,7 +303,7 @@ function App() {
           apiLoading={apiLoading}
           geoLoading={geoLoading}
           totalCount={totalCount}
-          activeType={activeType}
+          activeTypes={activeTypes}
           isFilterOpen={isFilterOpen}
           isSortingByDistance={isSortingByDistance}
           onOpenNearby={() => setIsNearbyModalOpen(true)}
@@ -341,8 +327,8 @@ function App() {
                     <RestaurantCardSkeleton />
                   </motion.div>
                 ))
-              ) : displayedRestaurants.length > 0 ? (
-                displayedRestaurants.map((res, i) => (
+              ) : restaurants.length > 0 ? (
+                restaurants.map((res, i) => (
                   <motion.div
                     key={res.id}
                     layout
@@ -353,14 +339,6 @@ function App() {
                   >
                     <RestaurantCard
                       restaurant={res}
-                      onToggleFavorite={() => {
-                        toggleFavorite(res.id);
-                        if (!res.isFavorite) {
-                          success(`Đã thêm "${res.name}" vào quán ruột! ❤️`);
-                        } else {
-                          info(`Đã xóa "${res.name}" khỏi quán ruột.`);
-                        }
-                      }}
                       onClick={() => setSelectedRestaurant(res)}
                     />
                   </motion.div>
@@ -380,14 +358,14 @@ function App() {
             totalPages={totalPages}
             onPageChange={(page) => {
               goToPage(page, {
-                type: activeType !== "Tất cả" ? activeType : undefined,
+                type:
+                  activeTypes.length > 0 ? activeTypes.join(",") : undefined,
                 q: searchQuery || undefined,
                 district: showNearbyOnly
                   ? (manualArea ?? undefined)
                   : undefined,
                 lat: isSortingByDistance ? userLocation?.lat : undefined,
                 lon: isSortingByDistance ? userLocation?.lon : undefined,
-                favOnly: showFavoritesOnly,
               });
             }}
             isLoading={apiLoading}
@@ -437,7 +415,6 @@ function App() {
         restaurant={selectedRestaurant}
         isOpen={!!selectedRestaurant}
         onClose={() => setSelectedRestaurant(null)}
-        onToggleFavorite={toggleFavorite}
       />
 
       <NearbyModal
@@ -452,8 +429,7 @@ function App() {
       <FilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        activeType={activeType}
-        showFavoritesOnly={showFavoritesOnly}
+        activeTypes={activeTypes}
         manualArea={manualArea}
         onApply={handleApplyFilters}
       />

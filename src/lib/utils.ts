@@ -64,7 +64,7 @@ export const FOOD_EMOJIS: Record<string, string> = {
   "bún bò huế": "🍜",
   "cơm tấm": "🍚",
   "cao lầu": "🍜",
-  "bánh bao": " dumpling",
+  "bánh bao": "🥟",
   xôi: "🍚",
   "bún riêu": "🍜",
   "bò kho": "🥘",

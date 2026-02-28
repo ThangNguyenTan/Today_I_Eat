@@ -279,7 +279,9 @@
   color: inherit;
 }
 
-/* Focus visible styles */
-:focus-visible {
-  @apply outline-none ring-2 ring-primary ring-offset-2;
+@layer base {
+  /* Focus visible styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
 }

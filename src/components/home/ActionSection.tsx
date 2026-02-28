@@ -9,7 +9,7 @@ interface ActionSectionProps {
   apiLoading: boolean;
   geoLoading: boolean;
   totalCount: number;
-  activeType: string;
+  activeTypes: string[];
   isFilterOpen: boolean;
   isSortingByDistance: boolean;
   onOpenNearby: () => void;
@@ -23,7 +23,7 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
   apiLoading,
   geoLoading,
   totalCount,
-  activeType,
+  activeTypes,
   isFilterOpen,
   isSortingByDistance,
   onOpenNearby,
@@ -45,7 +45,7 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
             <Info className="h-3.5 w-3.5 text-primary/60" />
             {apiLoading || geoLoading
               ? "Đang tải..."
-              : searchQuery || activeType !== "Tất cả"
+              : searchQuery || activeTypes.length > 0
                 ? `Tìm thấy ${totalCount.toLocaleString()} địa điểm`
                 : `Có ${totalCount.toLocaleString()} địa điểm`}
           </p>
