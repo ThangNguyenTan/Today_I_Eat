@@ -1,5 +1,5 @@
 import React from "react";
-import { Info, Navigation, MapPin, ListFilter } from "lucide-react";
+import { Info, Navigation, MapPin, ListFilter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/SearchBar";
 
@@ -63,11 +63,24 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
           <Button
             variant="ghost"
             size="sm"
+            disabled={geoLoading}
             onClick={onToggleDistanceSort}
-            className={`rounded-xl gap-1.5 font-bold text-[10px] uppercase tracking-widest transition-all h-9 ${isSortingByDistance ? "bg-amber-50 text-amber-600 shadow-sm ring-1 ring-amber-200" : "text-amber-600 hover:bg-amber-50"}`}
+            className={`rounded-xl gap-1.5 font-bold text-[10px] uppercase tracking-widest transition-all h-9 ${
+              isSortingByDistance || geoLoading
+                ? "bg-amber-50 text-amber-600 shadow-sm ring-1 ring-amber-200"
+                : "text-amber-600 hover:bg-amber-50"
+            }`}
           >
-            <MapPin className="h-3.5 w-3.5" />
-            {isSortingByDistance ? "Đang sắp xếp" : "Sắp xếp"}
+            {geoLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <MapPin className="h-3.5 w-3.5" />
+            )}
+            {geoLoading
+              ? "Đang tìm..."
+              : isSortingByDistance
+                ? "Bỏ sắp xếp"
+                : "Sắp xếp"}
           </Button>
           <Button
             variant="ghost"

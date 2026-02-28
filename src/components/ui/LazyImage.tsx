@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -13,17 +13,6 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [blur, setBlur] = useState(true);
-
-  useEffect(() => {
-    if (!src) return;
-    const img = new Image();
-    img.src = src;
-    img.onload = () => {
-      setIsLoaded(true);
-      setTimeout(() => setBlur(false), 300);
-    };
-  }, [src]);
 
   return (
     <div
@@ -32,10 +21,13 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       <img
         src={src}
         alt={alt}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
         className={cn(
-          "transition-all duration-700 ease-in-out",
-          blur ? "scale-110 blur-lg grayscale" : "scale-100 blur-0 grayscale-0",
-          !isLoaded && "opacity-0",
+          "transition-all duration-700 ease-in-out w-full h-full object-cover",
+          !isLoaded
+            ? "scale-110 blur-xl grayscale opacity-0"
+            : "scale-100 blur-0 grayscale-0 opacity-100",
           className,
         )}
         {...props}

@@ -414,7 +414,6 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     "#A78BFA",
   ];
   const isSpinning = phase === "spinning";
-  const isDone = phase === "done";
 
   if (!isOpen) return null;
 
@@ -422,7 +421,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     <div
       className={cn(
         "fixed inset-0 z-50 flex justify-center p-0 sm:p-4 overflow-hidden transition-all duration-500",
-        isDone ? "items-end sm:items-center" : "items-center",
+        !isSpinning ? "items-end sm:items-center" : "items-center",
       )}
     >
       {/* Backdrop */}
@@ -434,23 +433,31 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
       {/* Modal Content container */}
       <div
         className={cn(
-          "relative bg-white shadow-2xl flex flex-col max-h-[92dvh] transition-all duration-500 overflow-hidden",
-          isDone
-            ? "w-full max-w-md rounded-t-[2.5rem] sm:rounded-[3rem] animate-in slide-in-from-bottom-10 sm:zoom-in-95"
-            : "w-[85vw] max-w-md rounded-[3rem] animate-in zoom-in-95",
+          "relative bg-white shadow-2xl flex flex-col transition-all duration-500 overflow-hidden",
+          !isSpinning
+            ? "w-full max-w-md h-[90vh] rounded-t-[2.5rem] sm:rounded-[3rem] animate-in slide-in-from-bottom-10 sm:zoom-in-95"
+            : "w-[85vw] max-w-md max-h-[92dvh] rounded-[3rem] animate-in zoom-in-95",
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with gradient and animations */}
         <div className="bg-gradient-to-br from-primary via-orange-500 to-amber-500 p-6 pt-10 text-center text-white relative flex-none overflow-hidden">
-          {/* Close Button */}
+          {/* Close & Repeat Buttons */}
           {!isSpinning && (
-            <button
-              onClick={onClose}
-              className="absolute top-4 left-4 z-50 p-3 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all hover:scale-105 active:scale-90"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
+            <>
+              <button
+                onClick={onClose}
+                className="absolute top-4 left-4 z-50 p-3 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all hover:scale-105 active:scale-90"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <button
+                onClick={startSpinning}
+                className="absolute top-4 right-4 z-50 p-3 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all hover:scale-105 active:scale-90"
+              >
+                <RotateCw className="h-5 w-5" />
+              </button>
+            </>
           )}
 
           <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
