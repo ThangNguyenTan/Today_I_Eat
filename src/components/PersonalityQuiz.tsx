@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Heart,
   UtensilsCrossed,
+  ArrowLeft,
 } from "lucide-react";
 import { FOOD_TYPES } from "@/constants";
 import type {
@@ -108,10 +109,20 @@ export const PersonalityQuiz: React.FC<PersonalityQuizProps> = ({
         }
       }}
     >
-      <DialogContent className="fixed left-[50%] top-[50%] z-50 w-[92vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] shadow-2xl h-[80vh] flex flex-col">
+      <DialogContent className="fixed left-[50%] top-[50%] z-50 w-[92vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] shadow-2xl h-[80vh] flex flex-col [&>button]:hidden">
         <DialogDescription className="sr-only">
           Khám phá phong cách ẩm thực của bạn qua bài trắc nghiệm ngắn
         </DialogDescription>
+
+        {/* Global Back/Close Button */}
+        {step !== "result" && (
+          <button
+            onClick={onClose}
+            className="absolute top-6 left-6 z-[60] p-3 rounded-2xl bg-white/80 hover:bg-white text-gray-500 shadow-sm border border-gray-100 transition-all active:scale-95"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
 
         {/* Progress Bar (Visible after intro) */}
         {currentStepNumber > 0 && currentStepNumber <= totalSteps && (

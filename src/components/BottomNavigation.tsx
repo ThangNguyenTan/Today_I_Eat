@@ -15,6 +15,7 @@ interface BottomNavigationProps {
   onAdd: () => void;
   isFilterActive: boolean;
   isFormOpen: boolean;
+  isNearbyActive?: boolean;
 }
 
 export function BottomNavigation({
@@ -25,6 +26,7 @@ export function BottomNavigation({
   onAdd,
   isFilterActive,
   isFormOpen,
+  isNearbyActive,
 }: BottomNavigationProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
@@ -35,9 +37,11 @@ export function BottomNavigation({
         {/* Home */}
         <button
           onClick={onHome}
-          className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-primary transition-colors duration-300 flex-1"
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${!isFormOpen && !isNearbyActive && !isFilterActive ? "text-primary" : "text-gray-400 hover:text-primary"}`}
         >
-          <div className="p-1 rounded-xl group-active:bg-gray-100 transition-colors">
+          <div
+            className={`p-1 rounded-xl transition-colors ${!isFormOpen && !isNearbyActive && !isFilterActive ? "bg-primary/10" : "group-active:bg-gray-100"}`}
+          >
             <Home className="h-5 w-5" />
           </div>
           <span className="text-[9px] font-black uppercase tracking-tighter">
@@ -48,9 +52,11 @@ export function BottomNavigation({
         {/* Nearby */}
         <button
           onClick={onNearby}
-          className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-emerald-500 transition-colors duration-300 flex-1"
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${isNearbyActive ? "text-emerald-500" : "text-gray-400 hover:text-emerald-500"}`}
         >
-          <div className="p-1 rounded-xl group-active:bg-emerald-50 transition-colors">
+          <div
+            className={`p-1 rounded-xl transition-colors ${isNearbyActive ? "bg-emerald-50" : "group-active:bg-emerald-50"}`}
+          >
             <MapPin className="h-5 w-5" />
           </div>
           <span className="text-[9px] font-black uppercase tracking-tighter">

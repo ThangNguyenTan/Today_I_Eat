@@ -71,17 +71,17 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
         </DialogDescription>
 
         {/* Top Action Bar (Floating) */}
-        <div className="absolute top-0 left-0 right-0 z-30 px-6 py-8 flex items-center justify-between pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 z-[60] px-6 py-6 flex items-center justify-between pointer-events-none transition-all duration-300">
           <button
             onClick={onClose}
-            className="p-3 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/20 text-white shadow-2xl pointer-events-auto hover:bg-white hover:text-gray-900 transition-all active:scale-90"
+            className="p-3.5 rounded-[1.25rem] bg-white/80 hover:bg-white backdrop-blur-md border border-white/50 text-gray-900 shadow-xl pointer-events-auto transition-all active:scale-90 hover:scale-105"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex gap-2 pointer-events-auto">
             <button
               onClick={handleShare}
-              className="p-3 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/20 text-white shadow-2xl hover:bg-white hover:text-gray-900 transition-all active:scale-90"
+              className="p-3.5 rounded-[1.25rem] bg-white/80 hover:bg-white backdrop-blur-md border border-white/50 text-gray-900 shadow-xl transition-all active:scale-90 hover:scale-105"
             >
               <Share2 className="h-5 w-5" />
             </button>

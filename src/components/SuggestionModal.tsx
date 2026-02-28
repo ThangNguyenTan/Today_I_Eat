@@ -1,11 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "./ui/dialog";
 import { Button } from "./ui/button";
 import {
   Sparkles,
@@ -13,13 +6,13 @@ import {
   RefreshCw,
   Loader2,
   RotateCw,
-  PartyPopper,
   AlertCircle,
   Navigation,
   Star,
   MapPin,
   Clock,
   ExternalLink,
+  ArrowLeft,
 } from "lucide-react";
 import { FOOD_TYPES } from "@/constants";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -40,13 +33,15 @@ interface SuggestionModalProps {
   isOpen: boolean;
   onClose: () => void;
   persona?: FoodiePersona;
+  onSelectRestaurant?: (r: NearbyRestaurant) => void;
 }
 
 // ─── SuggestionCard ────────────────────────────────────────────────────────────
 const SuggestionCard: React.FC<{
   restaurant: NearbyRestaurant;
   rank: number;
-}> = ({ restaurant: r, rank }) => {
+  onClick?: () => void;
+}> = ({ restaurant: r, rank, onClick }) => {
   const emoji = getEmoji(r.type);
   const distColor = getDistanceColor(r.distanceKm);
   const hours = formatOperatingHours(
@@ -59,90 +54,88 @@ const SuggestionCard: React.FC<{
   const mainHighlight = highlights[0];
 
   return (
-    <div className="group relative bg-white rounded-[2.5rem] border border-gray-100 p-5 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 overflow-hidden">
+    <div
+      onClick={onClick}
+      className="group relative bg-white rounded-[2rem] border border-gray-100 p-4 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.98]"
+    >
       {/* Premium Glow Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      {/* Rank Badge */}
-      <div className="absolute top-0 right-0 p-4">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-orange-500 text-white font-black text-xs flex items-center justify-center shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform duration-500">
-          #{rank}
-        </div>
-      </div>
+      <div className="relative z-10 flex flex-col gap-4">
+        <div className="flex gap-4 items-start">
+          {/* Visual Content */}
+          <div className="relative flex-none">
+            {r.thumbnailUrl ? (
+              <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md bg-gray-50 border-2 border-white">
+                <LazyImage
+                  src={r.thumbnailUrl}
+                  alt={r.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              </div>
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/10 to-orange-500/10 flex items-center justify-center text-3xl shadow-inner border-2 border-white">
+                {emoji}
+              </div>
+            )}
 
-      <div className="relative z-10 flex flex-col sm:flex-row gap-5">
-        {/* Visual Content */}
-        <div className="relative flex-none mx-auto sm:mx-0">
-          {r.thumbnailUrl ? (
-            <div className="w-32 h-32 rounded-[2rem] overflow-hidden shadow-xl bg-gray-50 border-4 border-white">
-              <LazyImage
-                src={r.thumbnailUrl}
-                alt={r.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
+            <div className="absolute -top-2 -left-2 w-7 h-7 rounded-lg bg-gray-900 text-white font-black text-[10px] flex items-center justify-center shadow-lg border-2 border-white transform -rotate-12 group-hover:rotate-0 transition-transform">
+              #{rank}
             </div>
-          ) : (
-            <div className="w-32 h-32 rounded-[2rem] bg-gradient-to-br from-primary/10 to-orange-500/10 flex items-center justify-center text-5xl shadow-inner border-4 border-white">
-              {emoji}
-            </div>
-          )}
+          </div>
 
-          {r.rating && r.rating.avg > 0 && (
-            <div className="absolute -bottom-2 -right-2 bg-white shadow-xl rounded-2xl px-3 py-1.5 border border-gray-100 flex items-center gap-1.5">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 font-black" />
-              <span className="text-xs font-black text-gray-800">
-                {r.rating.avg.toFixed(1)}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Text Content */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="mb-3">
-            <h3 className="font-black text-xl text-gray-900 leading-tight group-hover:text-primary transition-colors mb-2">
+          {/* Text Content */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-black text-lg text-gray-900 leading-tight group-hover:text-primary transition-colors mb-1 truncate">
               {r.name}
             </h3>
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.15em] bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
+
+            <div className="flex flex-wrap gap-2 items-center mb-2">
+              <span className="text-[9px] font-black text-primary uppercase tracking-wider bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
                 {r.type}
               </span>
               <span
                 className={cn(
-                  "text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-widest",
+                  "text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider",
                   distColor,
                 )}
               >
                 {formatDistance(r.distanceKm)}
               </span>
+              {r.rating && r.rating.avg > 0 && (
+                <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                  <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                  <span className="text-[9px] font-black text-amber-700">
+                    {r.rating.avg.toFixed(1)}
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* AI Highlight / Why this one? */}
-          {mainHighlight && (
-            <div className="mb-4 p-3 rounded-2xl bg-gray-50 border border-gray-100/50 relative group/highlight">
-              <p className="text-[11px] font-bold text-gray-600 leading-relaxed italic pr-2">
+            {/* AI Highlight / Why this one? */}
+            {mainHighlight && (
+              <p className="text-[10px] font-bold text-gray-500 leading-relaxed italic line-clamp-2">
                 "{mainHighlight}"
               </p>
-            </div>
-          )}
-
-          <div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-gray-50">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 text-primary/60" />
-              <p className="text-[11px] font-bold line-clamp-1">{r.location}</p>
-            </div>
-            {hours && (
-              <div className="flex items-center gap-1.5 text-emerald-600">
-                <Clock className="h-3.5 w-3.5" />
-                <p className="text-[11px] font-black">{hours}</p>
-              </div>
             )}
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex items-center justify-center sm:pl-2">
+        {/* Footer info & Action */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-gray-50">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <MapPin className="h-3 w-3 text-primary/60 flex-shrink-0" />
+              <p className="text-[10px] font-bold line-clamp-1">{r.location}</p>
+            </div>
+            {hours && (
+              <div className="flex items-center gap-1.5 text-emerald-600">
+                <Clock className="h-3 w-3 flex-shrink-0" />
+                <p className="text-[10px] font-black">{hours}</p>
+              </div>
+            )}
+          </div>
+
           <a
             href={getGoogleMapsUrl(
               r.name,
@@ -152,12 +145,13 @@ const SuggestionCard: React.FC<{
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-900 text-white hover:bg-primary transition-all shadow-lg hover:shadow-primary/30 group/btn"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-primary transition-all shadow-md hover:shadow-primary/20 group/btn"
           >
-            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">
-              Chỉ đường
+            <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+              Xem đường đi
             </span>
-            <ExternalLink className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+            <ExternalLink className="h-3 w-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </a>
         </div>
       </div>
@@ -190,6 +184,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   isOpen,
   onClose,
   persona,
+  onSelectRestaurant,
 }) => {
   const {
     latitude,
@@ -419,22 +414,45 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     "#A78BFA",
   ];
   const isSpinning = phase === "spinning";
+  const isDone = phase === "done";
+
+  if (!isOpen) return null;
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => !open && !isSpinning && onClose()}
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex justify-center p-0 sm:p-4 overflow-hidden transition-all duration-500",
+        isDone ? "items-end sm:items-center" : "items-center",
+      )}
     >
-      <DialogContent
-        aria-describedby={undefined}
-        className="fixed left-[50%] top-[50%] z-50 w-[92vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl max-h-[92dvh] flex flex-col"
-      >
-        <DialogDescription className="sr-only">
-          Kết quả gợi ý món ăn dành cho bạn
-        </DialogDescription>
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-500"
+        onClick={() => !isSpinning && onClose()}
+      />
 
+      {/* Modal Content container */}
+      <div
+        className={cn(
+          "relative bg-white shadow-2xl flex flex-col max-h-[92dvh] transition-all duration-500 overflow-hidden",
+          isDone
+            ? "w-full max-w-md rounded-t-[2.5rem] sm:rounded-[3rem] animate-in slide-in-from-bottom-10 sm:zoom-in-95"
+            : "w-[85vw] max-w-md rounded-[3rem] animate-in zoom-in-95",
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header with gradient and animations */}
         <div className="bg-gradient-to-br from-primary via-orange-500 to-amber-500 p-6 pt-10 text-center text-white relative flex-none overflow-hidden">
+          {/* Close Button */}
+          {!isSpinning && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 left-4 z-50 p-3 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/20 transition-all hover:scale-105 active:scale-90"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+
           <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
             <div
               className="absolute top-4 left-4 w-20 h-20 border-4 border-white/30 rounded-full animate-ping"
@@ -468,25 +486,16 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             </div>
           )}
 
-          <DialogHeader className="mb-4 relative z-10">
-            <div
-              className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] backdrop-blur-md shadow-2xl shadow-black/20 transition-all duration-500 ${isSpinning ? "bg-white/20 animate-pulse" : "bg-white/30"}`}
-            >
-              {isSpinning ? (
-                <RotateCw className="h-10 w-10 text-white animate-spin" />
-              ) : (
-                <PartyPopper className="h-10 w-10 text-white animate-bounce" />
-              )}
-            </div>
-            <DialogTitle
-              className={`text-3xl font-black tracking-tight text-white mb-2 transition-all duration-500 ${isSpinning ? "" : "animate-in zoom-in-95"}`}
+          <div className="mb-4 relative z-10 space-y-2">
+            <h1
+              className={`text-3xl font-black tracking-tight text-white transition-all duration-500 ${isSpinning ? "" : "animate-in zoom-in-95"}`}
             >
               {isSpinning ? "Đang quay..." : "🎉 Tìm thấy rồi!"}
-            </DialogTitle>
+            </h1>
             <p className="text-white/80 text-[11px] font-bold uppercase tracking-[0.25em]">
               {isSpinning ? "Đang tìm món ngon..." : "Gợi ý hoàn hảo cho bạn"}
             </p>
-          </DialogHeader>
+          </div>
 
           <div
             className={`transition-all duration-500 transform ${isSpinning ? "scale-95" : "scale-100"}`}
@@ -572,6 +581,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                           key={r.id}
                           restaurant={r}
                           rank={idx + 1}
+                          onClick={() => onSelectRestaurant?.(r)}
                         />
                       ))}
                     </div>
@@ -579,9 +589,11 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                     {hasMore ? (
                       <div
                         ref={sentinelRef}
-                        className="py-6 flex justify-center"
+                        className="py-6 flex justify-center min-h-[64px]"
                       >
-                        <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                        {isLoadingMore && (
+                          <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                        )}
                       </div>
                     ) : (
                       <div className="pt-2 pb-4 text-center">
@@ -684,7 +696,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             )}
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };

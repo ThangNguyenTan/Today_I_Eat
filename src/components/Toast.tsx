@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Check, Info, AlertTriangle, XCircle, X } from "lucide-react";
+import { Check, Info, AlertTriangle, XCircle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ToastType = "success" | "error" | "info" | "warning";
@@ -70,9 +70,9 @@ export const Toast: React.FC<ToastProps> = ({
 
       <button
         onClick={() => onDismiss(id)}
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black/5 text-black/40 transition-colors hover:bg-black/10 hover:text-black"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-black/5 text-black/40 transition-all hover:bg-black/10 hover:text-black hover:scale-110 active:scale-90"
       >
-        <X className="h-3 w-3" />
+        <ArrowLeft className="h-4 w-4" />
       </button>
     </div>
   );

@@ -9,7 +9,7 @@ import { RestaurantCard } from "@/components/RestaurantCard";
 import { RestaurantCardSkeleton } from "@/components/RestaurantCardSkeleton";
 import { SuggestionModal } from "@/components/SuggestionModal";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronUp, Loader2 } from "lucide-react";
+import { ChevronUp, Loader2, ArrowLeft } from "lucide-react";
 import { NearbyModal } from "@/components/NearbyModal";
 import { Pagination } from "@/components/Pagination";
 import { useAuth } from "@/context/AuthContext";
@@ -280,9 +280,9 @@ function App() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsFormOpen(false)}
-                  className="rounded-full"
+                  className="rounded-full hover:bg-gray-100 transition-all p-2"
                 >
-                  <PlusCircle className="h-5 w-5 rotate-45" />
+                  <ArrowLeft className="h-5 w-5 text-gray-500" />
                 </Button>
               </div>
 
@@ -381,6 +381,7 @@ function App() {
         onAdd={() => setIsFormOpen(!isFormOpen)}
         isFilterActive={isFilterOpen}
         isFormOpen={isFormOpen}
+        isNearbyActive={isNearbyModalOpen}
       />
 
       {/* Fixed Scroll to Top Button */}
@@ -409,12 +410,7 @@ function App() {
         isOpen={isSuggestionModalOpen}
         onClose={() => setIsSuggestionModalOpen(false)}
         persona={profile?.persona}
-      />
-
-      <RestaurantPocketView
-        restaurant={selectedRestaurant}
-        isOpen={!!selectedRestaurant}
-        onClose={() => setSelectedRestaurant(null)}
+        onSelectRestaurant={(r) => setSelectedRestaurant(r)}
       />
 
       <NearbyModal
@@ -422,7 +418,6 @@ function App() {
         onClose={() => setIsNearbyModalOpen(false)}
         onSelectRestaurant={(r) => {
           setSelectedRestaurant(r);
-          setIsNearbyModalOpen(false);
         }}
       />
 
@@ -432,6 +427,12 @@ function App() {
         activeTypes={activeTypes}
         manualArea={manualArea}
         onApply={handleApplyFilters}
+      />
+
+      <RestaurantPocketView
+        restaurant={selectedRestaurant}
+        isOpen={!!selectedRestaurant}
+        onClose={() => setSelectedRestaurant(null)}
       />
 
       <Footer />

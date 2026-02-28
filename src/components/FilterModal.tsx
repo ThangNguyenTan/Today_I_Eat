@@ -15,6 +15,7 @@ import {
   ChevronsUpDown,
   Search,
   Filter,
+  ArrowLeft,
 } from "lucide-react";
 import { FOOD_TYPES, HCM_DISTRICTS } from "@/constants";
 import {
@@ -74,14 +75,21 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="fixed left-[50%] top-[50%] z-50 w-[94vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col transition-all duration-300"
+        className="fixed left-[50%] top-[50%] z-50 w-[94vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col transition-all duration-300 [&>button]:hidden"
         aria-describedby={undefined}
       >
         <DialogDescription className="sr-only">
           Tùy chỉnh bộ lọc tìm kiếm quán ăn
         </DialogDescription>
 
-        <div className="bg-gradient-to-br from-primary/10 via-orange-50/50 to-amber-50/30 p-8 pt-10 text-center relative flex-none">
+        <div className="bg-gradient-to-br from-primary/10 via-orange-50/50 to-amber-50/30 p-8 pt-12 text-center relative flex-none">
+          <button
+            onClick={onClose}
+            className="absolute top-6 left-6 z-20 p-3 rounded-2xl bg-white/80 hover:bg-white text-gray-500 shadow-sm border border-gray-100 transition-all active:scale-95"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
 
           <DialogHeader className="relative z-10 text-center items-center">

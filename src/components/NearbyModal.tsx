@@ -4,7 +4,7 @@ import type { Restaurant } from "@/types";
 import {
   MapPin,
   Navigation,
-  X,
+  ArrowLeft,
   ExternalLink,
   Loader2,
   AlertCircle,
@@ -53,7 +53,6 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
     longitude,
     loading: geoLoading,
     error: geoError,
-    hasAttempted,
     permissionStatus,
     getLocation,
   } = useGeolocation();
@@ -113,14 +112,22 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (permissionStatus === "granted" && !hasAttempted && phase === "idle") {
-        setPhase("locating");
-        getLocation();
-      } else if (latitude && longitude && phase === "locating") {
-        runSearch(latitude, longitude);
-      } else if (geoError && phase === "locating") {
-        setPhase("error");
-        setErrorMsg(geoError);
+      if (phase === "idle") {
+        if (permissionStatus === "granted") {
+          if (latitude && longitude) {
+            runSearch(latitude, longitude);
+          } else {
+            setPhase("locating");
+            getLocation();
+          }
+        }
+      } else if (phase === "locating") {
+        if (latitude && longitude) {
+          runSearch(latitude, longitude);
+        } else if (geoError) {
+          setPhase("error");
+          setErrorMsg(geoError);
+        }
       }
     } else {
       isCancelledRef.current = true;
@@ -131,7 +138,6 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
     }
   }, [
     isOpen,
-    hasAttempted,
     latitude,
     longitude,
     geoError,
@@ -181,24 +187,24 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-gray-100 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
-              <Navigation className="h-5 w-5 text-emerald-600" />
+        <div className="flex flex-col border-b border-gray-100 flex-shrink-0 relative">
+          <div className="flex items-center justify-between px-6 pt-4 pb-1">
+            <button
+              onClick={onClose}
+              className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-500" />
+            </button>
+            <div className="flex items-center gap-3 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none mt-1.5">
+              <h2 className="text-lg font-black tracking-tight whitespace-nowrap">
+                Gần Đây
+              </h2>
             </div>
-            <div>
-              <h2 className="text-lg font-black tracking-tight">Gần Đây</h2>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                Trong vòng {RADIUS_KM} km · Sắp xếp theo khoảng cách
-              </p>
-            </div>
+            <div className="w-9" />
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <X className="h-5 w-5 text-gray-400" />
-          </button>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center pb-3">
+            Trong vòng {RADIUS_KM} km · Sắp xếp theo khoảng cách
+          </p>
         </div>
 
         {/* Body */}
@@ -340,8 +346,13 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                   ))}
 
                   {hasMore ? (
-                    <div ref={sentinelRef} className="py-6 flex justify-center">
-                      <Loader2 className="h-6 w-6 text-emerald-500 animate-spin" />
+                    <div
+                      ref={sentinelRef}
+                      className="py-6 flex justify-center min-h-[64px]"
+                    >
+                      {isLoadingMore && (
+                        <Loader2 className="h-6 w-6 text-emerald-500 animate-spin" />
+                      )}
                     </div>
                   ) : (
                     <div className="pt-2 pb-4 text-center">

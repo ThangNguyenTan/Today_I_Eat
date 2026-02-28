@@ -25,21 +25,30 @@ export const Pagination: React.FC<PaginationProps> = ({
     } else {
       pages.push(1);
 
-      const leftSide = currentPage > 3;
-      const rightSide = currentPage < totalPages - 2;
+      const leftBoundary = 3;
+      const rightBoundary = totalPages - 2;
 
-      if (leftSide && rightSide) {
+      const showLeftEllipsis = currentPage > leftBoundary + 1;
+      const showRightEllipsis = currentPage < rightBoundary - 1;
+
+      if (showLeftEllipsis && showRightEllipsis) {
         pages.push("ellipsis");
-        pages.push(currentPage);
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
         pages.push("ellipsis");
-      } else if (!leftSide) {
-        // 1, 2, 3, 4, ..., total
-        for (let i = 2; i <= 4; i++) pages.push(i);
+      } else if (!showLeftEllipsis && showRightEllipsis) {
+        // Example: 1, 2, 3, 4, 5, ..., 10
+        for (let i = 2; i <= Math.max(leftBoundary + 1, currentPage + 1); i++)
+          pages.push(i);
         pages.push("ellipsis");
-      } else {
-        // 1, ..., total-3, total-2, total-1, total
+      } else if (showLeftEllipsis && !showRightEllipsis) {
+        // Example: 1, ..., 6, 7, 8, 9, 10
         pages.push("ellipsis");
-        for (let i = totalPages - 3; i <= totalPages - 1; i++) pages.push(i);
+        for (
+          let i = Math.min(currentPage - 1, totalPages - leftBoundary);
+          i <= totalPages - 1;
+          i++
+        )
+          pages.push(i);
       }
 
       pages.push(totalPages);
