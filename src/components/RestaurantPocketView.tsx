@@ -17,6 +17,7 @@ import { Button } from "./ui/button";
 import type { Restaurant } from "@/types";
 import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/context/ToastContext";
 
 interface RestaurantPocketViewProps {
   restaurant: Restaurant | null;
@@ -46,20 +47,37 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
     r.operating?.closeTime,
   );
 
+  const { success } = useToast();
+
   const handleShare = async () => {
+    // Generate a robust link back to the app with the restaurant name as a search query.
+    // Ensure we handle trailing slashes and correctly encode the name.
+    const baseUrl = window.location.origin + window.location.pathname;
+    const appUrl = `${baseUrl.replace(/\/$/, "")}?q=${encodeURIComponent(r.name)}`;
+    const shareText = `Khám phá quán ${r.name} trên Ăn Gì Đây! 🤤`;
+
+    // Attempt native share if available
     if (navigator.share) {
       try {
         await navigator.share({
           title: r.name,
-          text: `Xem quán ${r.name} trên Ăn Gì Đây?`,
-          url: window.location.href,
+          text: shareText,
+          url: appUrl,
         });
-      } catch (err) {
-        console.log("Error sharing:", err);
+        return; // Success
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("Error sharing:", err);
+        }
       }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Đã sao chép liên kết!");
+    }
+
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(`${shareText}\n${appUrl}`);
+      success("Đã sao chép liên kết quán! ✨");
+    } catch (err) {
+      console.error("Failed to copy:", err);
     }
   };
 

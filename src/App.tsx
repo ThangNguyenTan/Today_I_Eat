@@ -72,7 +72,9 @@ function App() {
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [manualArea, setManualArea] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(
+    () => new URLSearchParams(window.location.search).get("q") || "",
+  );
   const [isNearbyModalOpen, setIsNearbyModalOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -166,6 +168,32 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [user, profile, isQuizOpen]);
+
+  // Automatically open restaurant pocket view for shared links
+  const hasAutoOpenedRef = useRef(false);
+  useEffect(() => {
+    const queryParam = new URLSearchParams(window.location.search).get("q");
+    if (
+      !hasAutoOpenedRef.current &&
+      !apiLoading &&
+      restaurants.length > 0 &&
+      queryParam
+    ) {
+      const exactMatch = restaurants.find(
+        (r) => r.name.toLowerCase() === queryParam.toLowerCase(),
+      );
+      if (exactMatch) {
+        setSelectedRestaurant(exactMatch);
+        hasAutoOpenedRef.current = true;
+        // Optionally clean up the URL for a cleaner UX
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
+      }
+    }
+  }, [restaurants, apiLoading]);
 
   // ─── Event Handlers ───────────────────────────────────────────────────────
 
