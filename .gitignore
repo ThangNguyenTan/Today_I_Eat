@@ -16,6 +16,15 @@ dist-ssr
 .env.*.local
 *.local
 
+# Build
+dist
+dist-ssr
+*.timestamp-*.mjs
+
+# AI & Tooling
+.antigravity/
+.vercel/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
