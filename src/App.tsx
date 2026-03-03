@@ -13,11 +13,11 @@ import { Pagination } from "@/components/Pagination";
 import { useAuth } from "@/context/AuthContext";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { FilterModal } from "@/components/FilterModal";
-import { PersonalityQuiz } from "@/components/PersonalityQuiz";
 import { RestaurantPocketView } from "@/components/RestaurantPocketView";
+import { FavoritesModal } from "@/components/FavoritesModal";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { motion, AnimatePresence } from "framer-motion";
-import type { FoodiePersona, Restaurant, SortOption } from "@/types";
+import type { Restaurant, SortOption } from "@/types";
 
 // Layout & Section Components
 import { Header } from "@/components/layout/Header";
@@ -32,7 +32,7 @@ import { useAppUI } from "@/hooks/useAppUI";
 function App() {
   // Auth & Profile
   const { user, loading: authLoading, login, logout } = useAuth();
-  const { profile, updatePersona } = useUserProfile(user);
+  const { profile, toggleFavorite } = useUserProfile(user);
 
   // API & Data
   const {
@@ -82,9 +82,9 @@ function App() {
         "sortBy",
       ) as SortOption) || "near",
   );
-  const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] =
     useState<Restaurant | null>(null);
+  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
 
   // ─── Search Logic ──────────────────────────────────────────────────────────
 
@@ -162,14 +162,6 @@ function App() {
     triggerSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, userLocation]);
-
-  // Automatically open quiz for new users
-  useEffect(() => {
-    if (user && profile && !profile.persona && !isQuizOpen) {
-      const timer = setTimeout(() => setIsQuizOpen(true), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [user, profile, isQuizOpen]);
 
   // Automatically open restaurant pocket view for shared links
   const hasAutoOpenedRef = useRef(false);
@@ -281,7 +273,7 @@ function App() {
         user={user}
         onLogin={login}
         onLogout={logout}
-        onOpenQuiz={() => setIsQuizOpen(true)}
+        onOpenFavorites={() => setIsFavoritesOpen(true)}
       />
 
       <main className="container relative z-10 mx-auto max-w-2xl px-6 py-10">
@@ -333,6 +325,22 @@ function App() {
                     <RestaurantCard
                       restaurant={res}
                       onClick={() => setSelectedRestaurant(res)}
+                      isFavorite={profile?.favoriteRestaurantIds?.includes(
+                        res.id,
+                      )}
+                      onToggleFavorite={async (e) => {
+                        e.stopPropagation();
+                        if (!user) {
+                          login();
+                          return;
+                        }
+                        await toggleFavorite(res.id);
+                        if (profile?.favoriteRestaurantIds?.includes(res.id)) {
+                          info("Đã bỏ lưu quán.");
+                        } else {
+                          success("Đã thả tim quán! ❤️");
+                        }
+                      }}
                     />
                   </motion.div>
                 ))
@@ -368,10 +376,9 @@ function App() {
         onNearby={() => setIsNearbyModalOpen(true)}
         onSuggest={() => setIsSuggestionModalOpen(true)}
         onFilter={() => setIsFilterOpen(!isFilterOpen)}
-        onLogin={user ? () => setIsQuizOpen(true) : login}
+        onLogin={user ? () => setIsFavoritesOpen(true) : login}
         isFilterActive={isFilterOpen}
         isNearbyActive={isNearbyModalOpen}
-        isQuizOpen={isQuizOpen}
         user={user}
       />
 
@@ -388,14 +395,6 @@ function App() {
       </button>
 
       {/* Modals */}
-      <PersonalityQuiz
-        isOpen={isQuizOpen}
-        onClose={() => setIsQuizOpen(false)}
-        onComplete={(persona: FoodiePersona) => {
-          updatePersona(persona);
-          success("Đã lưu hồ sơ ẩm thực của bạn! ✨");
-        }}
-      />
 
       <SuggestionModal
         isOpen={isSuggestionModalOpen}
@@ -424,6 +423,38 @@ function App() {
         restaurant={selectedRestaurant}
         isOpen={!!selectedRestaurant}
         onClose={() => setSelectedRestaurant(null)}
+        isFavorite={
+          selectedRestaurant
+            ? profile?.favoriteRestaurantIds?.includes(selectedRestaurant.id)
+            : false
+        }
+        onToggleFavorite={async () => {
+          if (!user) {
+            login();
+            return;
+          }
+          if (selectedRestaurant) {
+            await toggleFavorite(selectedRestaurant.id);
+            if (
+              profile?.favoriteRestaurantIds?.includes(selectedRestaurant.id)
+            ) {
+              info("Đã bỏ lưu quán.");
+            } else {
+              success("Đã thả tim quán! ❤️");
+            }
+          }
+        }}
+      />
+
+      <FavoritesModal
+        isOpen={isFavoritesOpen}
+        onClose={() => setIsFavoritesOpen(false)}
+        favoriteIds={profile?.favoriteRestaurantIds || []}
+        onSelectRestaurant={(r) => setSelectedRestaurant(r)}
+        onToggleFavorite={async (id) => {
+          if (!user) return login();
+          await toggleFavorite(id);
+        }}
       />
 
       <Footer />

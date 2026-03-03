@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   MessageCircle,
   ChevronRight,
+  Heart,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import type { Restaurant } from "@/types";
@@ -23,12 +24,16 @@ interface RestaurantPocketViewProps {
   restaurant: Restaurant | null;
   isOpen: boolean;
   onClose: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
   restaurant: r,
   isOpen,
   onClose,
+  isFavorite,
+  onToggleFavorite,
 }) => {
   if (!r) return null;
 
@@ -97,6 +102,21 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex gap-2 pointer-events-auto">
+            {onToggleFavorite && (
+              <button
+                onClick={onToggleFavorite}
+                className={cn(
+                  "p-3.5 rounded-[1.25rem] backdrop-blur-md shadow-xl transition-all active:scale-90 hover:scale-105 border",
+                  isFavorite
+                    ? "bg-white text-red-500 border-white"
+                    : "bg-white/80 hover:bg-white border-white/50 text-gray-900",
+                )}
+              >
+                <Heart
+                  className={cn("h-5 w-5", isFavorite && "fill-current")}
+                />
+              </button>
+            )}
             <button
               onClick={handleShare}
               className="p-3.5 rounded-[1.25rem] bg-white/80 hover:bg-white backdrop-blur-md border border-white/50 text-gray-900 shadow-xl transition-all active:scale-90 hover:scale-105"

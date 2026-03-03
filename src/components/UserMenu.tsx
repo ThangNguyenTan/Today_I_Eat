@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogIn, LogOut, Heart, Sparkles, User } from "lucide-react";
+import { LogIn, LogOut, Heart, Sparkles } from "lucide-react";
 
 interface UserMenuProps {
   user: {
@@ -18,14 +18,14 @@ interface UserMenuProps {
   } | null;
   onLogin: () => void;
   onLogout: () => void;
-  onOpenQuiz?: () => void;
+  onOpenFavorites?: () => void;
 }
 
 export const UserMenu: React.FC<UserMenuProps> = ({
   user,
   onLogin,
   onLogout,
-  onOpenQuiz,
+  onOpenFavorites,
 }) => {
   if (!user) {
     return (
@@ -101,22 +101,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           {/* Menu items */}
           <div className="space-y-1">
             <DropdownMenuItem
-              onClick={onOpenQuiz}
-              className="rounded-xl py-3.5 px-4 cursor-pointer gap-3 focus:bg-gradient-to-r focus:from-primary/5 focus:to-orange-500/5 transition-all duration-200 group"
+              onClick={onOpenFavorites}
+              className="rounded-xl py-3.5 px-4 cursor-pointer gap-3 focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 transition-all duration-200 group"
             >
-              <div className="p-2 rounded-xl bg-orange-50 text-orange-500 group-focus:bg-orange-100 transition-colors">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col flex-1">
-                <span className="font-bold text-sm">Hồ sơ ẩm thực</span>
-                <span className="text-[10px] text-muted-foreground">
-                  AI tinh chỉnh gợi ý theo gu của bạn
-                </span>
-              </div>
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            </DropdownMenuItem>
-
-            <DropdownMenuItem className="rounded-xl py-3.5 px-4 cursor-pointer gap-3 focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 transition-all duration-200 group">
               <div className="p-2 rounded-xl bg-red-50 text-red-500 group-focus:bg-red-100 transition-colors">
                 <Heart className="h-4 w-4" />
               </div>
@@ -124,18 +111,6 @@ export const UserMenu: React.FC<UserMenuProps> = ({
                 <span className="font-bold text-sm">Quán ruột của tôi</span>
                 <span className="text-[10px] text-muted-foreground">
                   Danh sách đã lưu
-                </span>
-              </div>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem className="rounded-xl py-3.5 px-4 cursor-pointer gap-3 focus:bg-gray-50 transition-all duration-200 group">
-              <div className="p-2 rounded-xl bg-gray-100 text-gray-500 group-focus:bg-gray-200 transition-colors">
-                <User className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col flex-1">
-                <span className="font-bold text-sm">Tài khoản</span>
-                <span className="text-[10px] text-muted-foreground">
-                  Quản lý thông tin cá nhân
                 </span>
               </div>
             </DropdownMenuItem>

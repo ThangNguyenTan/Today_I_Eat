@@ -6,14 +6,14 @@ interface HeaderProps {
   user: any;
   onLogin: () => void;
   onLogout: () => void;
-  onOpenQuiz: () => void;
+  onOpenFavorites: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   user,
   onLogin,
   onLogout,
-  onOpenQuiz,
+  onOpenFavorites,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full glass-premium border-b-0">
@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
             }
             onLogin={onLogin}
             onLogout={onLogout}
-            onOpenQuiz={onOpenQuiz}
+            onOpenFavorites={onOpenFavorites}
           />
         </div>
       </div>

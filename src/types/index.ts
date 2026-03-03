@@ -123,23 +123,8 @@ export interface NearbyApiResponse {
   total: number;
 }
 
-// ─── User Profile & Personality ──────────────────────────────────────────────
-
-export type TastePreference = "Spicy" | "Sweet" | "Salty" | "Sour" | "Umami";
-export type AdventureLevel = "Conservative" | "Balanced" | "Adventurous";
-export type BudgetPreference = "Budget" | "Mid-range" | "Splurge";
-
-export interface FoodiePersona {
-  adventureLevel: AdventureLevel;
-  primaryTaste: TastePreference;
-  budgetPreference: BudgetPreference;
-  favoriteCuisines: string[];
-  lastUpdated: number;
-}
-
 export interface UserProfile {
   uid: string;
-  persona?: FoodiePersona;
   favoriteRestaurantIds: string[];
 }
 

@@ -176,6 +176,25 @@ export const useRestaurants = (user: User | null) => {
     [restaurants],
   );
 
+  const fetchRestaurantsByIds = useCallback(
+    async (ids: string[]): Promise<Restaurant[]> => {
+      if (!ids || ids.length === 0) return [];
+      try {
+        const resp = await fetch(`${API_BASE}/restaurants/by-ids`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+        if (!resp.ok) throw new Error("API error");
+        return resp.json();
+      } catch (err) {
+        console.error("Failed to fetch restaurants by ids:", err);
+        return [];
+      }
+    },
+    [],
+  );
+
   return {
     restaurants,
     totalCount,
@@ -187,5 +206,6 @@ export const useRestaurants = (user: User | null) => {
     getRandomRestaurant,
     goToPage,
     search,
+    fetchRestaurantsByIds,
   };
 };

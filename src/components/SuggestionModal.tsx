@@ -17,7 +17,7 @@ import {
 import { FOOD_TYPES } from "@/constants";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { type NearbyRestaurant } from "./NearbyModal";
-import type { FoodiePersona } from "@/types";
+
 import { LazyImage } from "./ui/LazyImage";
 import {
   formatDistance,
@@ -32,7 +32,6 @@ import {
 interface SuggestionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  persona?: FoodiePersona;
   onSelectRestaurant?: (r: NearbyRestaurant) => void;
 }
 
@@ -183,7 +182,6 @@ type Phase = "idle" | "spinning" | "locating" | "loading" | "done" | "error";
 export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   isOpen,
   onClose,
-  persona,
   onSelectRestaurant,
 }) => {
   const {
@@ -329,11 +327,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     let count = 0;
     const maxCount = 16;
 
-    // Use persona favorite cuisines if available, else use all
-    const pool =
-      persona?.favoriteCuisines && persona.favoriteCuisines.length > 0
-        ? persona.favoriteCuisines
-        : FOOD_TYPES;
+    const pool = FOOD_TYPES;
 
     const spin = (delay: number) => {
       if (isCancelledRef.current) {
@@ -360,7 +354,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     };
 
     spin(50);
-  }, [locateAndSearch, persona]);
+  }, [locateAndSearch]);
 
   useEffect(() => {
     if (isOpen) {

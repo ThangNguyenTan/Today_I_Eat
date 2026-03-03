@@ -492,6 +492,25 @@ app.get("/api/restaurants/random", async (req, res) => {
 });
 
 /**
+ * POST /api/restaurants/by-ids
+ * Returns an array of restaurants matching the provided IDs.
+ */
+app.post("/api/restaurants/by-ids", async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: "ids array is required" });
+    }
+    const allTransformed = await ensureCache();
+    const results = allTransformed.filter((r) => ids.includes(r.id));
+    res.json(results);
+  } catch (err) {
+    console.error("POST /api/restaurants/by-ids error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
  * GET /api/restaurants/count
  * Returns total count for the frontend subtitle.
  */

@@ -10,7 +10,6 @@ interface BottomNavigationProps {
   isFilterActive: boolean;
   isNearbyActive?: boolean;
   user: any;
-  isQuizOpen?: boolean;
 }
 
 export function BottomNavigation({
@@ -22,7 +21,6 @@ export function BottomNavigation({
   isFilterActive,
   isNearbyActive,
   user,
-  isQuizOpen,
 }: BottomNavigationProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
@@ -92,14 +90,10 @@ export function BottomNavigation({
         {/* User / Login */}
         <button
           onClick={onLogin}
-          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${
-            isQuizOpen ? "text-primary" : "text-gray-400 hover:text-primary"
-          }`}
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 text-gray-400 hover:text-primary`}
         >
           <div
-            className={`p-1 rounded-xl transition-colors ${
-              isQuizOpen ? "bg-primary/10" : "group-active:bg-gray-100"
-            }`}
+            className={`p-1 rounded-xl transition-colors group-active:bg-gray-100`}
           >
             {user && user.photoURL ? (
               <img

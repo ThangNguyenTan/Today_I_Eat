@@ -1,6 +1,14 @@
 import type { Restaurant } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import { MapPin, ExternalLink, Quote, Star, Tag, Clock } from "lucide-react";
+import {
+  MapPin,
+  ExternalLink,
+  Quote,
+  Star,
+  Tag,
+  Clock,
+  Heart,
+} from "lucide-react";
 import {
   getGoogleMapsUrl,
   formatOperatingHours,
@@ -13,11 +21,15 @@ import { LazyImage } from "./ui/LazyImage";
 interface RestaurantCardProps {
   restaurant: Restaurant;
   onClick?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (e: React.MouseEvent) => void;
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   restaurant,
   onClick,
+  isFavorite,
+  onToggleFavorite,
 }) => {
   const emoji = getEmoji(restaurant.type);
   const hasThumb = Boolean(restaurant.thumbnailUrl);
@@ -44,6 +56,24 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
     >
       {/* Gradient border glow */}
       <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/20 via-orange-500/20 to-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl scale-105" />
+
+      {/* Favorite Button */}
+      {onToggleFavorite && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(e);
+          }}
+          className={cn(
+            "absolute top-4 right-4 z-20 p-2.5 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 hover:scale-110 active:scale-90",
+            isFavorite
+              ? "bg-white text-red-500"
+              : "bg-black/20 text-white shadow-none hover:bg-black/40 border border-white/20",
+          )}
+        >
+          <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+        </button>
+      )}
 
       {/* Thumbnail / hero image */}
       {hasThumb ? (
