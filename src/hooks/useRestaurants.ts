@@ -29,6 +29,7 @@ export const useRestaurants = (user: User | null) => {
         district?: string;
         lat?: number;
         lon?: number;
+        sortBy?: string;
       } = {},
     ): Promise<RestaurantsApiResponse> => {
       if (abortControllerRef.current) {
@@ -44,6 +45,7 @@ export const useRestaurants = (user: User | null) => {
         params.set("type", filters.type);
       if (filters.q) params.set("q", filters.q);
       if (filters.district) params.set("district", filters.district);
+      if (filters.sortBy) params.set("sortBy", filters.sortBy);
       if (filters.lat !== undefined && filters.lon !== undefined) {
         params.set("lat", String(filters.lat));
         params.set("lon", String(filters.lon));
@@ -74,6 +76,7 @@ export const useRestaurants = (user: User | null) => {
         district?: string;
         lat?: number;
         lon?: number;
+        sortBy?: string;
       } = {},
     ) => {
       setLoading(true);
@@ -102,6 +105,7 @@ export const useRestaurants = (user: User | null) => {
         district?: string;
         lat?: number;
         lon?: number;
+        sortBy?: string;
       } = {},
     ) => {
       setLoading(true);

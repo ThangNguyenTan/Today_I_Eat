@@ -316,11 +316,14 @@ app.get("/api/restaurants", async (req, res) => {
     const q = req.query.q?.toLowerCase();
     const lat = parseFloat(req.query.lat);
     const lon = parseFloat(req.query.lon);
+    const sortBy = req.query.sortBy;
 
     const hasLocation = !isNaN(lat) && !isNaN(lon);
+    console.log(
+      `🔍 [API] Search: q="${q}", district="${district}", hasLocation=${hasLocation}, sortBy="${sortBy}"`,
+    );
 
     // 2. Filter, Calculate Distance, and Map in ONE Pass
-    // This is much faster than multiple chained .filter().map().sort()
     let result = [];
     const count = allTransformed.length;
 
@@ -330,11 +333,11 @@ app.get("/api/restaurants", async (req, res) => {
       // Basic exclusions
       if (EXCLUDE_DRINKS.includes(r.type)) continue;
 
-      // Dynamic Opening Status (Pre-calculated minutes for instant check)
+      // Dynamic Opening Status
       if (r.operating && !isCurrentlyOpen(r.operating, currentTotalMinutes))
         continue;
 
-      // Filter matches (using pre-calculated lowercased keys)
+      // Filter matches
       if (typesArr && typesArr.length > 0) {
         const hasMatch = typesArr.some(
           (t) => r._keywordLower.includes(t) || t.includes(r._keywordLower),
@@ -342,11 +345,10 @@ app.get("/api/restaurants", async (req, res) => {
         if (!hasMatch) continue;
       }
 
-      // For district and q, we check against the combined searchKey
       if (district && !r.location.toLowerCase().includes(district)) continue;
       if (q && !r._searchKey.includes(q)) continue;
 
-      // Distance calculation (Show everything, no radius filter)
+      // Distance calculation
       let distanceKm = null;
       if (hasLocation) {
         if (r.position?.latitude && r.position?.longitude) {
@@ -357,7 +359,7 @@ app.get("/api/restaurants", async (req, res) => {
             r.position.longitude,
           );
         } else {
-          distanceKm = 9999; // Restaurants without position go to the end
+          distanceKm = 9999;
         }
         result.push({ ...r, distanceKm });
       } else {
@@ -365,8 +367,16 @@ app.get("/api/restaurants", async (req, res) => {
       }
     }
 
-    // 3. Sort ONLY if sorting by distance (Popularity is pre-sorted in cache)
-    if (hasLocation) {
+    // 3. Sort logic
+    if (sortBy === "near" && hasLocation) {
+      result.sort((a, b) => a.distanceKm - b.distanceKm);
+    } else if (sortBy === "far" && hasLocation) {
+      result.sort((a, b) => b.distanceKm - a.distanceKm);
+    } else if (sortBy === "high_rating") {
+      result.sort((a, b) => (b.rating?.avg || 0) - (a.rating?.avg || 0));
+    } else if (sortBy === "low_rating") {
+      result.sort((a, b) => (a.rating?.avg || 0) - (b.rating?.avg || 0));
+    } else if (hasLocation) {
       result.sort((a, b) => a.distanceKm - b.distanceKm);
     }
 
@@ -375,8 +385,8 @@ app.get("/api/restaurants", async (req, res) => {
 
     res.json({ restaurants, total, page, limit });
   } catch (err) {
-    console.error("GET /api/restaurants error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ [API] GET /api/restaurants error:", err);
+    res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
 

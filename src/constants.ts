@@ -67,3 +67,10 @@ export const DEFAULT_LOCATION = {
   longitude: 106.7009,
   area: "Quận 1",
 };
+
+export const SORT_OPTIONS = [
+  { value: "near", label: "Gần nhất" },
+  { value: "far", label: "Xa nhất" },
+  { value: "high_rating", label: "Đánh giá cao" },
+  { value: "low_rating", label: "Đánh giá thấp" },
+] as const;

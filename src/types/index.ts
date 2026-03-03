@@ -142,3 +142,5 @@ export interface UserProfile {
   persona?: FoodiePersona;
   favoriteRestaurantIds: string[];
 }
+
+export type SortOption = "near" | "far" | "high_rating" | "low_rating";

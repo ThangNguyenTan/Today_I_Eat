@@ -4,13 +4,7 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [["babel-plugin-react-compiler"]],
-      },
-    }),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -20,9 +14,6 @@ export default defineConfig({
     host: true,
     port: 5173,
     allowedHosts: true,
-    hmr: {
-      clientPort: 443,
-    },
     proxy: {
       "/api": {
         target: "http://localhost:3001",

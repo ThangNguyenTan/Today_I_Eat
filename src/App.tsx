@@ -19,7 +19,7 @@ import { PersonalityQuiz } from "@/components/PersonalityQuiz";
 import { RestaurantPocketView } from "@/components/RestaurantPocketView";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { motion, AnimatePresence } from "framer-motion";
-import type { FoodiePersona, Restaurant } from "@/types";
+import type { FoodiePersona, Restaurant, SortOption } from "@/types";
 
 // Layout & Section Components
 import { Header } from "@/components/layout/Header";
@@ -80,7 +80,12 @@ function App() {
     lat: number;
     lon: number;
   } | null>(null);
-  const [isSortingByDistance, setIsSortingByDistance] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption | "">(
+    () =>
+      (new URLSearchParams(window.location.search).get(
+        "sortBy",
+      ) as SortOption) || "near",
+  );
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] =
     useState<Restaurant | null>(null);
@@ -110,8 +115,9 @@ function App() {
           type: types.length > 0 ? types.join(",") : undefined,
           q: q || undefined,
           district: district || undefined,
-          lat: isSortingByDistance ? userLocation?.lat : undefined,
-          lon: isSortingByDistance ? userLocation?.lon : undefined,
+          lat: userLocation?.lat,
+          lon: userLocation?.lon,
+          sortBy: sortBy || undefined,
         });
       }, 300);
     },
@@ -121,7 +127,7 @@ function App() {
       showNearbyOnly,
       manualArea,
       search,
-      isSortingByDistance,
+      sortBy,
       userLocation,
     ],
   );
@@ -159,7 +165,7 @@ function App() {
   useEffect(() => {
     triggerSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSortingByDistance, userLocation]);
+  }, [sortBy, userLocation]);
 
   // Automatically open quiz for new users
   useEffect(() => {
@@ -213,23 +219,22 @@ function App() {
     maxPull: 120,
   });
 
-  const toggleDistanceSort = useCallback(() => {
-    if (isSortingByDistance && userLocation) {
-      setIsSortingByDistance(false);
-      return;
-    }
-
-    if (permissionStatus === "denied") {
-      info(
-        "Vị trí bị chặn. Vui lòng bật lại trong cài đặt trình duyệt để sắp xếp.",
-        5000,
-      );
-      return;
-    }
-
-    if (!userLocation) getLocation();
-    setIsSortingByDistance(true);
-  }, [isSortingByDistance, userLocation, getLocation, permissionStatus, info]);
+  const handleSortChange = useCallback(
+    (value: SortOption | "") => {
+      if ((value === "near" || value === "far") && !userLocation) {
+        if (permissionStatus === "denied") {
+          info(
+            "Vị trí bị chặn. Vui lòng bật lại trong cài đặt trình duyệt để sắp xếp theo khoảng cách.",
+            5000,
+          );
+          return;
+        }
+        getLocation();
+      }
+      setSortBy(value);
+    },
+    [userLocation, getLocation, permissionStatus, info],
+  );
 
   const handleApplyFilters = (filters: {
     types: string[];
@@ -333,9 +338,9 @@ function App() {
           totalCount={totalCount}
           activeTypes={activeTypes}
           isFilterOpen={isFilterOpen}
-          isSortingByDistance={isSortingByDistance}
+          sortBy={sortBy}
+          onSortChange={handleSortChange}
           onOpenNearby={() => setIsNearbyModalOpen(true)}
-          onToggleDistanceSort={toggleDistanceSort}
           onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}
         />
 
@@ -392,8 +397,9 @@ function App() {
                 district: showNearbyOnly
                   ? (manualArea ?? undefined)
                   : undefined,
-                lat: isSortingByDistance ? userLocation?.lat : undefined,
-                lon: isSortingByDistance ? userLocation?.lon : undefined,
+                lat: userLocation?.lat,
+                lon: userLocation?.lon,
+                sortBy: sortBy || undefined,
               });
             }}
             isLoading={apiLoading}
