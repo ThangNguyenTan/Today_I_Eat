@@ -1,18 +1,12 @@
-import React from "react";
-import { Heart, UtensilsCrossed, PlusCircle } from "lucide-react";
+import { Heart, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EmptyStateProps {
   user: any;
   onLogin: () => void;
-  onAdd: () => void;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({
-  user,
-  onLogin,
-  onAdd,
-}) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({ user, onLogin }) => {
   return (
     <div className="col-span-full py-24 text-center glass rounded-[2.5rem] border-dashed border-2 border-gray-100 flex flex-col items-center justify-center group overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
@@ -42,16 +36,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             Chưa có "quán ruột" nào?
           </h4>
           <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-            Đừng để bụng đói! Hãy thêm những quán ăn yêu thích của bạn để chúng
-            tôi có thể gợi ý cho bữa sau nhé.
+            Danh sách của bạn đang trống. Hiện tại tính năng thêm quán mới chỉ
+            dành cho Quản trị viên (Admin).
           </p>
-          <Button
-            onClick={onAdd}
-            className="rounded-xl px-8 h-12 bg-primary text-white font-bold shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-          >
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Thêm quán ngay
-          </Button>
         </div>
       ) : (
         <div className="relative z-10 max-w-sm px-4">

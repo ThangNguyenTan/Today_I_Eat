@@ -3,13 +3,11 @@ import { useRestaurants } from "@/hooks/useRestaurants";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useToast } from "@/context/ToastContext";
-import { RestaurantForm } from "@/components/RestaurantForm";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { RestaurantCard } from "@/components/RestaurantCard";
 import { RestaurantCardSkeleton } from "@/components/RestaurantCardSkeleton";
 import { SuggestionModal } from "@/components/SuggestionModal";
-import { Button } from "@/components/ui/button";
-import { ChevronUp, Loader2, ArrowLeft } from "lucide-react";
+import { ChevronUp, Loader2 } from "lucide-react";
 import { NearbyModal } from "@/components/NearbyModal";
 import { Pagination } from "@/components/Pagination";
 import { useAuth } from "@/context/AuthContext";
@@ -43,7 +41,6 @@ function App() {
     loading: apiLoading,
     currentPage,
     totalPages,
-    addRestaurant,
     goToPage,
     search,
   } = useRestaurants(user);
@@ -66,7 +63,6 @@ function App() {
   const { success, info } = useToast();
 
   // Functional State
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
@@ -283,8 +279,6 @@ function App() {
 
       <Header
         user={user}
-        isFormOpen={isFormOpen}
-        onToggleForm={() => setIsFormOpen(!isFormOpen)}
         onLogin={login}
         onLogout={logout}
         onOpenQuiz={() => setIsQuizOpen(true)}
@@ -295,40 +289,6 @@ function App() {
           greeting={greeting}
           onSuggest={() => setIsSuggestionModalOpen(true)}
         />
-
-        {/* Add Restaurant Form (Collapsible) */}
-        {isFormOpen && (
-          <section className="mb-12 animate-in zoom-in-95 fade-in duration-300">
-            <div className="rounded-[2.5rem] border-0 bg-white p-8 shadow-2xl">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-black tracking-tight">
-                    Thêm Quán Mới
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Lưu giữ hương vị yêu thích của bạn
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsFormOpen(false)}
-                  className="rounded-full hover:bg-gray-100 transition-all p-2"
-                >
-                  <ArrowLeft className="h-5 w-5 text-gray-500" />
-                </Button>
-              </div>
-
-              <RestaurantForm
-                onAdd={(data) => {
-                  addRestaurant(data);
-                  setIsFormOpen(false);
-                  success(`Đã thêm quán "${data.name}" vào danh sách! 🎉`);
-                }}
-              />
-            </div>
-          </section>
-        )}
 
         <ActionSection
           searchQuery={searchQuery}
@@ -377,11 +337,7 @@ function App() {
                   </motion.div>
                 ))
               ) : (
-                <EmptyState
-                  user={user}
-                  onLogin={login}
-                  onAdd={() => setIsFormOpen(true)}
-                />
+                <EmptyState user={user} onLogin={login} />
               )}
             </AnimatePresence>
           </div>
@@ -412,10 +368,11 @@ function App() {
         onNearby={() => setIsNearbyModalOpen(true)}
         onSuggest={() => setIsSuggestionModalOpen(true)}
         onFilter={() => setIsFilterOpen(!isFilterOpen)}
-        onAdd={() => setIsFormOpen(!isFormOpen)}
+        onLogin={user ? () => setIsQuizOpen(true) : login}
         isFilterActive={isFilterOpen}
-        isFormOpen={isFormOpen}
         isNearbyActive={isNearbyModalOpen}
+        isQuizOpen={isQuizOpen}
+        user={user}
       />
 
       {/* Fixed Scroll to Top Button */}

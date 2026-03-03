@@ -1,10 +1,4 @@
-import {
-  Home,
-  MapPin,
-  UtensilsCrossed,
-  ListFilter,
-  PlusCircle,
-} from "lucide-react";
+import { Home, MapPin, UtensilsCrossed, ListFilter, User } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface BottomNavigationProps {
@@ -12,10 +6,11 @@ interface BottomNavigationProps {
   onNearby: () => void;
   onSuggest: () => void;
   onFilter: () => void;
-  onAdd: () => void;
+  onLogin: () => void;
   isFilterActive: boolean;
-  isFormOpen: boolean;
   isNearbyActive?: boolean;
+  user: any;
+  isQuizOpen?: boolean;
 }
 
 export function BottomNavigation({
@@ -23,10 +18,11 @@ export function BottomNavigation({
   onNearby,
   onSuggest,
   onFilter,
-  onAdd,
+  onLogin,
   isFilterActive,
-  isFormOpen,
   isNearbyActive,
+  user,
+  isQuizOpen,
 }: BottomNavigationProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
@@ -37,10 +33,10 @@ export function BottomNavigation({
         {/* Home */}
         <button
           onClick={onHome}
-          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${!isFormOpen && !isNearbyActive && !isFilterActive ? "text-primary" : "text-gray-400 hover:text-primary"}`}
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${!isNearbyActive && !isFilterActive ? "text-primary" : "text-gray-400 hover:text-primary"}`}
         >
           <div
-            className={`p-1 rounded-xl transition-colors ${!isFormOpen && !isNearbyActive && !isFilterActive ? "bg-primary/10" : "group-active:bg-gray-100"}`}
+            className={`p-1 rounded-xl transition-colors ${!isNearbyActive && !isFilterActive ? "bg-primary/10" : "group-active:bg-gray-100"}`}
           >
             <Home className="h-5 w-5" />
           </div>
@@ -93,22 +89,30 @@ export function BottomNavigation({
           </span>
         </button>
 
-        {/* Add */}
+        {/* User / Login */}
         <button
-          onClick={onAdd}
+          onClick={onLogin}
           className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${
-            isFormOpen ? "text-primary" : "text-gray-400 hover:text-primary"
+            isQuizOpen ? "text-primary" : "text-gray-400 hover:text-primary"
           }`}
         >
           <div
-            className={`p-1 rounded-xl transition-colors ${isFormOpen ? "bg-primary/10" : "group-active:bg-gray-100"}`}
+            className={`p-1 rounded-xl transition-colors ${
+              isQuizOpen ? "bg-primary/10" : "group-active:bg-gray-100"
+            }`}
           >
-            <PlusCircle
-              className={`h-5 w-5 transition-transform duration-300 ${isFormOpen ? "rotate-45" : ""}`}
-            />
+            {user && user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt="User"
+                className="h-5 w-5 rounded-full object-cover"
+              />
+            ) : (
+              <User className="h-5 w-5" />
+            )}
           </div>
           <span className="text-[9px] font-black uppercase tracking-tighter">
-            Thêm
+            {user ? "Tài khoản" : "Đăng nhập"}
           </span>
         </button>
       </div>

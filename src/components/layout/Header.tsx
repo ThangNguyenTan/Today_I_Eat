@@ -1,12 +1,9 @@
 import React from "react";
-import { UtensilsCrossed, PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { UtensilsCrossed } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 
 interface HeaderProps {
   user: any;
-  isFormOpen: boolean;
-  onToggleForm: () => void;
   onLogin: () => void;
   onLogout: () => void;
   onOpenQuiz: () => void;
@@ -14,8 +11,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   user,
-  isFormOpen,
-  onToggleForm,
   onLogin,
   onLogout,
   onOpenQuiz,
@@ -60,15 +55,6 @@ export const Header: React.FC<HeaderProps> = ({
             onLogout={onLogout}
             onOpenQuiz={onOpenQuiz}
           />
-          <div className="w-[1px] h-6 bg-gray-100 mx-1 hidden sm:block" />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleForm}
-            className={`rounded-full transition-all duration-300 ${isFormOpen ? "bg-primary text-white scale-110 rotate-45" : "hover:bg-primary/10 hover:scale-110"} hidden sm:flex`}
-          >
-            <PlusCircle className="h-6 w-6" />
-          </Button>
         </div>
       </div>
     </header>
