@@ -399,7 +399,6 @@ function App() {
       <SuggestionModal
         isOpen={isSuggestionModalOpen}
         onClose={() => setIsSuggestionModalOpen(false)}
-        persona={profile?.persona}
         onSelectRestaurant={(r) => setSelectedRestaurant(r)}
       />
 
