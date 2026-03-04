@@ -1,5 +1,6 @@
 import { Home, MapPin, UtensilsCrossed, ListFilter, User } from "lucide-react";
 import { Button } from "./ui/button";
+import { motion } from "framer-motion";
 
 interface BottomNavigationProps {
   onHome: () => void;
@@ -22,6 +23,11 @@ export function BottomNavigation({
   isNearbyActive,
   user,
 }: BottomNavigationProps) {
+  // Determine active tab ID for the gliding bubble
+  let activeTab = "explore";
+  if (isNearbyActive) activeTab = "nearby";
+  else if (isFilterActive) activeTab = "filter";
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
       {/* Background with glass effect and gradient border top */}
@@ -31,14 +37,19 @@ export function BottomNavigation({
         {/* Home */}
         <button
           onClick={onHome}
-          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${!isNearbyActive && !isFilterActive ? "text-primary" : "text-gray-400 hover:text-primary"}`}
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 relative ${activeTab === "explore" ? "text-primary" : "text-gray-400 hover:text-primary/70"}`}
         >
-          <div
-            className={`p-1 rounded-xl transition-colors ${!isNearbyActive && !isFilterActive ? "bg-primary/10" : "group-active:bg-gray-100"}`}
-          >
+          <div className="relative p-1.5 z-10 flex items-center justify-center">
+            {activeTab === "explore" && (
+              <motion.div
+                layoutId="nav-pill"
+                className="absolute inset-0 bg-primary/10 rounded-xl -z-10"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
             <Home className="h-5 w-5" />
           </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter">
+          <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
             Khám phá
           </span>
         </button>
@@ -46,14 +57,19 @@ export function BottomNavigation({
         {/* Nearby */}
         <button
           onClick={onNearby}
-          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${isNearbyActive ? "text-emerald-500" : "text-gray-400 hover:text-emerald-500"}`}
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 relative ${activeTab === "nearby" ? "text-primary" : "text-gray-400 hover:text-primary/70"}`}
         >
-          <div
-            className={`p-1 rounded-xl transition-colors ${isNearbyActive ? "bg-emerald-50" : "group-active:bg-emerald-50"}`}
-          >
+          <div className="relative p-1.5 z-10 flex items-center justify-center">
+            {activeTab === "nearby" && (
+              <motion.div
+                layoutId="nav-pill"
+                className="absolute inset-0 bg-primary/10 rounded-xl -z-10"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
             <MapPin className="h-5 w-5" />
           </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter">
+          <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
             Gần đây
           </span>
         </button>
@@ -73,16 +89,23 @@ export function BottomNavigation({
         {/* Filter */}
         <button
           onClick={onFilter}
-          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 ${
-            isFilterActive ? "text-primary" : "text-gray-400 hover:text-primary"
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 relative ${
+            activeTab === "filter"
+              ? "text-primary"
+              : "text-gray-400 hover:text-primary/70"
           }`}
         >
-          <div
-            className={`p-1 rounded-xl transition-colors ${isFilterActive ? "bg-primary/10" : "group-active:bg-gray-100"}`}
-          >
+          <div className="relative p-1.5 z-10 flex items-center justify-center">
+            {activeTab === "filter" && (
+              <motion.div
+                layoutId="nav-pill"
+                className="absolute inset-0 bg-primary/10 rounded-xl -z-10"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
             <ListFilter className="h-5 w-5" />
           </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter">
+          <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
             Bộ lọc
           </span>
         </button>
@@ -90,11 +113,10 @@ export function BottomNavigation({
         {/* User / Login */}
         <button
           onClick={onLogin}
-          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 text-gray-400 hover:text-primary`}
+          className={`flex flex-col items-center gap-1.5 transition-colors duration-300 flex-1 text-gray-400 hover:text-primary/70 relative`}
         >
-          <div
-            className={`p-1 rounded-xl transition-colors group-active:bg-gray-100`}
-          >
+          <div className="relative p-1.5 z-10 flex items-center justify-center">
+            <div className="absolute inset-0 bg-transparent rounded-xl transition-colors group-active:bg-gray-100 -z-10" />
             {user && user.photoURL ? (
               <img
                 src={user.photoURL}
@@ -105,8 +127,8 @@ export function BottomNavigation({
               <User className="h-5 w-5" />
             )}
           </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter">
-            {user ? "Tài khoản" : "Đăng nhập"}
+          <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
+            {user ? "Tài khoản" : "Tài khoản"}
           </span>
         </button>
       </div>

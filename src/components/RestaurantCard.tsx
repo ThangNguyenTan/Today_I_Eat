@@ -154,12 +154,14 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
         className={`relative flex flex-col items-start space-y-3 p-6 ${hasThumb ? "pb-2 pt-4" : "pb-2"}`}
       >
         <div className="flex w-full items-center justify-between">
-          {/* Type Badge */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-orange-500/10 border border-primary/10">
-            <span className="text-base">{emoji}</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">
-              {restaurant.type}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Type Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-orange-500/10 border border-primary/10">
+              <span className="text-base">{emoji}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                {restaurant.type}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -232,10 +234,12 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
         {/* Notes */}
         {restaurant.notes && (
-          <div className="relative p-4 rounded-2xl bg-gradient-to-br from-[#FAFAFA] to-gray-50/50 border border-gray-100/50 overflow-hidden group/note">
-            <Quote className="absolute -top-1 -left-1 h-6 w-6 text-primary/10 rotate-180 group-hover/note:text-primary/20 transition-all duration-300" />
-            <p className="text-xs font-medium italic text-muted-foreground/90 leading-relaxed pl-3">
-              "{restaurant.notes}"
+          <div className="relative p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/50 to-orange-50/10 border border-amber-100/50 overflow-hidden group/note flex items-start gap-3">
+            <div className="mt-0.5 w-6 h-6 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center shrink-0 shadow-sm shadow-amber-200/50 group-hover/note:scale-110 transition-transform duration-300">
+              <Quote className="h-3 w-3 text-amber-700" />
+            </div>
+            <p className="text-xs font-medium text-gray-700 leading-relaxed flex-1">
+              {restaurant.notes}
             </p>
           </div>
         )}

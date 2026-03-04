@@ -290,16 +290,10 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
             <div className="flex gap-3 pt-4">
               <Button
                 onClick={() => window.open(mapsUrl, "_blank")}
-                className="flex-1 h-16 rounded-3xl bg-primary hover:bg-orange-600 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 gap-2"
+                className="w-full h-16 rounded-3xl bg-primary hover:bg-orange-600 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 gap-2"
               >
                 <Navigation className="h-5 w-5" />
                 Mở Bản Đồ
-              </Button>
-              <Button
-                variant="outline"
-                className="h-16 w-16 rounded-3xl border-2 border-gray-100 flex items-center justify-center text-primary active:scale-95 transition-all"
-              >
-                <MessageCircle className="h-6 w-6" />
               </Button>
             </div>
           </div>
