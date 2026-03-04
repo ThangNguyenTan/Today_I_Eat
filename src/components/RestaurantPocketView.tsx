@@ -10,7 +10,6 @@ import {
   Phone,
   Tag,
   ArrowLeft,
-  MessageCircle,
   ChevronRight,
   Heart,
 } from "lucide-react";
