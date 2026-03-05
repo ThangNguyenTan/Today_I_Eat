@@ -221,7 +221,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                       "Bánh Cuốn": "🍥",
                       "Bánh Xèo": "🥞",
                       "Bánh Khọt": "🥞",
-                      "Bún Đậu Mắm Tôm": "🥒",
+                      "Bún Đậu": "🥒",
                       "Bánh Bao": "🥟",
                       Xôi: "🍚",
                       "Bún Riêu": "🍜",
