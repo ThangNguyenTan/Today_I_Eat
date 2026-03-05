@@ -1,38 +1,119 @@
 import type { FoodType, MealTime } from "./types";
 
+export const FOOD_CATEGORIES: Record<string, FoodType[]> = {
+  "Món Nước (Noodles & Soups)": [
+    "Phở",
+    "Bún Bò Huế",
+    "Mì Quảng",
+    "Bún Riêu",
+    "Hủ Tiếu",
+    "Bánh Canh",
+    "Bún Mắm",
+    "Bún Cá",
+    "Mì Cay",
+    "Cháo Lòng",
+  ],
+  "Cơm (Rice Dishes)": ["Cơm Tấm", "Cơm Gà", "Cơm Chiên"],
+  "Món Khô (Dry Dishes)": [
+    "Bún Chả",
+    "Bún Thịt Nướng",
+    "Bún Đậu",
+    "Cao Lầu",
+    "Mì Trộn",
+    "Bò Kho",
+    "Bò Né",
+    "Xôi",
+  ],
+  "Món Cuốn (Rolls)": [
+    "Gỏi Cuốn",
+    "Chả Giò",
+    "Nem Rán",
+    "Nem Nướng",
+    "Bò Bía",
+    "Phở Cuốn",
+  ],
+  "Món Bánh (Savory Cakes & Bread)": [
+    "Bánh Mì",
+    "Bánh Mì Xíu Mại",
+    "Bánh Cuốn",
+    "Bánh Xèo",
+    "Bánh Khọt",
+    "Bánh Bao",
+    "Bánh Bèo",
+    "Bột Chiên",
+    "Há Cảo",
+  ],
+  "Ăn Vặt (Snacks)": [
+    "Bánh Tráng Nướng",
+    "Bánh Tráng Trộn",
+    "Ốc",
+    "Phá Lấu",
+    "Bắp Xào",
+  ],
+  "Tráng Miệng (Desserts)": ["Chè"],
+  "Lẩu (Hotpot)": ["Lẩu"],
+  "Đồ Nướng (BBQ)": ["Đồ Nướng"],
+  "Món Ngoại (International)": ["Gà Rán", "Pizza", "Burger", "Sushi", "Dimsum"],
+};
+
 export const FOOD_TYPES: FoodType[] = [
+  // Most Popular & Iconic
   "Phở",
   "Bánh Mì",
-  "Gỏi Cuốn",
-  "Chả Giò",
-  "Nem Rán",
-  "Bún Chả",
-  "Bún Bò Huế",
   "Cơm Tấm",
-  "Cao Lầu",
-  "Bánh Cuốn",
-  "Bánh Xèo",
-  "Bánh Khọt",
-  "Bún Đậu Mắm Tôm",
-  "Bánh Bao",
-  "Xôi",
-  "Bún Riêu",
-  "Bò Kho",
-  "Nem Nướng",
-  "Bánh Tráng Nướng",
-  "Bánh Bèo",
-  "Bánh Canh",
-  "Bánh Mì Xíu Mại",
+  "Bún Chả",
   "Bún Thịt Nướng",
-  "Mì Quảng",
+
+  // Very Popular Everyday Eats
   "Hủ Tiếu",
+  "Bún Bò Huế",
+  "Bún Riêu",
   "Cơm Gà",
-  "Cơm Chiên",
+  "Xôi",
+  "Chả Giò",
+  "Bánh Bao",
+
+  // Everyday Soups & Noodles
+  "Bánh Canh",
+  "Mì Quảng",
   "Bún Mắm",
-  "Cháo Lòng",
+  "Bún Cá",
+
+  // Common Street & Snack Items
+  "Gỏi Cuốn",
+  "Bánh Xèo",
+  "Bún Đậu",
+  "Bánh Cuốn",
+  "Bánh Bèo",
+  "Bột Chiên",
+  "Bánh Tráng Trộn",
+  "Bánh Tráng Nướng",
   "Ốc",
+  "Bắp Xào",
+
+  // Other Well-Known Local Favorites
+  "Bò Kho",
+  "Bò Né",
+  "Cao Lầu",
+  "Bánh Mì Xíu Mại",
+  "Phá Lấu",
+
+  // Group Meal / Social Foods
   "Lẩu",
+  "Đồ Nướng",
+
+  // Desserts / Sweets
   "Chè",
+
+  // Modern / International Favorites (less traditional but widely eaten especially in cities)
+  "Gà Rán",
+  "Burger",
+  "Pizza",
+  "Mì Cay",
+  "Mì Trộn",
+  "Há Cảo",
+  "Dimsum",
+  "Sushi",
 ];
 
 export const MEAL_TIMES: MealTime[] = ["Sáng", "Trưa", "Chiều", "Tối", "Khuya"];
