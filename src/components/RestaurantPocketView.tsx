@@ -249,12 +249,14 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
                     {r.location}
                   </p>
                   <Button
+                    asChild
                     variant="link"
                     className="h-auto p-0 text-primary font-bold text-xs gap-1"
-                    onClick={() => window.open(mapsUrl, "_blank")}
                   >
-                    Chỉ đường trên Google Maps
-                    <ChevronRight className="h-3 w-3" />
+                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                      Chỉ đường trên Google Maps
+                      <ChevronRight className="h-3 w-3" />
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -274,12 +276,14 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
                     <Utensils className="h-5 w-5" />
                   </div>
                   <Button
+                    asChild
                     variant="link"
                     className="h-auto p-0 text-orange-600 font-bold text-xs gap-1"
-                    onClick={() => window.open(r.shopeeUrl!, "_blank")}
                   >
-                    Đặt món trên ShopeeFood
-                    <ChevronRight className="h-3 w-3" />
+                    <a href={r.shopeeUrl!}>
+                      Đặt món trên ShopeeFood
+                      <ChevronRight className="h-3 w-3" />
+                    </a>
                   </Button>
                 </div>
               )}
@@ -288,11 +292,13 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
             {/* Bottom Actions */}
             <div className="flex gap-3 pt-4">
               <Button
-                onClick={() => window.open(mapsUrl, "_blank")}
+                asChild
                 className="w-full h-16 rounded-3xl bg-primary hover:bg-orange-600 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 gap-2"
               >
-                <Navigation className="h-5 w-5" />
-                Mở Bản Đồ
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                  <Navigation className="h-5 w-5" />
+                  Mở Bản Đồ
+                </a>
               </Button>
             </div>
           </div>
