@@ -225,6 +225,7 @@ function transformRestaurant(doc) {
     popularityScore,
     _searchKey: `${name.toLowerCase()} ${address.toLowerCase()}`.trim(),
     _keywordLower: keyword.toLowerCase(),
+    _locationLower: address.toLowerCase(),
   };
 }
 
@@ -345,7 +346,7 @@ app.get("/api/restaurants", async (req, res) => {
         if (!hasMatch) continue;
       }
 
-      if (district && !r.location.toLowerCase().includes(district)) continue;
+      if (district && !r._locationLower.includes(district)) continue;
       if (q && !r._searchKey.includes(q)) continue;
 
       // Distance calculation
@@ -361,9 +362,9 @@ app.get("/api/restaurants", async (req, res) => {
         } else {
           distanceKm = 9999;
         }
-        result.push({ ...r, distanceKm });
+        result.push({ r, distanceKm });
       } else {
-        result.push(r);
+        result.push({ r });
       }
     }
 
@@ -373,15 +374,21 @@ app.get("/api/restaurants", async (req, res) => {
     } else if (sortBy === "far" && hasLocation) {
       result.sort((a, b) => b.distanceKm - a.distanceKm);
     } else if (sortBy === "high_rating") {
-      result.sort((a, b) => (b.rating?.avg || 0) - (a.rating?.avg || 0));
+      result.sort((a, b) => (b.r.rating?.avg || 0) - (a.r.rating?.avg || 0));
     } else if (sortBy === "low_rating") {
-      result.sort((a, b) => (a.rating?.avg || 0) - (b.rating?.avg || 0));
+      result.sort((a, b) => (a.r.rating?.avg || 0) - (b.r.rating?.avg || 0));
     } else if (hasLocation) {
       result.sort((a, b) => a.distanceKm - b.distanceKm);
     }
 
     const total = result.length;
-    const restaurants = result.slice(skip, skip + limit);
+    const paginated = result.slice(skip, skip + limit);
+    const restaurants = paginated.map((item) => {
+      if (item.distanceKm !== undefined) {
+        return { ...item.r, distanceKm: item.distanceKm };
+      }
+      return item.r;
+    });
 
     res.json({ restaurants, total, page, limit });
   } catch (err) {
@@ -426,34 +433,44 @@ app.get("/api/restaurants/nearby", async (req, res) => {
     );
     const currentTotalMinutes = vnTime.getHours() * 60 + vnTime.getMinutes();
 
-    const filtered = allTransformed
-      .filter((r) => {
-        if (EXCLUDE_DRINKS.includes(r.type)) return false;
-        if (r.operating && !isCurrentlyOpen(r.operating, currentTotalMinutes))
-          return false;
-        if (typesArr && typesArr.length > 0) {
-          const kw = r.keyword.toLowerCase();
-          const hasMatch = typesArr.some(
-            (t) => kw.includes(t) || t.includes(kw),
-          );
-          if (!hasMatch) return false;
-        }
-        if (!r.position?.latitude || !r.position?.longitude) return false;
-        return true;
-      })
-      .map((r) => ({
-        ...r,
-        distanceKm: haversineKm(
-          lat,
-          lon,
-          r.position.latitude,
-          r.position.longitude,
-        ),
-      }))
-      .filter((r) => r.distanceKm <= radiusKm)
-      .sort((a, b) => a.distanceKm - b.distanceKm);
+    let filtered = [];
+    const count = allTransformed.length;
 
-    const results = filtered.slice(skip, skip + limit);
+    for (let i = 0; i < count; i++) {
+      const r = allTransformed[i];
+
+      if (EXCLUDE_DRINKS.includes(r.type)) continue;
+
+      if (r.operating && !isCurrentlyOpen(r.operating, currentTotalMinutes))
+        continue;
+
+      if (typesArr && typesArr.length > 0) {
+        const kw = r._keywordLower;
+        const hasMatch = typesArr.some((t) => kw.includes(t) || t.includes(kw));
+        if (!hasMatch) continue;
+      }
+
+      if (!r.position?.latitude || !r.position?.longitude) continue;
+
+      const distanceKm = haversineKm(
+        lat,
+        lon,
+        r.position.latitude,
+        r.position.longitude,
+      );
+
+      if (distanceKm <= radiusKm) {
+        filtered.push({ r, distanceKm });
+      }
+    }
+
+    filtered.sort((a, b) => a.distanceKm - b.distanceKm);
+
+    const paginated = filtered.slice(skip, skip + limit);
+    const results = paginated.map((item) => ({
+      ...item.r,
+      distanceKm: item.distanceKm,
+    }));
     res.json({ restaurants: results, total: filtered.length, page, limit });
   } catch (err) {
     console.error("GET /api/restaurants/nearby error:", err);
@@ -524,16 +541,14 @@ app.get("/api/restaurants/count", async (_req, res) => {
 });
 
 // ─── Haversine (server-side for /nearby) ─────────────────────────────────────
+const PI_RAD = Math.PI / 180;
 function haversineKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const dLat = (lat2 - lat1) * PI_RAD;
+  const dLon = (lon2 - lon1) * PI_RAD;
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    Math.cos(lat1 * PI_RAD) * Math.cos(lat2 * PI_RAD) * Math.sin(dLon / 2) ** 2;
+  return 12742 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); // 6371 * 2 = 12742
 }
 
 // ─── Boot / Export ────────────────────────────────────────────────────────────
