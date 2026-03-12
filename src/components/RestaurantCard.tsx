@@ -17,6 +17,7 @@ import {
   cn,
 } from "@/lib/utils";
 import { LazyImage } from "./ui/LazyImage";
+import { useTranslation } from "react-i18next";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -31,6 +32,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   isFavorite,
   onToggleFavorite,
 }) => {
+  const { t } = useTranslation();
   const emoji = getEmoji(restaurant.type);
   const hasThumb = Boolean(restaurant.thumbnailUrl);
   const mapsUrl = getGoogleMapsUrl(
@@ -91,7 +93,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {isPermanentlyClosed ? (
               <div className="px-3 py-1.5 rounded-xl backdrop-blur-md bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
-                ● Đã Đóng Vĩnh Viễn
+                {t("card.closedPerm")}
               </div>
             ) : hours ? (
               <div
@@ -125,7 +127,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {isPermanentlyClosed ? (
               <div className="px-3 py-1.5 rounded-xl bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
-                ● Đã Đóng Vĩnh Viễn
+                {t("card.closedPerm")}
               </div>
             ) : hours ? (
               <div
@@ -252,10 +254,10 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
             rel="noopener noreferrer"
             className="relative flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gray-50 text-xs font-bold text-gray-600 overflow-hidden group/btn hover:text-white transition-colors duration-300"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-primary to-orange-500 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary to-orange-500 translate-y-[105%] group-hover/btn:translate-y-0 transition-transform duration-300" />
             <span className="relative z-10 flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5" />
-              Xem trên bản đồ
+              {t("card.viewMap")}
               <ExternalLink className="h-3 w-3 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform duration-300" />
             </span>
           </a>

@@ -1,6 +1,14 @@
-import { Home, MapPin, UtensilsCrossed, ListFilter, User } from "lucide-react";
+import {
+  Home,
+  MapPin,
+  UtensilsCrossed,
+  ListFilter,
+  User as UserIcon,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import { type User } from "firebase/auth";
 
 interface BottomNavigationProps {
   onHome: () => void;
@@ -10,7 +18,7 @@ interface BottomNavigationProps {
   onLogin: () => void;
   isFilterActive: boolean;
   isNearbyActive?: boolean;
-  user: any;
+  user: User | null;
 }
 
 export function BottomNavigation({
@@ -23,6 +31,8 @@ export function BottomNavigation({
   isNearbyActive,
   user,
 }: BottomNavigationProps) {
+  const { t } = useTranslation();
+
   // Determine active tab ID for the gliding bubble
   let activeTab = "explore";
   if (isNearbyActive) activeTab = "nearby";
@@ -50,7 +60,7 @@ export function BottomNavigation({
             <Home className="h-5 w-5" />
           </div>
           <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
-            Khám phá
+            {t("bottomNav.explore")}
           </span>
         </button>
 
@@ -70,7 +80,7 @@ export function BottomNavigation({
             <MapPin className="h-5 w-5" />
           </div>
           <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
-            Gần đây
+            {t("bottomNav.nearby")}
           </span>
         </button>
 
@@ -106,7 +116,7 @@ export function BottomNavigation({
             <ListFilter className="h-5 w-5" />
           </div>
           <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
-            Bộ lọc
+            {t("bottomNav.filter")}
           </span>
         </button>
 
@@ -124,11 +134,11 @@ export function BottomNavigation({
                 className="h-5 w-5 rounded-full object-cover"
               />
             ) : (
-              <User className="h-5 w-5" />
+              <UserIcon className="h-5 w-5" />
             )}
           </div>
           <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">
-            {user ? "Tài khoản" : "Tài khoản"}
+            {t("bottomNav.account")}
           </span>
         </button>
       </div>

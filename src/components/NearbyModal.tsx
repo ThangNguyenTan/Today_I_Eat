@@ -21,6 +21,7 @@ import {
   getDistanceColor,
 } from "@/lib/utils";
 import { LazyImage } from "./ui/LazyImage";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Phase = "idle" | "locating" | "loading" | "done" | "error";
@@ -41,6 +42,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
   onClose,
   onSelectRestaurant,
 }) => {
+  const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
@@ -99,7 +101,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
           setPhase("done");
           setIsLoadingMore(false);
         }
-      } catch (err) {
+      } catch {
         if (!isCancelledRef.current) {
           setErrorMsg("Không thể tải dữ liệu từ máy chủ");
           setPhase("error");
@@ -197,13 +199,13 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
             </button>
             <div className="flex items-center gap-3 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none mt-1.5">
               <h2 className="text-lg font-black tracking-tight whitespace-nowrap">
-                Gần Đây
+                {t("nearby.title")}
               </h2>
             </div>
             <div className="w-9" />
           </div>
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center pb-3">
-            Trong vòng {RADIUS_KM} km · Sắp xếp theo khoảng cách
+            {t("nearby.subtitle", { radius: RADIUS_KM })}
           </p>
         </div>
 
@@ -220,18 +222,17 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
               </div>
               <div className="space-y-2">
                 <h3 className="text-xl font-black text-gray-900">
-                  Tìm quán ngon gần bạn?
+                  {t("nearby.promptTitle")}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Để hiển thị danh sách các quán ăn quanh đây, chúng tôi cần bạn
-                  cấp quyền truy cập vị trí.
+                  {t("nearby.promptDesc")}
                 </p>
               </div>
               <Button
                 onClick={getLocation}
                 className="w-full h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all"
               >
-                Tiếp tục
+                {t("nearby.promptBtn")}
               </Button>
             </div>
           )}
@@ -244,20 +245,19 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
               </div>
               <div className="space-y-1">
                 <h3 className="text-lg font-black text-gray-900">
-                  Vị trí bị chặn
+                  {t("nearby.blockedTitle")}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Bạn đã từ chối quyền truy cập vị trí. Để tiếp tục, vui lòng
-                  bật lại trong cài đặt trình duyệt.
+                  {t("nearby.blockedDesc")}
                 </p>
                 <div className="mt-4 p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-left">
                   <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">
-                    Cách mở lại nhanh:
+                    {t("nearby.blockedQuickFix")}
                   </p>
                   <ol className="text-[11px] text-gray-600 space-y-1 ml-4 list-decimal leading-snug">
-                    <li>Nhấn vào biểu tượng 🔒 hoặc ⚙️ ở thanh địa chỉ</li>
-                    <li>Ở phần "Vị trí", chọn "Cho phép" (Allow)</li>
-                    <li>Tải lại trang web</li>
+                    <li>{t("nearby.blockedStep1")}</li>
+                    <li>{t("nearby.blockedStep2")}</li>
+                    <li>{t("nearby.blockedStep3")}</li>
                   </ol>
                 </div>
               </div>
@@ -267,7 +267,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                 className="w-full h-12 rounded-xl font-black uppercase tracking-[0.1em] gap-2 text-[11px]"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
-                Tải lại trang
+                {t("nearby.reloadBtn")}
               </Button>
             </div>
           )}
@@ -288,10 +288,10 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
               </div>
               <div className="text-center space-y-1">
                 <p className="font-black text-gray-800 text-lg">
-                  Đang xác định vị trí...
+                  {t("nearby.locatingTitle")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Vui lòng cho phép truy cập GPS
+                  {t("nearby.locatingDesc")}
                 </p>
               </div>
             </div>
@@ -306,9 +306,11 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
               </div>
               <div className="text-center space-y-1">
                 <p className="font-black text-gray-800">
-                  Đang tìm quán gần bạn...
+                  {t("nearby.loadingTitle")}
                 </p>
-                <p className="text-sm text-muted-foreground">Chờ xíu nha ☕</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("nearby.loadingDesc")}
+                </p>
               </div>
             </div>
           )}
@@ -321,7 +323,10 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                   {/* Stats row */}
                   <div className="flex items-center justify-between px-1 mb-2">
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      {nearby.length} quán trong {RADIUS_KM} km
+                      {t("nearby.statsInfo", {
+                        count: nearby.length,
+                        radius: RADIUS_KM,
+                      })}
                     </p>
                     {latitude && longitude && (
                       <a
@@ -331,7 +336,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                         className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 hover:underline"
                       >
                         <MapPin className="h-3 w-3" />
-                        Mở bản đồ
+                        {t("nearby.openMap")}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
@@ -361,7 +366,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                         className="text-[11px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 mx-auto"
                       >
                         <RefreshCw className="h-3 w-3" />
-                        Tìm lại
+                        {t("nearby.retryBtn")}
                       </button>
                     </div>
                   )}
@@ -379,7 +384,9 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                 <AlertCircle className="h-10 w-10 text-red-400" />
               </div>
               <div className="space-y-1">
-                <p className="font-black text-gray-800">Không thể định vị</p>
+                <p className="font-black text-gray-800">
+                  {t("nearby.errorTitle")}
+                </p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {errorMsg}
                 </p>
@@ -390,7 +397,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
                 className="rounded-xl px-10 h-12 shadow-xl"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Thử lại ngay
+                {t("nearby.errorRetry")}
               </Button>
             </div>
           )}
@@ -406,6 +413,7 @@ export const RestaurantRow: React.FC<{
   rank: number;
   onClick?: () => void;
 }> = ({ restaurant: r, rank, onClick }) => {
+  const { t } = useTranslation();
   const emoji = getEmoji(r.type);
   const distColor = getDistanceColor(r.distanceKm);
   const isPermanentlyClosed =
@@ -476,7 +484,7 @@ export const RestaurantRow: React.FC<{
         {isPermanentlyClosed && (
           <div className="mt-2">
             <span className="inline-flex px-2 py-0.5 rounded-md bg-red-50 text-red-500 text-[9px] font-black uppercase tracking-wider border border-red-100">
-              Đã đóng vĩnh viễn
+              {t("nearby.closedPerm")}
             </span>
           </div>
         )}
@@ -489,7 +497,7 @@ export const RestaurantRow: React.FC<{
               {r.rating.avg.toFixed(1)}
             </span>
             <span className="text-[10px] text-muted-foreground">
-              ({r.rating.displayTotalReview} đánh giá)
+              ({r.rating.displayTotalReview} {t("nearby.reviews")})
             </span>
           </div>
         )}
@@ -530,7 +538,7 @@ export const RestaurantRow: React.FC<{
           onClick={(e) => e.stopPropagation()}
         >
           <ExternalLink className="h-3 w-3" />
-          Chỉ đường
+          {t("nearby.directions")}
         </a>
       </div>
     </div>
@@ -541,24 +549,28 @@ export const RestaurantRow: React.FC<{
 const EmptyNearby: React.FC<{ km: number; onRetry: () => void }> = ({
   km,
   onRetry,
-}) => (
-  <div className="py-16 flex flex-col items-center gap-5 text-center px-6">
-    <div className="text-5xl">🗺️</div>
-    <div className="space-y-1">
-      <p className="font-black text-gray-800">Không có quán nào gần đây</p>
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        Hiện tại không có quán nào trong bán kính {km} km của bạn.
-        <br />
-        Thử mở rộng phạm vi hoặc khám phá toàn bộ danh sách nhé!
-      </p>
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="py-16 flex flex-col items-center gap-5 text-center px-6">
+      <div className="text-5xl">🗺️</div>
+      <div className="space-y-1">
+        <p className="font-black text-gray-800">{t("nearby.emptyTitle")}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {t("nearby.emptyDesc1", { radius: km })}
+          <br />
+          {t("nearby.emptyDesc2")}
+        </p>
+      </div>
+      <Button
+        variant="outline"
+        onClick={onRetry}
+        className="rounded-xl px-8 font-black uppercase tracking-widest gap-2"
+      >
+        <RefreshCw className="h-4 w-4" />
+        {t("nearby.emptyRetry")}
+      </Button>
     </div>
-    <Button
-      variant="outline"
-      onClick={onRetry}
-      className="rounded-xl px-8 font-black uppercase tracking-widest gap-2"
-    >
-      <RefreshCw className="h-4 w-4" />
-      Thử lại
-    </Button>
-  </div>
-);
+  );
+};

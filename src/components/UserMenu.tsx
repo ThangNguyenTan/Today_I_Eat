@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -27,6 +28,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   onLogout,
   onOpenFavorites,
 }) => {
+  const { t } = useTranslation();
+
   if (!user) {
     return (
       <Button
@@ -37,7 +40,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
         <div className="p-1.5 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white transition-all duration-300">
           <LogIn className="h-3.5 w-3.5" />
         </div>
-        <span className="hidden sm:inline">Đăng nhập</span>
+        <span className="hidden sm:inline">{t("userMenu.login")}</span>
       </Button>
     );
   }
@@ -89,7 +92,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
                 <div className="flex items-center gap-1 mt-1">
                   <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                   <span className="text-[10px] font-bold text-green-600 uppercase">
-                    Online
+                    {t("userMenu.online")}
                   </span>
                 </div>
               </div>
@@ -108,9 +111,11 @@ export const UserMenu: React.FC<UserMenuProps> = ({
                 <Heart className="h-4 w-4" />
               </div>
               <div className="flex flex-col flex-1">
-                <span className="font-bold text-sm">Quán ruột của tôi</span>
+                <span className="font-bold text-sm">
+                  {t("userMenu.favorites")}
+                </span>
                 <span className="text-[10px] text-muted-foreground">
-                  Danh sách đã lưu
+                  {t("userMenu.favoritesDesc")}
                 </span>
               </div>
             </DropdownMenuItem>
@@ -127,9 +132,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               <LogOut className="h-4 w-4" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-sm">Đăng xuất</span>
+              <span className="font-bold text-sm">{t("userMenu.logout")}</span>
               <span className="text-[10px] opacity-70">
-                Tạm biệt, hẹn gặp lại!
+                {t("userMenu.logoutDesc")}
               </span>
             </div>
           </DropdownMenuItem>

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { SORT_OPTIONS } from "@/constants";
 import type { SortOption } from "@/types";
+import { useTranslation } from "react-i18next";
 
 interface ActionSectionProps {
   searchQuery: string;
@@ -29,36 +30,40 @@ interface ActionSectionProps {
 const SortSelect: React.FC<{
   sortBy: SortOption | "";
   onSortChange: (value: SortOption | "") => void;
-}> = ({ sortBy, onSortChange }) => (
-  <Select
-    value={sortBy || "near"}
-    onValueChange={(val) => onSortChange(val as SortOption)}
-  >
-    <SelectTrigger
-      className={`h-9 min-w-[124px] rounded-xl border-0 bg-transparent px-3 gap-1.5 font-bold text-[10px] uppercase tracking-widest transition-all focus:ring-0 focus:ring-offset-0 ${
-        sortBy && sortBy !== "near"
-          ? "bg-amber-50 text-amber-600 shadow-sm ring-1 ring-amber-200"
-          : "text-amber-600 hover:bg-amber-50"
-      }`}
+}> = ({ sortBy, onSortChange }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Select
+      value={sortBy || "near"}
+      onValueChange={(val) => onSortChange(val as SortOption)}
     >
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
-        <SlidersHorizontal className="h-3.5 w-3.5" />
-        <SelectValue placeholder="Sắp xếp" />
-      </div>
-    </SelectTrigger>
-    <SelectContent className="rounded-2xl border-gray-100 shadow-xl overflow-hidden">
-      {SORT_OPTIONS.map((opt) => (
-        <SelectItem
-          key={opt.value}
-          value={opt.value}
-          className="text-[10px] font-bold uppercase tracking-widest py-3 px-4 focus:bg-amber-50 focus:text-amber-600 cursor-pointer"
-        >
-          {opt.label}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-);
+      <SelectTrigger
+        className={`h-9 min-w-[124px] rounded-xl border-0 bg-transparent px-3 gap-1.5 font-bold text-[10px] uppercase tracking-widest transition-all focus:ring-0 focus:ring-offset-0 ${
+          sortBy && sortBy !== "near"
+            ? "bg-amber-50 text-amber-600 shadow-sm ring-1 ring-amber-200"
+            : "text-amber-600 hover:bg-amber-50"
+        }`}
+      >
+        <div className="flex items-center gap-1.5 whitespace-nowrap">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          <SelectValue placeholder={t("action.sortBy")} />
+        </div>
+      </SelectTrigger>
+      <SelectContent className="rounded-2xl border-gray-100 shadow-xl overflow-hidden">
+        {SORT_OPTIONS.map((opt) => (
+          <SelectItem
+            key={opt.value}
+            value={opt.value}
+            className="text-[10px] font-bold uppercase tracking-widest py-3 px-4 focus:bg-amber-50 focus:text-amber-600 cursor-pointer"
+          >
+            {t(`sort.${opt.value}`)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
 
 export const ActionSection: React.FC<ActionSectionProps> = ({
   searchQuery,
@@ -73,6 +78,8 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
   onOpenNearby,
   onToggleFilter,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <section className="mb-10 space-y-6">
       <SearchBar
@@ -84,15 +91,15 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
       <div className="flex items-end justify-between gap-4 px-2">
         <div className="min-w-0">
           <h3 className="text-3xl font-black tracking-tight whitespace-nowrap">
-            Khám phá
+            {t("action.explore")}
           </h3>
           <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1.5">
             <Info className="h-3.5 w-3.5 text-primary/60" />
             {apiLoading || geoLoading
-              ? "Đang tải..."
+              ? t("action.loading")
               : searchQuery || activeTypes.length > 0
-                ? `Tìm thấy ${totalCount.toLocaleString()} địa điểm`
-                : `Có ${totalCount.toLocaleString()} địa điểm`}
+                ? `${t("action.foundStart")}${totalCount.toLocaleString()}${t("action.foundEnd")}`
+                : `${t("action.hasStart")}${totalCount.toLocaleString()}${t("action.hasEnd")}`}
           </p>
         </div>
 
@@ -110,7 +117,7 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
             className="rounded-xl gap-1.5 font-bold text-[10px] uppercase tracking-widest transition-all text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 h-9"
           >
             <Navigation className="h-3.5 w-3.5" />
-            Gần Đây
+            {t("action.nearby")}
           </Button>
 
           <SortSelect sortBy={sortBy} onSortChange={onSortChange} />
@@ -122,7 +129,7 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
             className={`rounded-xl gap-2 font-bold text-[10px] uppercase tracking-widest transition-all h-9 ${isFilterOpen ? "bg-primary text-white shadow-lg" : "text-primary hover:bg-primary/5"}`}
           >
             <ListFilter className="h-3.5 w-3.5" />
-            Bộ lọc
+            {t("action.filter")}
           </Button>
         </div>
       </div>

@@ -17,8 +17,8 @@ import {
 import { FOOD_TYPES } from "@/constants";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { type NearbyRestaurant } from "./NearbyModal";
-
 import { LazyImage } from "./ui/LazyImage";
+import { useTranslation } from "react-i18next";
 import {
   formatDistance,
   formatOperatingHours,
@@ -41,6 +41,7 @@ const SuggestionCard: React.FC<{
   rank: number;
   onClick?: () => void;
 }> = ({ restaurant: r, rank, onClick }) => {
+  const { t } = useTranslation();
   const emoji = getEmoji(r.type);
   const distColor = getDistanceColor(r.distanceKm);
   const hours = formatOperatingHours(
@@ -148,7 +149,7 @@ const SuggestionCard: React.FC<{
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-primary transition-all shadow-md hover:shadow-primary/20 group/btn"
           >
             <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-              Xem đường đi
+              {t("card.viewMap")}
             </span>
             <ExternalLink className="h-3 w-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </a>
@@ -165,17 +166,25 @@ const ConfettiParticle = ({
 }: {
   delay: number;
   color: string;
-}) => (
-  <div
-    className="absolute w-2 h-2 rounded-full animate-confetti"
-    style={{
-      backgroundColor: color,
-      left: `${Math.random() * 100}%`,
-      animationDelay: `${delay}ms`,
-      animationDuration: `${1000 + Math.random() * 500}ms`,
-    }}
-  />
-);
+}) => {
+  const randomLeft = React.useMemo(() => `${Math.random() * 100}%`, []);
+  const randomDuration = React.useMemo(
+    () => `${1000 + Math.random() * 500}ms`,
+    [],
+  );
+
+  return (
+    <div
+      className="absolute w-2 h-2 rounded-full animate-confetti"
+      style={{
+        backgroundColor: color,
+        left: randomLeft,
+        animationDelay: `${delay}ms`,
+        animationDuration: randomDuration,
+      }}
+    />
+  );
+};
 
 type Phase = "idle" | "spinning" | "locating" | "loading" | "done" | "error";
 
@@ -184,6 +193,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   onClose,
   onSelectRestaurant,
 }) => {
+  const { t } = useTranslation();
   const {
     latitude,
     longitude,
@@ -257,13 +267,13 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
       } catch (err) {
         if (!isCancelledRef.current) {
           console.error("[SuggestionModal] runSearch error:", err);
-          setErrorMsg("Không thể tải dữ liệu từ máy chủ");
+          setErrorMsg(t("suggestion.errorServer"));
           setPhase("error");
           setIsLoadingMore(false);
         }
       }
     },
-    [],
+    [t],
   );
 
   const locateAndSearch = useCallback(
@@ -278,7 +288,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
 
       if (permissionStatus === "denied") {
         setPhase("error");
-        setErrorMsg("Quyền truy cập vị trí bị từ chối");
+        setErrorMsg(t("suggestion.errorLocation"));
         return;
       }
 
@@ -298,7 +308,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
         }
       }
     },
-    [permissionStatus, getLocation, latitude, longitude, runSearch],
+    [permissionStatus, getLocation, latitude, longitude, runSearch, t],
   );
 
   // Handle geolocation updates during "locating" phase
@@ -491,10 +501,12 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             <h1
               className={`text-3xl font-black tracking-tight text-white transition-all duration-500 ${isSpinning ? "" : "animate-in zoom-in-95"}`}
             >
-              {isSpinning ? "Đang quay..." : "🎉 Tìm thấy rồi!"}
+              {isSpinning ? t("suggestion.spinning") : t("suggestion.found")}
             </h1>
             <p className="text-white/80 text-[11px] font-bold uppercase tracking-[0.25em]">
-              {isSpinning ? "Đang tìm món ngon..." : "Gợi ý hoàn hảo cho bạn"}
+              {isSpinning
+                ? t("suggestion.subtitleSpinning")
+                : t("suggestion.subtitleFound")}
             </p>
           </div>
 
@@ -506,12 +518,12 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_1s_infinite]" />
               )}
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60 block mb-2">
-                Hãy thử ngay món
+                {t("suggestion.tryDish")}
               </span>
               <h2
                 className={`text-3xl font-black text-white leading-tight transition-all duration-300 ${isSpinning ? "" : "animate-in slide-in-from-bottom-2"}`}
               >
-                {spinningType || "Đang chọn..."}
+                {spinningType || t("suggestion.choosing")}
               </h2>
             </div>
           </div>
@@ -541,10 +553,10 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                 </div>
                 <div className="text-center space-y-1">
                   <p className="font-black text-gray-800">
-                    Đang tìm quán {spinningType} gần bạn...
+                    {t("suggestion.locating", { type: spinningType })}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Vui lòng cho phép truy cập GPS
+                    {t("nearby.locatingDesc")}
                   </p>
                 </div>
               </div>
@@ -558,10 +570,10 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                 </div>
                 <div className="text-center space-y-1">
                   <p className="font-black text-gray-800">
-                    Đang tải danh sách quán...
+                    {t("suggestion.loadingTitle")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Chờ chút nhé 🍽️
+                    {t("suggestion.loadingDesc")}
                   </p>
                 </div>
               </div>
@@ -573,7 +585,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                   <>
                     <div className="flex items-center justify-between px-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        Top {spinningType} quanh bạn
+                        {t("suggestion.topPlaces", { type: spinningType })}
                       </p>
                     </div>
                     <div className="space-y-4">
@@ -599,7 +611,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                     ) : (
                       <div className="pt-2 pb-4 text-center">
                         <p className="text-[11px] font-bold text-gray-300 uppercase tracking-widest">
-                          ✨ Đã hết danh sách ✨
+                          {t("suggestion.endOfList")}
                         </p>
                       </div>
                     )}
@@ -610,13 +622,13 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                         className="h-14 rounded-2xl border-2 border-gray-100 bg-white text-gray-800 text-sm font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-300 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2"
                       >
                         <RotateCw className="h-4 w-4" />
-                        Tìm món khác
+                        {t("suggestion.spinAgain")}
                       </Button>
                       <Button
                         onClick={onClose}
                         className="h-14 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white text-sm font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:-translate-y-1 active:scale-95"
                       >
-                        Đóng
+                        {t("common.close")}
                       </Button>
                     </div>
                   </>
@@ -625,17 +637,19 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                     <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                       <Utensils className="h-10 w-10 text-gray-300" />
                     </div>
-                    <p className="text-gray-800 font-bold mb-1">Rất tiếc...</p>
+                    <p className="text-gray-800 font-bold mb-1">
+                      {t("suggestion.oops")}
+                    </p>
                     <p className="text-sm text-muted-foreground mb-6">
-                      Không tìm thấy quán {spinningType} nào quanh vị trí của
-                      bạn.
+                      {t("suggestion.notFound", { type: spinningType })}
                     </p>
                     <Button
                       onClick={startSpinning}
                       variant="outline"
                       className="h-12 rounded-xl"
                     >
-                      <RotateCw className="mr-2 h-4 w-4" /> Quán món khác
+                      <RotateCw className="mr-2 h-4 w-4" />{" "}
+                      {t("suggestion.anotherDish")}
                     </Button>
                   </div>
                 )}
@@ -651,21 +665,20 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                   <div className="space-y-4">
                     <div className="space-y-1">
                       <p className="font-black text-gray-800 text-lg">
-                        Vị trí bị chặn
+                        {t("nearby.blockedTitle")}
                       </p>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Bạn đã chặn vị trí. Để gợi ý món ngon, vui lòng mở lại
-                        trong cài đặt trình duyệt.
+                        {t("nearby.blockedDesc")}
                       </p>
                     </div>
                     <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-left">
                       <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 font-black">
-                        Cách mở nhanh:
+                        {t("nearby.blockedQuickFix")}
                       </p>
                       <ol className="text-[11px] text-gray-600 space-y-1 ml-4 list-decimal leading-snug">
-                        <li>Bấm biểu tượng 🔒 hoặc ⚙️ ở thanh địa chỉ</li>
-                        <li>Bật "Vị trí" thành "Cho phép" (Allow)</li>
-                        <li>Tải lại trang web</li>
+                        <li>{t("nearby.blockedStep1")}</li>
+                        <li>{t("nearby.blockedStep2")}</li>
+                        <li>{t("nearby.blockedStep3")}</li>
                       </ol>
                     </div>
                     <Button
@@ -674,13 +687,15 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                       className="w-full h-12 rounded-xl mt-1 font-black text-xs uppercase tracking-widest gap-2"
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
-                      Tải lại trang
+                      {t("nearby.reloadBtn")}
                     </Button>
                   </div>
                 ) : (
                   <>
                     <div className="space-y-1">
-                      <p className="font-black text-gray-800">Đã xảy ra lỗi</p>
+                      <p className="font-black text-gray-800">
+                        {t("suggestion.errorOccurred")}
+                      </p>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {errorMsg}
                       </p>
@@ -689,7 +704,8 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
                       onClick={() => locateAndSearch()}
                       className="mt-2 rounded-xl h-12 px-8 font-bold"
                     >
-                      <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
+                      <RefreshCw className="mr-2 h-4 w-4" />{" "}
+                      {t("nearby.errorRetry")}
                     </Button>
                   </>
                 )}

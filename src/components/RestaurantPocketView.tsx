@@ -18,6 +18,7 @@ import type { Restaurant } from "@/types";
 import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/context/ToastContext";
+import { useTranslation } from "react-i18next";
 
 interface RestaurantPocketViewProps {
   restaurant: Restaurant | null;
@@ -34,6 +35,8 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
   isFavorite,
   onToggleFavorite,
 }) => {
+  const { t } = useTranslation();
+  const { success } = useToast();
   if (!r) return null;
 
   const mapsUrl = getGoogleMapsUrl(
@@ -51,14 +54,12 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
     r.operating?.closeTime,
   );
 
-  const { success } = useToast();
-
   const handleShare = async () => {
     // Generate a robust link back to the app with the restaurant name as a search query.
     // Ensure we handle trailing slashes and correctly encode the name.
     const baseUrl = window.location.origin + window.location.pathname;
     const appUrl = `${baseUrl.replace(/\/$/, "")}?q=${encodeURIComponent(r.name)}`;
-    const shareText = `Khám phá quán ${r.name} trên Ăn Gì Đây! 🤤`;
+    const shareText = t("pocket.shareText", { name: r.name });
 
     // Attempt native share if available
     if (navigator.share) {
@@ -79,7 +80,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
     // Fallback to clipboard
     try {
       await navigator.clipboard.writeText(`${shareText}\n${appUrl}`);
-      success("Đã sao chép liên kết quán! ✨");
+      success(t("pocket.copied"));
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -89,7 +90,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="p-0 border-0 max-w-lg w-full h-[92dvh] sm:h-auto sm:max-h-[85dvh] overflow-hidden rounded-t-[3rem] sm:rounded-[3rem] bg-white gap-0">
         <DialogDescription className="sr-only">
-          Chi tiết nhà hàng {r.name}
+          {t("pocket.details", { name: r.name })}
         </DialogDescription>
 
         {/* Top Action Bar (Floating) */}
@@ -204,7 +205,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
                   </div>
                   <div className="h-4 w-[1px] bg-gray-100" />
                   <span className="text-sm font-bold text-muted-foreground">
-                    {r.rating.displayTotalReview} đánh giá
+                    {r.rating.displayTotalReview} {t("nearby.reviews")}
                   </span>
                 </div>
               )}
@@ -216,24 +217,24 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
                 <div className="flex items-center gap-2 text-emerald-600">
                   <Clock className="h-4 w-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">
-                    Giờ mở cửa
+                    {t("pocket.openHours")}
                   </span>
                 </div>
                 <p className="text-sm font-bold text-emerald-900 leading-tight">
                   {isPermanentlyClosed
-                    ? "Đã đóng vĩnh viễn"
-                    : hours || "Đang cập nhật"}
+                    ? t("pocket.closedPerm")
+                    : hours || t("pocket.updating")}
                 </p>
               </div>
               <div className="p-4 rounded-[2rem] bg-orange-50/50 border border-orange-100 flex flex-col gap-3">
                 <div className="flex items-center gap-2 text-orange-600">
                   <Tag className="h-4 w-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">
-                    Ưu đãi
+                    {t("pocket.promotions")}
                   </span>
                 </div>
                 <p className="text-sm font-bold text-orange-900 leading-tight">
-                  {r.promotionGroups?.[0]?.text || "Không có ưu đãi"}
+                  {r.promotionGroups?.[0]?.text || t("pocket.noPromotions")}
                 </p>
               </div>
             </div>
@@ -254,7 +255,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
                     className="h-auto p-0 text-primary font-bold text-xs gap-1"
                   >
                     <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-                      Chỉ đường trên Google Maps
+                      {t("pocket.directions")}
                       <ChevronRight className="h-3 w-3" />
                     </a>
                   </Button>
@@ -281,7 +282,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
                     className="h-auto p-0 text-orange-600 font-bold text-xs gap-1"
                   >
                     <a href={r.shopeeUrl!}>
-                      Đặt món trên ShopeeFood
+                      {t("pocket.orderShopee")}
                       <ChevronRight className="h-3 w-3" />
                     </a>
                   </Button>
@@ -297,7 +298,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
               >
                 <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
                   <Navigation className="h-5 w-5" />
-                  Mở Bản Đồ
+                  {t("pocket.openMap")}
                 </a>
               </Button>
             </div>

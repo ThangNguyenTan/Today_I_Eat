@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X, Clock, Trash2 } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SearchBarProps {
   query: string;
@@ -13,20 +14,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onChange,
   isLoading,
 }) => {
+  const { t } = useTranslation();
   const [isFocused, setIsFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("recent_searches");
-    if (saved) {
-      try {
-        setRecentSearches(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse recent searches", e);
-      }
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("recent_searches");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to parse recent searches", e);
+      return [];
     }
-  }, []);
+  });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const saveSearch = (q: string) => {
     if (!q.trim()) return;
@@ -91,7 +90,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         </div>
         <input
           type="text"
-          placeholder="Tìm tên quán, món ăn hoặc địa chỉ..."
+          placeholder={t("search.placeholder")}
           value={query}
           onFocus={() => setIsFocused(true)}
           onChange={(e) => onChange(e.target.value)}
@@ -116,14 +115,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         <div className="absolute top-full left-0 right-0 mt-3 p-4 bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden z-50">
           <div className="flex items-center justify-between mb-3 px-2">
             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-              Tìm kiếm gần đây
+              {t("search.recentSearch")}
             </h4>
             <button
               onClick={clearAll}
               className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest flex items-center gap-1"
             >
               <Trash2 className="h-3 w-3" />
-              Xóa hết
+              {t("search.clearAll")}
             </button>
           </div>
           <div className="space-y-1">

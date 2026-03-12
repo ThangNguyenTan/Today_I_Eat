@@ -1,12 +1,14 @@
 import React from "react";
 import { Button } from "./ui/button";
 import { UtensilsCrossed, LogIn, Sparkles, MapPin, Heart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface LoginOverlayProps {
   onLogin: () => void;
 }
 
 export const LoginOverlay: React.FC<LoginOverlayProps> = ({ onLogin }) => {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-0">
       {/* Premium Blur Background */}
@@ -37,12 +39,11 @@ export const LoginOverlay: React.FC<LoginOverlayProps> = ({ onLogin }) => {
 
           <div className="space-y-4">
             <h1 className="text-4xl font-black tracking-tight text-gray-900 leading-tight">
-              Chào mừng bạn đến <br />
-              <span className="text-primary italic">Ăn Gì Đây?</span>
+              {t("login.welcome")} <br />
+              <span className="text-primary italic">{t("login.appName")}</span>
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed px-4">
-              Khám phá thế giới ẩm thực Việt Nam tinh tế, được cá nhân hóa riêng
-              theo khẩu vị của bạn.
+              {t("login.desc")}
             </p>
           </div>
 
@@ -51,13 +52,13 @@ export const LoginOverlay: React.FC<LoginOverlayProps> = ({ onLogin }) => {
             <div className="flex flex-col items-center p-4 rounded-3xl bg-gray-50/80 border border-gray-100">
               <MapPin className="h-5 w-5 text-emerald-500 mb-2" />
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                Gần bạn nhất
+                {t("login.nearest")}
               </span>
             </div>
             <div className="flex flex-col items-center p-4 rounded-3xl bg-gray-50/80 border border-gray-100">
               <Heart className="h-5 w-5 text-red-500 mb-2" />
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                Món ruột
+                {t("login.favorites")}
               </span>
             </div>
           </div>
@@ -69,10 +70,10 @@ export const LoginOverlay: React.FC<LoginOverlayProps> = ({ onLogin }) => {
               className="w-full h-16 rounded-2xl bg-gray-900 hover:bg-gray-800 text-white font-black uppercase tracking-widest shadow-2xl shadow-gray-200 group active:scale-95 transition-all"
             >
               <LogIn className="mr-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              Đăng nhập với Google
+              {t("login.loginBtn")}
             </Button>
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-[0.15em]">
-              Để bắt đầu hành trình ẩm thực của bạn
+              {t("login.footer")}
             </p>
           </div>
         </div>

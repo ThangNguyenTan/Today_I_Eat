@@ -1,9 +1,11 @@
 import React from "react";
 import { UtensilsCrossed } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
-
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useTranslation } from "react-i18next";
+import { type User } from "firebase/auth";
 interface HeaderProps {
-  user: any;
+  user: User | null;
   onLogin: () => void;
   onLogout: () => void;
   onOpenFavorites: () => void;
@@ -15,6 +17,8 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onOpenFavorites,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <header className="sticky top-0 z-40 w-full glass-premium border-b-0">
       <div className="container flex h-16 items-center justify-between px-6">
@@ -31,14 +35,15 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="flex flex-col">
             <h1 className="text-lg font-black tracking-tight leading-none group-hover:text-primary transition-colors duration-300">
-              Ăn Gì Đây?
+              {t("header.title")}
             </h1>
             <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-              🇻🇳 Vietnamese Cuisine
+              🇻🇳 {t("header.subtitle")}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <LanguageSelector />
           <UserMenu
             user={
               user

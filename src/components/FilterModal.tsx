@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useTranslation } from "react-i18next";
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -47,15 +48,20 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   manualArea,
   onApply,
 }) => {
+  const { t } = useTranslation();
   const [localTypes, setLocalTypes] = useState<string[]>(activeTypes);
   const [localArea, setLocalArea] = useState<string | null>(manualArea);
   const [isAreaOpen, setIsAreaOpen] = useState(false);
 
-  // Sync with props ONLY when they actually change, preserving unapplied state across opens
-  useEffect(() => {
+  const [prevActiveTypes, setPrevActiveTypes] = useState(activeTypes);
+  const [prevManualArea, setPrevManualArea] = useState(manualArea);
+
+  if (prevActiveTypes !== activeTypes || prevManualArea !== manualArea) {
+    setPrevActiveTypes(activeTypes);
+    setPrevManualArea(manualArea);
     setLocalTypes(activeTypes);
     setLocalArea(manualArea);
-  }, [activeTypes, manualArea]);
+  }
 
   const handleApply = () => {
     onApply({
@@ -79,7 +85,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         aria-describedby={undefined}
       >
         <DialogDescription className="sr-only">
-          Tùy chỉnh bộ lọc tìm kiếm quán ăn
+          {t("filter.screenReaderDesc")}
         </DialogDescription>
 
         <div className="bg-gradient-to-br from-primary/10 via-orange-50/50 to-amber-50/30 p-8 pt-12 text-center relative flex-none">
@@ -97,10 +103,10 @@ export const FilterModal: React.FC<FilterModalProps> = ({
               <Filter className="h-8 w-8 text-primary" />
             </div>
             <DialogTitle className="text-3xl font-black tracking-tight text-gray-900">
-              Bộ lọc
+              {t("filter.title")}
             </DialogTitle>
             <p className="text-muted-foreground text-[11px] font-bold uppercase tracking-[0.2em] mt-1">
-              Tìm kiếm theo nhu cầu của bạn
+              {t("filter.subtitle")}
             </p>
           </DialogHeader>
         </div>
@@ -113,7 +119,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 <MapPin className="h-4 w-4" />
               </div>
               <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">
-                Khu vực
+                {t("filter.area")}
               </span>
             </div>
             <Popover
@@ -130,7 +136,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   }`}
                 >
                   <span className="uppercase tracking-widest">
-                    {localArea || "Toàn thành phố"}
+                    {localArea || t("filter.areaPlaceholder")}
                   </span>
                   <ChevronsUpDown className="h-4 w-4 opacity-30" />
                 </button>
@@ -146,7 +152,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
               >
                 <Command>
                   <CommandInput
-                    placeholder="Tìm Quận..."
+                    placeholder={t("filter.searchAreaPlaceholder")}
                     className="h-14 text-sm border-none focus:ring-0"
                   />
                   <CommandList
@@ -154,7 +160,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     style={{ touchAction: "pan-y" }}
                   >
                     <CommandEmpty className="text-sm py-8 text-center text-muted-foreground">
-                      Không tìm thấy khu vực này 📍
+                      {t("filter.notFoundArea")}
                     </CommandEmpty>
                     <CommandGroup>
                       {HCM_DISTRICTS.map((district) => (
@@ -190,7 +196,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   <UtensilsCrossed className="h-4 w-4" />
                 </div>
                 <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">
-                  Loại món ăn
+                  {t("filter.foodType")}
                 </span>
               </div>
             </div>
@@ -203,7 +209,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     : "bg-white border-gray-100 text-gray-400 hover:border-primary/30 hover:text-primary"
                 }`}
               >
-                🍽️ Tất cả
+                {t("filter.allTypes")}
               </button>
               {FOOD_TYPES.map((type) => {
                 const emoji =
@@ -282,14 +288,14 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             }`}
           >
             <RotateCcw className="h-5 w-5" />
-            Xóa
+            {t("filter.reset")}
           </button>
           <Button
             onClick={handleApply}
             className="flex-1 h-[60px] rounded-[1.25rem] bg-gradient-to-r from-primary to-orange-500 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 gap-3"
           >
             <Search className="h-5 w-5" />
-            Tìm kiếm ngay
+            {t("filter.searchNow")}
           </Button>
         </div>
       </DialogContent>

@@ -1,0 +1,125 @@
+
+> today@0.0.0 lint
+> eslint .
+
+
+C:\Pet Projects\Today_I_Eat\src\components\BottomNavigation.tsx
+  14:9  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Pet Projects\Today_I_Eat\src\components\FavoritesModal.tsx
+  31:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Pet Projects\Today_I_Eat\src\components\FavoritesModal.tsx:31:9
+  29 |     if (isOpen) {
+  30 |       if (favoriteIds.length > 0) {
+> 31 |         setLoading(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  32 |         fetchRestaurantsByIds(favoriteIds).then((data) => {
+  33 |           setRestaurants(data);
+  34 |           setLoading(false);  react-hooks/set-state-in-effect
+
+C:\Pet Projects\Today_I_Eat\src\components\FilterModal.tsx
+  58:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Pet Projects\Today_I_Eat\src\components\FilterModal.tsx:58:5
+  56 |   // Sync with props ONLY when they actually change, preserving unapplied state across opens
+  57 |   useEffect(() => {
+> 58 |     setLocalTypes(activeTypes);
+     |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  59 |     setLocalArea(manualArea);
+  60 |   }, [activeTypes, manualArea]);
+  61 |  react-hooks/set-state-in-effect
+
+C:\Pet Projects\Today_I_Eat\src\components\NearbyModal.tsx
+  104:16  error  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Pet Projects\Today_I_Eat\src\components\RestaurantPocketView.tsx
+  56:23  error  React Hook "useToast" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  74:21  error  Unexpected any. Specify a different type                                                                                                                                                    @typescript-eslint/no-explicit-any
+
+C:\Pet Projects\Today_I_Eat\src\components\SearchBar.tsx
+  26:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Pet Projects\Today_I_Eat\src\components\SearchBar.tsx:26:9
+  24 |     if (saved) {
+  25 |       try {
+> 26 |         setRecentSearches(JSON.parse(saved));
+     |         ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  27 |       } catch (e) {
+  28 |         console.error("Failed to parse recent searches", e);
+  29 |       }  react-hooks/set-state-in-effect
+
+C:\Pet Projects\Today_I_Eat\src\components\SuggestionModal.tsx
+  174:16  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Pet Projects\Today_I_Eat\src\components\SuggestionModal.tsx:174:16
+  172 |     style={{
+  173 |       backgroundColor: color,
+> 174 |       left: `${Math.random() * 100}%`,
+      |                ^^^^^^^^^^^^^ Cannot call impure function
+  175 |       animationDelay: `${delay}ms`,
+  176 |       animationDuration: `${1000 + Math.random() * 500}ms`,
+  177 |     }}  react-hooks/purity
+  176:36  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Pet Projects\Today_I_Eat\src\components\SuggestionModal.tsx:176:36
+  174 |       left: `${Math.random() * 100}%`,
+  175 |       animationDelay: `${delay}ms`,
+> 176 |       animationDuration: `${1000 + Math.random() * 500}ms`,
+      |                                    ^^^^^^^^^^^^^ Cannot call impure function
+  177 |     }}
+  178 |   />
+  179 | );                 react-hooks/purity
+  268:5   warning  React Hook useCallback has a missing dependency: 't'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+  303:5   warning  React Hook useCallback has a missing dependency: 't'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+
+C:\Pet Projects\Today_I_Eat\src\components\home\EmptyState.tsx
+  6:9  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Pet Projects\Today_I_Eat\src\components\layout\Header.tsx
+  7:9  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Pet Projects\Today_I_Eat\src\components\ui\button.tsx
+  60:18  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Pet Projects\Today_I_Eat\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Pet Projects\Today_I_Eat\src\components\ui\input.tsx
+  4:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Pet Projects\Today_I_Eat\src\context\AuthContext.tsx
+  39:19  error  Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  70:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Pet Projects\Today_I_Eat\src\context\ToastContext.tsx
+  15:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Pet Projects\Today_I_Eat\src\hooks\useGeolocation.ts
+  114:5  warning  React Hook useCallback has an unnecessary dependency: 'DEFAULT_LOCATION'. Either exclude it or remove the dependency array. Outer scope values like 'DEFAULT_LOCATION' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  130:5  warning  React Hook useCallback has an unnecessary dependency: 'DEFAULT_LOCATION'. Either exclude it or remove the dependency array. Outer scope values like 'DEFAULT_LOCATION' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+Γ£û 21 problems (17 errors, 4 warnings)
+

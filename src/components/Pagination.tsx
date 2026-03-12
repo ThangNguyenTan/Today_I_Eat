@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface PaginationProps {
   currentPage: number;
@@ -15,6 +16,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
   if (totalPages <= 1) return null;
 
   const getPages = () => {
@@ -109,7 +111,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       </div>
       <div className="flex flex-col items-center gap-1">
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-          Trang {currentPage} / {totalPages}
+          {t("common.page")} {currentPage} / {totalPages}
         </p>
       </div>
     </div>

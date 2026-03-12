@@ -28,8 +28,10 @@ import { EmptyState } from "@/components/home/EmptyState";
 
 // Hooks
 import { useAppUI } from "@/hooks/useAppUI";
+import { useTranslation } from "react-i18next";
 
 function App() {
+  const { t } = useTranslation();
   // Auth & Profile
   const { user, loading: authLoading, login, logout } = useAuth();
   const { profile, toggleFavorite } = useUserProfile(user);
@@ -198,8 +200,8 @@ function App() {
     setManualArea(null);
 
     await new Promise((resolve) => setTimeout(resolve, 800));
-    success("Đã làm mới danh sách!", 2000);
-  }, [success]);
+    success(t("toast.listRefreshed"), 2000);
+  }, [success, t]);
 
   const { pullDistance, isRefreshing, pullProgress } = usePullToRefresh({
     onRefresh: handleRefresh,
@@ -211,17 +213,14 @@ function App() {
     (value: SortOption | "") => {
       if ((value === "near" || value === "far") && !userLocation) {
         if (permissionStatus === "denied") {
-          info(
-            "Vị trí bị chặn. Vui lòng bật lại trong cài đặt trình duyệt để sắp xếp theo khoảng cách.",
-            5000,
-          );
+          info(t("toast.locationBlocked"), 5000);
           return;
         }
         getLocation();
       }
       setSortBy(value);
     },
-    [userLocation, getLocation, permissionStatus, info],
+    [userLocation, getLocation, permissionStatus, info, t],
   );
 
   const handleApplyFilters = (filters: {
@@ -336,9 +335,9 @@ function App() {
                         }
                         await toggleFavorite(res.id);
                         if (profile?.favoriteRestaurantIds?.includes(res.id)) {
-                          info("Đã bỏ lưu quán.");
+                          info(t("toast.favRemoved"));
                         } else {
-                          success("Đã thả tim quán! ❤️");
+                          success(t("toast.favAdded"));
                         }
                       }}
                     />
@@ -437,9 +436,9 @@ function App() {
             if (
               profile?.favoriteRestaurantIds?.includes(selectedRestaurant.id)
             ) {
-              info("Đã bỏ lưu quán.");
+              info(t("toast.favRemoved"));
             } else {
-              success("Đã thả tim quán! ❤️");
+              success(t("toast.favAdded"));
             }
           }
         }}

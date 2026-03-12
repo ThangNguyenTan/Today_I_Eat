@@ -3,6 +3,7 @@ import type { Restaurant } from "@/types";
 import { ArrowLeft, Loader2, Heart } from "lucide-react";
 import { useRestaurants } from "@/hooks/useRestaurants";
 import { RestaurantCard } from "./RestaurantCard";
+import { useTranslation } from "react-i18next";
 
 interface FavoritesModalProps {
   isOpen: boolean;
@@ -19,21 +20,30 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
   onSelectRestaurant,
   onToggleFavorite,
 }) => {
+  const { t } = useTranslation();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(false);
   const { fetchRestaurantsByIds } = useRestaurants(null);
 
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen && favoriteIds.length > 0) {
+      setLoading(true);
+      setRestaurants([]);
+    }
+  }
+
   useEffect(() => {
-    if (isOpen) {
-      if (favoriteIds.length > 0) {
-        setLoading(true);
-        fetchRestaurantsByIds(favoriteIds).then((data) => {
-          setRestaurants(data);
-          setLoading(false);
-        });
-      } else {
-        setRestaurants([]);
-      }
+    if (isOpen && favoriteIds.length > 0) {
+      fetchRestaurantsByIds(favoriteIds).then((data) => {
+        setRestaurants(data);
+        setLoading(false);
+      });
+    } else if (isOpen) {
+      setRestaurants([]);
+      setLoading(false);
     }
   }, [isOpen, favoriteIds, fetchRestaurantsByIds]);
 
@@ -68,7 +78,7 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
                 <Heart className="h-4 w-4 fill-current" />
               </div>
               <h2 className="text-lg font-black tracking-tight whitespace-nowrap">
-                Quán Ruột ({favoriteIds.length})
+                {t("favorites.title")} ({favoriteIds.length})
               </h2>
             </div>
             <div className="w-9" />
@@ -80,7 +90,9 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
           {loading ? (
             <div className="py-20 flex flex-col items-center gap-5">
               <Loader2 className="h-10 w-10 text-red-500 animate-spin" />
-              <p className="font-bold text-gray-400">Đang tải danh sách...</p>
+              <p className="font-bold text-gray-400">
+                {t("favorites.loading")}
+              </p>
             </div>
           ) : restaurants.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2">
@@ -108,10 +120,10 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
               </div>
               <div className="space-y-1">
                 <p className="font-black text-gray-800 text-lg">
-                  Chưa có quán yêu thích
+                  {t("favorites.emptyTitle")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Bạn chưa lưu quán nào. Hãy thả tim các quán ngon nha!
+                  {t("favorites.emptyDesc")}
                 </p>
               </div>
             </div>

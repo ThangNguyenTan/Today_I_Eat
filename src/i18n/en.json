@@ -1,0 +1,168 @@
+{
+    "header": {
+        "title": "What To Eat?",
+        "subtitle": "Vietnamese Cuisine"
+    },
+    "userMenu": {
+        "login": "Login",
+        "online": "Online",
+        "favorites": "My Favorites",
+        "favoritesDesc": "Saved list",
+        "logout": "Logout",
+        "logoutDesc": "Goodbye, see you again!"
+    },
+    "hero": {
+        "todayYou": "How do you",
+        "howAreYou": "feel today?",
+        "description": "Let us help you pick something delicious for your meal! 🍜",
+        "button": "What to eat now?"
+    },
+    "bottomNav": {
+        "explore": "Explore",
+        "nearby": "Nearby",
+        "filter": "Filter",
+        "account": "Account"
+    },
+    "action": {
+        "explore": "Explore",
+        "sortBy": "Sort by",
+        "loading": "Loading...",
+        "foundStart": "Found ",
+        "foundEnd": " places",
+        "hasStart": "There are ",
+        "hasEnd": " places",
+        "nearby": "Nearby",
+        "filter": "Filter"
+    },
+    "sort": {
+        "near": "Nearest",
+        "far": "Furthest",
+        "high_rating": "Highest rating",
+        "low_rating": "Lowest rating"
+    },
+    "empty": {
+        "titleNoFav": "No favorites yet?",
+        "descNoFav": "Your list is empty. Currently, adding new places is for Admins only.",
+        "titleNotAuth": "You are not logged in",
+        "descNotAuth": "Log in to save your favorite eating spots and sync across all your devices.",
+        "loginBtn": "Login now"
+    },
+    "search": {
+        "placeholder": "Search name, dish or address...",
+        "recentSearch": "Recent searches",
+        "clearAll": "Clear all"
+    },
+    "filter": {
+        "title": "Filter",
+        "subtitle": "Search based on your needs",
+        "area": "Area",
+        "areaPlaceholder": "Whole city",
+        "searchAreaPlaceholder": "Search District...",
+        "notFoundArea": "Area not found 📍",
+        "foodType": "Food type",
+        "allTypes": "🍽️ All",
+        "reset": "Reset",
+        "searchNow": "Search now",
+        "screenReaderDesc": "Customize restaurant search filters"
+    },
+    "nearby": {
+        "title": "Nearby",
+        "subtitle": "Within {{radius}} km · Sorted by distance",
+        "promptTitle": "Find good places near you?",
+        "promptDesc": "To show nearby places, we need location access.",
+        "promptBtn": "Continue",
+        "blockedTitle": "Location blocked",
+        "blockedDesc": "You denied location access. Please enable it in browser settings.",
+        "blockedQuickFix": "Quick fix:",
+        "blockedStep1": "Click the 🔒 or ⚙️ icon in address bar",
+        "blockedStep2": "Under \"Location\", select \"Allow\"",
+        "blockedStep3": "Reload page",
+        "reloadBtn": "Reload page",
+        "locatingTitle": "Locating...",
+        "locatingDesc": "Please allow GPS access",
+        "loadingTitle": "Finding places near you...",
+        "loadingDesc": "Please wait ☕",
+        "statsInfo": "{{count}} places within {{radius}} km",
+        "openMap": "Open maps",
+        "retryBtn": "Retry",
+        "errorTitle": "Cannot locate",
+        "errorRetry": "Retry now",
+        "emptyTitle": "No places nearby",
+        "emptyDesc1": "There are currently no places within {{radius}} km.",
+        "emptyDesc2": "Try expanding the radius or explore the full list!",
+        "emptyRetry": "Retry",
+        "closedPerm": "Permanently closed",
+        "reviews": "reviews",
+        "directions": "Directions"
+    },
+    "card": {
+        "closedPerm": "● Permanently Closed",
+        "viewMap": "View on map"
+    },
+    "suggestion": {
+        "errorServer": "Cannot load data from server",
+        "errorLocation": "Location access denied",
+        "spinning": "Spinning...",
+        "found": "🎉 Found it!",
+        "subtitleSpinning": "Finding delicious food...",
+        "subtitleFound": "Perfect suggestion for you",
+        "tryDish": "You should try",
+        "choosing": "Choosing...",
+        "locating": "Finding {{type}} places near you...",
+        "loadingTitle": "Loading places...",
+        "loadingDesc": "Please wait 🍽️",
+        "topPlaces": "Top {{type}} around you",
+        "endOfList": "✨ End of list ✨",
+        "spinAgain": "Spin again",
+        "oops": "Oops...",
+        "notFound": "No {{type}} places found near your location.",
+        "anotherDish": "Try another dish",
+        "errorOccurred": "An error occurred"
+    },
+    "favorites": {
+        "title": "My Favorites",
+        "loading": "Loading list...",
+        "emptyTitle": "No favorite places",
+        "emptyDesc": "You haven't saved any places yet. Heart some good ones!"
+    },
+    "pocket": {
+        "shareText": "Check out {{name}} on What To Eat! 🤤",
+        "copied": "Restaurant link copied! ✨",
+        "details": "Restaurant details for {{name}}",
+        "openHours": "Operating Hours",
+        "updating": "Updating...",
+        "promotions": "Promotions",
+        "noPromotions": "No promotions",
+        "directions": "Directions on Google Maps",
+        "orderShopee": "Order on ShopeeFood",
+        "openMap": "Open Map",
+        "closedPerm": "Permanently closed"
+    },
+    "login": {
+        "welcome": "Welcome to",
+        "appName": "What To Eat?",
+        "desc": "Discover the exquisite world of Vietnamese cuisine, personalized just for your taste.",
+        "nearest": "Nearest to you",
+        "favorites": "Favorites",
+        "loginBtn": "Login with Google",
+        "footer": "To start your culinary journey"
+    },
+    "refresh": {
+        "pull": "↓ Pull to refresh",
+        "release": "✨ Release to refresh!",
+        "refreshing": "🍜 Refreshing..."
+    },
+    "toast": {
+        "listRefreshed": "List refreshed!",
+        "locationBlocked": "Location is blocked. Please enable it in browser settings to sort by distance.",
+        "favRemoved": "Removed from favorites.",
+        "favAdded": "Added to favorites! ❤️"
+    },
+    "common": {
+        "language": "Language",
+        "english": "English",
+        "vietnamese": "Tiếng Việt",
+        "close": "Close",
+        "page": "Page"
+    }
+}

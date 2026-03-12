@@ -1,0 +1,168 @@
+{
+    "header": {
+        "title": "Ăn Gì Đây?",
+        "subtitle": "Vietnamese Cuisine"
+    },
+    "userMenu": {
+        "login": "Đăng nhập",
+        "online": "Online",
+        "favorites": "Quán ruột của tôi",
+        "favoritesDesc": "Danh sách đã lưu",
+        "logout": "Đăng xuất",
+        "logoutDesc": "Tạm biệt, hẹn gặp lại!"
+    },
+    "hero": {
+        "todayYou": "Hôm nay bạn",
+        "howAreYou": "thấy thế nào?",
+        "description": "Để chúng tôi giúp bạn chọn món ngon cho bữa ăn hôm nay! 🍜",
+        "button": "Ăn gì bây giờ?"
+    },
+    "bottomNav": {
+        "explore": "Khám phá",
+        "nearby": "Gần đây",
+        "filter": "Bộ lọc",
+        "account": "Tài khoản"
+    },
+    "action": {
+        "explore": "Khám phá",
+        "sortBy": "Sắp xếp",
+        "loading": "Đang tải...",
+        "foundStart": "Tìm thấy ",
+        "foundEnd": " địa điểm",
+        "hasStart": "Có ",
+        "hasEnd": " địa điểm",
+        "nearby": "Gần Đây",
+        "filter": "Bộ lọc"
+    },
+    "sort": {
+        "near": "Gần nhất",
+        "far": "Xa nhất",
+        "high_rating": "Đánh giá cao",
+        "low_rating": "Đánh giá thấp"
+    },
+    "empty": {
+        "titleNoFav": "Chưa có \"quán ruột\" nào?",
+        "descNoFav": "Danh sách của bạn đang trống. Hiện tại tính năng thêm quán mới chỉ dành cho Quản trị viên (Admin).",
+        "titleNotAuth": "Bạn chưa đăng nhập",
+        "descNotAuth": "Đăng nhập để lưu lại những địa điểm ăn uống yêu thích và đồng bộ trên mọi thiết bị của bạn.",
+        "loginBtn": "Đăng nhập ngay"
+    },
+    "search": {
+        "placeholder": "Tìm tên quán, món ăn hoặc địa chỉ...",
+        "recentSearch": "Tìm kiếm gần đây",
+        "clearAll": "Xóa hết"
+    },
+    "filter": {
+        "title": "Bộ lọc",
+        "subtitle": "Tìm kiếm theo nhu cầu của bạn",
+        "area": "Khu vực",
+        "areaPlaceholder": "Toàn thành phố",
+        "searchAreaPlaceholder": "Tìm Quận...",
+        "notFoundArea": "Không tìm thấy khu vực này 📍",
+        "foodType": "Loại món ăn",
+        "allTypes": "🍽️ Tất cả",
+        "reset": "Xóa",
+        "searchNow": "Tìm kiếm ngay",
+        "screenReaderDesc": "Tùy chỉnh bộ lọc tìm kiếm quán ăn"
+    },
+    "nearby": {
+        "title": "Gần Đây",
+        "subtitle": "Trong vòng {{radius}} km · Sắp xếp theo khoảng cách",
+        "promptTitle": "Tìm quán ngon gần bạn?",
+        "promptDesc": "Để hiển thị danh sách các quán ăn quanh đây, chúng tôi cần bạn cấp quyền truy cập vị trí.",
+        "promptBtn": "Tiếp tục",
+        "blockedTitle": "Vị trí bị chặn",
+        "blockedDesc": "Bạn đã từ chối quyền truy cập vị trí. Để tiếp tục, vui lòng bật lại trong cài đặt trình duyệt.",
+        "blockedQuickFix": "Cách mở lại nhanh:",
+        "blockedStep1": "Nhấn vào biểu tượng 🔒 hoặc ⚙️ ở thanh địa chỉ",
+        "blockedStep2": "Ở phần \"Vị trí\", chọn \"Cho phép\" (Allow)",
+        "blockedStep3": "Tải lại trang web",
+        "reloadBtn": "Tải lại trang",
+        "locatingTitle": "Đang xác định vị trí...",
+        "locatingDesc": "Vui lòng cho phép truy cập GPS",
+        "loadingTitle": "Đang tìm quán gần bạn...",
+        "loadingDesc": "Chờ xíu nha ☕",
+        "statsInfo": "{{count}} quán trong {{radius}} km",
+        "openMap": "Mở bản đồ",
+        "retryBtn": "Tìm lại",
+        "errorTitle": "Không thể định vị",
+        "errorRetry": "Thử lại ngay",
+        "emptyTitle": "Không có quán nào gần đây",
+        "emptyDesc1": "Hiện tại không có quán nào trong bán kính {{radius}} km của bạn.",
+        "emptyDesc2": "Thử mở rộng phạm vi hoặc khám phá toàn bộ danh sách nhé!",
+        "emptyRetry": "Thử lại",
+        "closedPerm": "Đã đóng vĩnh viễn",
+        "reviews": "đánh giá",
+        "directions": "Chỉ đường"
+    },
+    "card": {
+        "closedPerm": "● Đã Đóng Vĩnh Viễn",
+        "viewMap": "Xem trên bản đồ"
+    },
+    "suggestion": {
+        "errorServer": "Không thể tải dữ liệu từ máy chủ",
+        "errorLocation": "Quyền truy cập vị trí bị từ chối",
+        "spinning": "Đang quay...",
+        "found": "🎉 Tìm thấy rồi!",
+        "subtitleSpinning": "Đang tìm món ngon...",
+        "subtitleFound": "Gợi ý hoàn hảo cho bạn",
+        "tryDish": "Hãy thử ngay món",
+        "choosing": "Đang chọn...",
+        "locating": "Đang tìm quán {{type}} gần bạn...",
+        "loadingTitle": "Đang tải danh sách quán...",
+        "loadingDesc": "Chờ chút nhé 🍽️",
+        "topPlaces": "Top {{type}} quanh bạn",
+        "endOfList": "✨ Đã hết danh sách ✨",
+        "spinAgain": "Tìm món khác",
+        "oops": "Rất tiếc...",
+        "notFound": "Không tìm thấy quán {{type}} nào quanh vị trí của bạn.",
+        "anotherDish": "Quán món khác",
+        "errorOccurred": "Đã xảy ra lỗi"
+    },
+    "favorites": {
+        "title": "Quán Ruột",
+        "loading": "Đang tải danh sách...",
+        "emptyTitle": "Chưa có quán yêu thích",
+        "emptyDesc": "Bạn chưa lưu quán nào. Hãy thả tim các quán ngon nha!"
+    },
+    "pocket": {
+        "shareText": "Khám phá quán {{name}} trên Ăn Gì Đây! 🤤",
+        "copied": "Đã sao chép liên kết quán! ✨",
+        "details": "Chi tiết nhà hàng {{name}}",
+        "openHours": "Giờ mở cửa",
+        "updating": "Đang cập nhật",
+        "promotions": "Ưu đãi",
+        "noPromotions": "Không có ưu đãi",
+        "directions": "Chỉ đường trên Google Maps",
+        "orderShopee": "Đặt món trên ShopeeFood",
+        "openMap": "Mở Bản Đồ",
+        "closedPerm": "Đã đóng vĩnh viễn"
+    },
+    "login": {
+        "welcome": "Chào mừng bạn đến",
+        "appName": "Ăn Gì Đây?",
+        "desc": "Khám phá thế giới ẩm thực Việt Nam tinh tế, được cá nhân hóa riêng theo khẩu vị của bạn.",
+        "nearest": "Gần bạn nhất",
+        "favorites": "Món ruột",
+        "loginBtn": "Đăng nhập với Google",
+        "footer": "Để bắt đầu hành trình ẩm thực của bạn"
+    },
+    "refresh": {
+        "pull": "↓ Kéo xuống để làm mới",
+        "release": "✨ Thả để làm mới!",
+        "refreshing": "🍜 Đang làm mới..."
+    },
+    "toast": {
+        "listRefreshed": "Đã làm mới danh sách!",
+        "locationBlocked": "Vị trí bị chặn. Vui lòng bật lại trong cài đặt trình duyệt để sắp xếp theo khoảng cách.",
+        "favRemoved": "Đã bỏ lưu quán.",
+        "favAdded": "Đã thả tim quán! ❤️"
+    },
+    "common": {
+        "language": "Ngôn ngữ",
+        "english": "English",
+        "vietnamese": "Tiếng Việt",
+        "close": "Đóng",
+        "page": "Trang"
+    }
+}

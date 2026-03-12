@@ -1,5 +1,6 @@
 import { Heart, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface EmptyStateProps {
   user: any;
@@ -7,6 +8,8 @@ interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ user, onLogin }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="col-span-full py-24 text-center glass rounded-[2.5rem] border-dashed border-2 border-gray-100 flex flex-col items-center justify-center group overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
@@ -33,27 +36,25 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ user, onLogin }) => {
       {user ? (
         <div className="relative z-10 max-w-sm px-4">
           <h4 className="text-2xl font-black mb-3 text-gray-800">
-            Chưa có "quán ruột" nào?
+            {t("empty.titleNoFav")}
           </h4>
           <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-            Danh sách của bạn đang trống. Hiện tại tính năng thêm quán mới chỉ
-            dành cho Quản trị viên (Admin).
+            {t("empty.descNoFav")}
           </p>
         </div>
       ) : (
         <div className="relative z-10 max-w-sm px-4">
           <h4 className="text-2xl font-black mb-3 text-gray-800">
-            Bạn chưa đăng nhập
+            {t("empty.titleNotAuth")}
           </h4>
           <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-            Đăng nhập để lưu lại những địa điểm ăn uống yêu thích và đồng bộ
-            trên mọi thiết bị của bạn.
+            {t("empty.descNotAuth")}
           </p>
           <Button
             onClick={onLogin}
             className="rounded-xl px-10 h-12 font-black uppercase tracking-widest bg-gradient-to-r from-primary to-orange-500 text-white shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
           >
-            Đăng nhập ngay
+            {t("empty.loginBtn")}
           </Button>
         </div>
       )}

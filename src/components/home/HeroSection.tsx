@@ -1,5 +1,6 @@
 import React from "react";
 import { UtensilsCrossed } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 interface HeroSectionProps {
@@ -11,6 +12,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   greeting,
   onSuggest,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <>
       <section className="mb-12">
@@ -19,13 +22,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {greeting}
           </p>
           <h2 className="text-5xl font-black tracking-tight sm:text-6xl leading-[1.1] mt-6">
-            Hôm nay bạn <br />
+            {t("hero.todayYou")} <br />
             <span className="text-gradient inline-block animate-in slide-in-from-bottom-4 duration-700">
-              thấy thế nào?
+              {t("hero.howAreYou")}
             </span>
           </h2>
           <p className="text-muted-foreground mt-4 text-sm max-w-xs mx-auto">
-            Để chúng tôi giúp bạn chọn món ngon cho bữa ăn hôm nay! 🍜
+            {t("hero.description")}
           </p>
         </div>
       </section>
@@ -58,7 +61,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
 
             <span className="relative z-10 flex items-center gap-4 text-lg font-black uppercase tracking-wider">
-              Ăn gì bây giờ?
+              {t("hero.button")}
               <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
                 <UtensilsCrossed className="h-6 w-6 animate-bounce" />
               </div>

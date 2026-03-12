@@ -1,4 +1,5 @@
 import { RefreshCw, ChefHat } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface PullToRefreshProps {
   pullDistance: number;
@@ -11,6 +12,7 @@ export function PullToRefresh({
   isRefreshing,
   pullProgress,
 }: PullToRefreshProps) {
+  const { t } = useTranslation();
   if (pullDistance <= 0 && !isRefreshing) return null;
 
   const isReady = pullProgress >= 1;
@@ -109,10 +111,10 @@ export function PullToRefresh({
           {/* Text indicator */}
           <p className="text-[12px] font-black uppercase tracking-widest text-white whitespace-nowrap drop-shadow-sm">
             {isRefreshing
-              ? "🍜 Đang làm mới..."
+              ? t("refresh.refreshing")
               : isReady
-                ? "✨ Thả để làm mới!"
-                : "↓ Kéo xuống để làm mới"}
+                ? t("refresh.release")
+                : t("refresh.pull")}
           </p>
         </div>
       </div>
