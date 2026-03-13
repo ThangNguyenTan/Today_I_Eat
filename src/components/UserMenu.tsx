@@ -50,7 +50,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="relative group outline-none">
-            <div className="h-11 w-11 rounded-2xl overflow-hidden border-2 border-white shadow-lg shadow-black/10 ring-2 ring-primary/10 transition-all duration-300 group-hover:ring-primary group-hover:ring-4 group-hover:scale-105 group-active:scale-95">
+            <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white shadow-lg shadow-black/10 ring-2 ring-primary/10 transition-all duration-300 group-hover:ring-primary group-hover:ring-4 group-hover:scale-105 group-active:scale-95">
               <img
                 src={user.photoURL}
                 alt={user.name}
