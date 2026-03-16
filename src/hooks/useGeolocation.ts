@@ -111,7 +111,7 @@ export const useGeolocation = () => {
         }));
       }
     },
-    [DEFAULT_LOCATION],
+    [],
   );
 
   const setFallbackLocation = useCallback(
@@ -127,7 +127,7 @@ export const useGeolocation = () => {
         isFallback: true,
       }));
     },
-    [DEFAULT_LOCATION],
+    [],
   );
 
   const getLocation = useCallback(() => {

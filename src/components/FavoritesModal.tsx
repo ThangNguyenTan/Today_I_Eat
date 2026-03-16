@@ -4,6 +4,12 @@ import { ArrowLeft, Loader2, Heart } from "lucide-react";
 import { useRestaurants } from "@/hooks/useRestaurants";
 import { RestaurantCard } from "./RestaurantCard";
 import { useTranslation } from "react-i18next";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
 
 interface FavoritesModalProps {
   isOpen: boolean;
@@ -29,8 +35,8 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
 
   if (prevIsOpen !== isOpen) {
     setPrevIsOpen(isOpen);
-    if (isOpen && favoriteIds.length > 0) {
-      setLoading(true);
+    if (isOpen) {
+      setLoading(favoriteIds.length > 0);
       setRestaurants([]);
     }
   }
@@ -41,24 +47,20 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
         setRestaurants(data);
         setLoading(false);
       });
-    } else if (isOpen) {
-      setRestaurants([]);
-      setLoading(false);
     }
   }, [isOpen, favoriteIds, fetchRestaurantsByIds]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
-        onClick={onClose}
-      />
-
-      {/* Modal sheet */}
-      <div className="relative w-full sm:max-w-2xl bg-[#FAFAFA] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-400 flex flex-col max-h-[92dvh]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="fixed left-[50%] top-[50%] z-50 w-[94vw] max-w-2xl translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden bg-[#FAFAFA] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[92dvh] transition-all duration-300 [&>button]:hidden">
+        <DialogTitle className="sr-only">
+          {t("favorites.title")}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          {t("favorites.emptyDesc")}
+        </DialogDescription>
         {/* Handle (mobile) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
           <div className="w-10 h-1 bg-gray-200 rounded-full" />
@@ -129,7 +131,7 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -14,6 +14,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
+import {
   getGoogleMapsUrl,
   formatOperatingHours,
   formatDistance,
@@ -174,15 +180,14 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
-        onClick={onClose}
-      />
-
-      {/* Modal sheet */}
-      <div className="relative w-full sm:max-w-lg bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-400 flex flex-col max-h-[92dvh]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="fixed left-[50%] top-[50%] z-50 w-[94vw] max-w-lg translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] shadow-2xl max-h-[92dvh] flex flex-col transition-all duration-300 [&>button]:hidden">
+        <DialogTitle className="sr-only">
+          {t("nearby.title")}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          {t("nearby.subtitle", { radius: RADIUS_KM })}
+        </DialogDescription>
         {/* Handle (mobile) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
           <div className="w-10 h-1 bg-gray-200 rounded-full" />
@@ -402,8 +407,8 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

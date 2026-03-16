@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: unknown) {
-      const authError = err as any;
+      const authError = err as { code?: string };
       console.error("Login failed:", authError);
       if (authError.code === "auth/operation-not-allowed") {
         setError("Vui lòng bật Google Auth trong Firebase Console.");

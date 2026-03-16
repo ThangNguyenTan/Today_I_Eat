@@ -45,6 +45,7 @@ function App() {
     totalPages,
     goToPage,
     search,
+    fetchRestaurantsByIds,
   } = useRestaurants(user);
 
   // Geolocation
@@ -165,31 +166,83 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, userLocation]);
 
-  // Automatically open restaurant pocket view for shared links
-  const hasAutoOpenedRef = useRef(false);
-  useEffect(() => {
-    const queryParam = new URLSearchParams(window.location.search).get("q");
-    if (
-      !hasAutoOpenedRef.current &&
-      !apiLoading &&
-      restaurants.length > 0 &&
-      queryParam
-    ) {
+  // ─── URL & Navigation Logic ───────────────────────────────────────────────
+
+  // Helper to sync UI state from URL
+  const syncStateWithUrl = useCallback(async () => {
+    const params = new URLSearchParams(window.location.search);
+    const resId = params.get("resId");
+    const modal = params.get("modal");
+    const q = params.get("q");
+
+    // Handle Modals - Only update if they actually change to avoid redundant renders
+    setIsFilterOpen(prev => prev !== (modal === "filter") ? (modal === "filter") : prev);
+    setIsSuggestionModalOpen(prev => prev !== (modal === "suggestion") ? (modal === "suggestion") : prev);
+    setIsNearbyModalOpen(prev => prev !== (modal === "nearby") ? (modal === "nearby") : prev);
+    setIsFavoritesOpen(prev => prev !== (modal === "favorites") ? (modal === "favorites") : prev);
+
+    // Handle Restaurant Selection
+    if (resId) {
+      if (selectedRestaurant?.id !== resId) {
+        const found = restaurants.find((r) => r.id === resId);
+        if (found) {
+          setSelectedRestaurant(found);
+        } else {
+          try {
+            const fetched = await fetchRestaurantsByIds([resId]);
+            if (fetched && fetched.length > 0) {
+              setSelectedRestaurant(fetched[0]);
+            }
+          } catch (err: unknown) {
+            console.error("Failed to sync restaurant from URL:", err);
+          }
+        }
+      }
+    } else if (q) {
+      const queryParam = q.toLowerCase();
       const exactMatch = restaurants.find(
-        (r) => r.name.toLowerCase() === queryParam.toLowerCase(),
+        (r) => r.name.toLowerCase() === queryParam,
       );
       if (exactMatch) {
-        setSelectedRestaurant(exactMatch);
-        hasAutoOpenedRef.current = true;
-        // Optionally clean up the URL for a cleaner UX
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname,
-        );
+         setSelectedRestaurant(exactMatch);
+         const url = new URL(window.location.href);
+         url.searchParams.delete("q");
+         url.searchParams.set("resId", exactMatch.id);
+         window.history.replaceState({}, "", url.toString());
+      }
+    } else {
+      if (selectedRestaurant !== null) {
+        setSelectedRestaurant(null);
       }
     }
-  }, [restaurants, apiLoading]);
+  }, [restaurants, fetchRestaurantsByIds, selectedRestaurant]);
+
+  // Listen for back/forward navigation
+  useEffect(() => {
+    window.addEventListener("popstate", syncStateWithUrl);
+    syncStateWithUrl();
+    return () => window.removeEventListener("popstate", syncStateWithUrl);
+  }, [syncStateWithUrl]);
+
+  // Push new state when opening things
+  const pushModal = useCallback((modalName: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("modal", modalName);
+    window.history.pushState({ modal: modalName }, "", url.toString());
+    syncStateWithUrl();
+  }, [syncStateWithUrl]);
+
+  const pushRestaurant = useCallback((res: Restaurant) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("resId", res.id);
+    // If we're coming from another restaurant (drill down), we push
+    window.history.pushState({ resId: res.id }, "", url.toString());
+    syncStateWithUrl();
+  }, [syncStateWithUrl]);
+
+  const handleBack = useCallback(() => {
+    window.history.back();
+  }, []);
 
   // ─── Event Handlers ───────────────────────────────────────────────────────
 
@@ -235,6 +288,7 @@ function App() {
       types: filters.types,
       district: filters.area || undefined,
     });
+    handleBack(); // Close modal after apply
   };
 
   // ─── Render Helpers ────────────────────────────────────────────────────────
@@ -272,13 +326,13 @@ function App() {
         user={user}
         onLogin={login}
         onLogout={logout}
-        onOpenFavorites={() => setIsFavoritesOpen(true)}
+        onOpenFavorites={() => pushModal("favorites")}
       />
 
       <main className="container relative z-10 mx-auto max-w-2xl px-6 py-10">
         <HeroSection
           greeting={greeting}
-          onSuggest={() => setIsSuggestionModalOpen(true)}
+          onSuggest={() => pushModal("suggestion")}
         />
 
         <ActionSection
@@ -291,8 +345,8 @@ function App() {
           isFilterOpen={isFilterOpen}
           sortBy={sortBy}
           onSortChange={handleSortChange}
-          onOpenNearby={() => setIsNearbyModalOpen(true)}
-          onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}
+          onOpenNearby={() => pushModal("nearby")}
+          onToggleFilter={() => (isFilterOpen ? handleBack() : pushModal("filter"))}
         />
 
         {/* Restaurant List */}
@@ -323,7 +377,7 @@ function App() {
                   >
                     <RestaurantCard
                       restaurant={res}
-                      onClick={() => setSelectedRestaurant(res)}
+                      onClick={() => pushRestaurant(res)}
                       isFavorite={profile?.favoriteRestaurantIds?.includes(
                         res.id,
                       )}
@@ -372,10 +426,10 @@ function App() {
 
       <BottomNavigation
         onHome={scrollToTop}
-        onNearby={() => setIsNearbyModalOpen(true)}
-        onSuggest={() => setIsSuggestionModalOpen(true)}
-        onFilter={() => setIsFilterOpen(!isFilterOpen)}
-        onLogin={user ? () => setIsFavoritesOpen(true) : login}
+        onNearby={() => pushModal("nearby")}
+        onSuggest={() => pushModal("suggestion")}
+        onFilter={() => (isFilterOpen ? handleBack() : pushModal("filter"))}
+        onLogin={user ? () => pushModal("favorites") : login}
         isFilterActive={isFilterOpen}
         isNearbyActive={isNearbyModalOpen}
         user={user}
@@ -397,21 +451,21 @@ function App() {
 
       <SuggestionModal
         isOpen={isSuggestionModalOpen}
-        onClose={() => setIsSuggestionModalOpen(false)}
-        onSelectRestaurant={(r) => setSelectedRestaurant(r)}
+        onClose={handleBack}
+        onSelectRestaurant={(r) => pushRestaurant(r)}
       />
 
       <NearbyModal
         isOpen={isNearbyModalOpen}
-        onClose={() => setIsNearbyModalOpen(false)}
+        onClose={handleBack}
         onSelectRestaurant={(r) => {
-          setSelectedRestaurant(r);
+          pushRestaurant(r);
         }}
       />
 
       <FilterModal
         isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
+        onClose={handleBack}
         activeTypes={activeTypes}
         manualArea={manualArea}
         onApply={handleApplyFilters}
@@ -420,7 +474,8 @@ function App() {
       <RestaurantPocketView
         restaurant={selectedRestaurant}
         isOpen={!!selectedRestaurant}
-        onClose={() => setSelectedRestaurant(null)}
+        onClose={handleBack}
+        onSelectRestaurant={(r) => pushRestaurant(r)}
         isFavorite={
           selectedRestaurant
             ? profile?.favoriteRestaurantIds?.includes(selectedRestaurant.id)
@@ -446,9 +501,9 @@ function App() {
 
       <FavoritesModal
         isOpen={isFavoritesOpen}
-        onClose={() => setIsFavoritesOpen(false)}
+        onClose={handleBack}
         favoriteIds={profile?.favoriteRestaurantIds || []}
-        onSelectRestaurant={(r) => setSelectedRestaurant(r)}
+        onSelectRestaurant={(r) => pushRestaurant(r)}
         onToggleFavorite={async (id) => {
           if (!user) return login();
           await toggleFavorite(id);

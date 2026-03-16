@@ -39,8 +39,20 @@ export const useUserProfile = (user: User | null) => {
         };
         setProfile(newProfile);
       }
-    } catch (err) {
-      console.error("Failed to fetch user profile:", err);
+    } catch (err: unknown) {
+      // Improve offline handling
+      const isOfflineStatus = err instanceof Error && (
+        err.message?.includes("unavailable") || 
+        err.message?.includes("offline") ||
+        (err as { code?: string }).code === "unavailable"
+      );
+
+      if (isOfflineStatus) {
+        console.warn("User profile fetch skipped: Client is offline. Using local fallback.");
+      } else {
+        console.error("Failed to fetch user profile:", err);
+      }
+      
       // Fallback so the app doesn't break
       const localFavs = localStorage.getItem(`favs_${user.uid}`);
       setProfile({

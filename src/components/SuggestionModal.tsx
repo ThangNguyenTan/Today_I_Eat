@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
+import {
   Sparkles,
   Utensils,
   RefreshCw,
@@ -167,20 +173,19 @@ const ConfettiParticle = ({
   delay: number;
   color: string;
 }) => {
-  const randomLeft = React.useMemo(() => `${Math.random() * 100}%`, []);
-  const randomDuration = React.useMemo(
-    () => `${1000 + Math.random() * 500}ms`,
-    [],
-  );
+  const [randoms] = React.useState(() => ({
+    left: `${Math.random() * 100}%`,
+    duration: `${1000 + Math.random() * 500}ms`
+  }));
 
   return (
     <div
       className="absolute w-2 h-2 rounded-full animate-confetti"
       style={{
         backgroundColor: color,
-        left: randomLeft,
+        left: randoms.left,
         animationDelay: `${delay}ms`,
-        animationDuration: randomDuration,
+        animationDuration: randoms.duration,
       }}
     />
   );
@@ -267,7 +272,12 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
       } catch (err) {
         if (!isCancelledRef.current) {
           console.error("[SuggestionModal] runSearch error:", err);
-          setErrorMsg(t("suggestion.errorServer"));
+          const isOfflineStatus = err instanceof Error && (
+            err.message?.includes("unavailable") ||
+            err.message?.includes("offline") ||
+            (err as { code?: string }).code === "unavailable"
+          );
+          setErrorMsg(isOfflineStatus ? t("suggestion.errorOffline") : t("suggestion.errorServer"));
           setPhase("error");
           setIsLoadingMore(false);
         }
@@ -422,28 +432,21 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      className={cn(
-        "fixed inset-0 z-50 flex justify-center p-0 sm:p-4 overflow-hidden transition-all duration-500",
-        !isSpinning ? "items-end sm:items-center" : "items-center",
-      )}
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-500"
-        onClick={() => !isSpinning && onClose()}
-      />
-
-      {/* Modal Content container */}
-      <div
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent 
         className={cn(
-          "relative bg-white shadow-2xl flex flex-col transition-all duration-500 overflow-hidden",
-          !isSpinning
-            ? "w-full max-w-md h-[90vh] rounded-t-[2.5rem] sm:rounded-[3rem] animate-in slide-in-from-bottom-10 sm:zoom-in-95"
-            : "w-[85vw] max-w-md max-h-[92dvh] rounded-[3rem] animate-in zoom-in-95",
+          "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden shadow-2xl flex flex-col transition-all duration-500 [&>button]:hidden",
+          !isSpinning 
+            ? "w-[94vw] max-w-md h-[90vh] rounded-t-[2.5rem] sm:rounded-[3rem]" 
+            : "w-[85vw] max-w-md rounded-[3rem]"
         )}
-        onClick={(e) => e.stopPropagation()}
       >
+        <DialogTitle className="sr-only">
+          {t("suggestion.found")}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          {t("suggestion.subtitleFound")}
+        </DialogDescription>
         {/* Header with gradient and animations */}
         <div className="bg-gradient-to-br from-primary via-orange-500 to-amber-500 p-6 pt-10 text-center text-white relative flex-none overflow-hidden">
           {/* Close & Repeat Buttons */}
@@ -713,7 +716,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
             )}
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

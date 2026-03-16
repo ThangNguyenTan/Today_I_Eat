@@ -136,7 +136,9 @@
         "directions": "Chỉ đường trên Google Maps",
         "orderShopee": "Đặt món trên ShopeeFood",
         "openMap": "Mở Bản Đồ",
-        "closedPerm": "Đã đóng vĩnh viễn"
+        "closedPerm": "Đã đóng vĩnh viễn",
+        "afterMealTitle": "Xong bữa rồi? Tráng miệng thôi!",
+        "afterMealSubtitle": "Gợi ý quán cà phê & đồ ngọt quanh {{name}}"
     },
     "login": {
         "welcome": "Chào mừng bạn đến",

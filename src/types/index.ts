@@ -47,7 +47,8 @@ export type FoodType =
   | "Pizza"
   | "Burger"
   | "Sushi"
-  | "Dimsum";
+  | "Dimsum"
+  | "Cà Phê";
 
 export type MealTime = "Sáng" | "Trưa" | "Chiều" | "Tối" | "Khuya";
 

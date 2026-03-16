@@ -50,7 +50,7 @@ export const FOOD_CATEGORIES: Record<string, FoodType[]> = {
     "Phá Lấu",
     "Bắp Xào",
   ],
-  "Tráng Miệng (Desserts)": ["Chè"],
+  "Tráng Miệng (Desserts)": ["Chè", "Cà Phê"],
   "Lẩu (Hotpot)": ["Lẩu"],
   "Đồ Nướng (BBQ)": ["Đồ Nướng"],
   "Món Ngoại (International)": ["Gà Rán", "Pizza", "Burger", "Sushi", "Dimsum"],
@@ -104,6 +104,7 @@ export const FOOD_TYPES: FoodType[] = [
 
   // Desserts / Sweets
   "Chè",
+  "Cà Phê",
 
   // Modern / International Favorites (less traditional but widely eaten especially in cities)
   "Gà Rán",

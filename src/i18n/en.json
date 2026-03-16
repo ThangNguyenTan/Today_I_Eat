@@ -136,7 +136,9 @@
         "directions": "Directions on Google Maps",
         "orderShopee": "Order on ShopeeFood",
         "openMap": "Open Map",
-        "closedPerm": "Permanently closed"
+        "closedPerm": "Permanently closed",
+        "afterMealTitle": "Finished your meal? Let's grab dessert!",
+        "afterMealSubtitle": "Nearby coffee & dessert spots around {{name}}"
     },
     "login": {
         "welcome": "Welcome to",

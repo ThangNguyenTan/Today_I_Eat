@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, DialogDescription } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "./ui/dialog";
 import {
   MapPin,
   Clock,
@@ -19,6 +19,7 @@ import { getGoogleMapsUrl, formatOperatingHours } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/context/ToastContext";
 import { useTranslation } from "react-i18next";
+import { AfterMealSection } from "./AfterMealSection";
 
 interface RestaurantPocketViewProps {
   restaurant: Restaurant | null;
@@ -26,6 +27,7 @@ interface RestaurantPocketViewProps {
   onClose: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onSelectRestaurant?: (r: Restaurant) => void;
 }
 
 export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
@@ -34,9 +36,19 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
   onClose,
   isFavorite,
   onToggleFavorite,
+  onSelectRestaurant,
 }) => {
   const { t } = useTranslation();
   const { success } = useToast();
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset scroll position when restaurant changes
+  React.useEffect(() => {
+    if (r?.id && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [r?.id]);
+
   if (!r) return null;
 
   const mapsUrl = getGoogleMapsUrl(
@@ -58,7 +70,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
     // Generate a robust link back to the app with the restaurant name as a search query.
     // Ensure we handle trailing slashes and correctly encode the name.
     const baseUrl = window.location.origin + window.location.pathname;
-    const appUrl = `${baseUrl.replace(/\/$/, "")}?q=${encodeURIComponent(r.name)}`;
+    const appUrl = `${baseUrl.replace(/\/$/, "")}?resId=${r.id}`;
     const shareText = t("pocket.shareText", { name: r.name });
 
     // Attempt native share if available
@@ -70,8 +82,8 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
           url: appUrl,
         });
         return; // Success
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== "AbortError") {
           console.error("Error sharing:", err);
         }
       }
@@ -89,6 +101,9 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="p-0 border-0 max-w-lg w-full h-[92dvh] sm:h-auto sm:max-h-[85dvh] overflow-hidden rounded-t-[3rem] sm:rounded-[3rem] bg-white gap-0">
+        <DialogTitle className="sr-only">
+          {r.name}
+        </DialogTitle>
         <DialogDescription className="sr-only">
           {t("pocket.details", { name: r.name })}
         </DialogDescription>
@@ -126,7 +141,10 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain pb-12">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto overscroll-contain pb-12"
+        >
           {/* Hero Section */}
           <div className="relative w-full h-80 flex-shrink-0">
             {(() => {
@@ -289,7 +307,17 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
                 </div>
               )}
             </div>
-
+            
+            {/* After-meal Suggestions */}
+            <AfterMealSection 
+              lat={r.position?.latitude} 
+              lon={r.position?.longitude} 
+              restaurantName={r.name}
+              currentRestaurantType={r.type}
+              currentRestaurantId={r.id}
+              onSelectRestaurant={onSelectRestaurant}
+            />
+            
             {/* Bottom Actions */}
             <div className="flex gap-3 pt-4">
               <Button

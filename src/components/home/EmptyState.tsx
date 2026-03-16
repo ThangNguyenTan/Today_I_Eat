@@ -2,8 +2,10 @@ import { Heart, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
+import type { User } from "firebase/auth";
+
 interface EmptyStateProps {
-  user: any;
+  user: User | null;
   onLogin: () => void;
 }
 
