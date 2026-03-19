@@ -6,6 +6,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Triggers native device vibration if supported.
+ * Excellent for simulating physical button presses and tactile feedback.
+ */
+export const triggerHaptic = (pattern: number | number[] = 50) => {
+  if (
+    typeof window !== "undefined" &&
+    window.navigator &&
+    window.navigator.vibrate
+  ) {
+    try {
+      window.navigator.vibrate(pattern);
+    } catch {
+      // Suppress errors on unsupported platforms
+    }
+  }
+};
+
 export const getCurrentMealTime = (): MealTime => {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 11) return "Sáng";

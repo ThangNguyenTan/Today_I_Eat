@@ -100,7 +100,7 @@ export const RestaurantPocketView: React.FC<RestaurantPocketViewProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="p-0 border-0 max-w-lg w-full h-[92dvh] sm:h-auto sm:max-h-[85dvh] overflow-hidden rounded-t-[3rem] sm:rounded-[3rem] bg-white gap-0">
+      <DialogContent className="p-0 border-0 flex flex-col h-[92dvh] sm:max-h-[85dvh] sm:h-auto overflow-hidden bg-white gap-0">
         <DialogTitle className="sr-only">
           {r.name}
         </DialogTitle>

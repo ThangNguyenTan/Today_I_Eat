@@ -82,11 +82,13 @@ export const ActionSection: React.FC<ActionSectionProps> = ({
 
   return (
     <section className="mb-10 space-y-6">
-      <SearchBar
-        query={searchQuery}
-        onChange={setSearchQuery}
-        isLoading={apiLoading}
-      />
+      <div className="max-w-2xl mx-auto mb-12">
+        <SearchBar
+          query={searchQuery}
+          onChange={setSearchQuery}
+          isLoading={apiLoading}
+        />
+      </div>
 
       <div className="flex items-end justify-between gap-4 px-2">
         <div className="min-w-0">

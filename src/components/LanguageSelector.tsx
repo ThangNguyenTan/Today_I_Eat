@@ -27,10 +27,10 @@ export const LanguageSelector: React.FC = () => {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="vi" className="font-medium cursor-pointer">
-            🇻🇳 {t("common.vietnamese")}
+            <span className="inline-block w-6 text-center font-bold text-xs bg-primary/10 text-primary rounded px-1 mr-1">VI</span> {t("common.vietnamese")}
           </SelectItem>
           <SelectItem value="en-US" className="font-medium cursor-pointer">
-            🇺🇸 {t("common.english")}
+            <span className="inline-block w-6 text-center font-bold text-xs bg-primary/10 text-primary rounded px-1 mr-1">EN</span> {t("common.english")}
           </SelectItem>
         </SelectContent>
       </Select>

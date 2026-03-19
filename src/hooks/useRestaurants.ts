@@ -16,7 +16,7 @@ export const useRestaurants = (user: User | null) => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 12;
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // ─── Fetch a page from the API ──────────────────────────────────────────────

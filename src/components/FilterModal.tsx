@@ -18,6 +18,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { FOOD_TYPES, HCM_DISTRICTS } from "@/constants";
+import { triggerHaptic } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -62,8 +63,9 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     setLocalTypes(activeTypes);
     setLocalArea(manualArea);
   }
-
+  
   const handleApply = () => {
+    triggerHaptic(50);
     onApply({
       types: localTypes,
       area: localArea,
@@ -81,7 +83,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="fixed left-[50%] top-[50%] z-50 w-[94vw] max-w-md translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col transition-all duration-300 [&>button]:hidden"
+        className="bg-[#FAFAFA] border-0 p-0 overflow-hidden flex flex-col h-[85vh] sm:max-h-[85vh] sm:h-auto sm:max-w-md [&>button]:hidden"
         aria-describedby={undefined}
       >
         <DialogDescription className="sr-only">

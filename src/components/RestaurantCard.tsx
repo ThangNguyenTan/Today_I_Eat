@@ -14,6 +14,7 @@ import {
   formatOperatingHours,
   formatDistance,
   getEmoji,
+  triggerHaptic,
   cn,
 } from "@/lib/utils";
 import { LazyImage } from "./ui/LazyImage";
@@ -64,6 +65,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
+            triggerHaptic(50);
             onToggleFavorite(e);
           }}
           className={cn(

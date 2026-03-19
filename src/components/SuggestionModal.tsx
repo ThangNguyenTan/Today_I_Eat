@@ -32,6 +32,7 @@ import {
   getDistanceColor,
   getGoogleMapsUrl,
   getAIHighlights,
+  triggerHaptic,
   cn,
 } from "@/lib/utils";
 
@@ -336,6 +337,7 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
 
   const startSpinning = useCallback(() => {
     console.log("[SuggestionModal] startSpinning called");
+    triggerHaptic([50, 100, 50]);
     isCancelledRef.current = false;
     setPhase("spinning");
     setShowConfetti(false);
@@ -435,10 +437,10 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden shadow-2xl flex flex-col transition-all duration-500 [&>button]:hidden",
+          "bg-white border-0 p-0 overflow-hidden flex flex-col transition-all duration-500 [&>button]:hidden",
           !isSpinning 
-            ? "w-[94vw] max-w-md h-[90vh] rounded-t-[2.5rem] sm:rounded-[3rem]" 
-            : "w-[85vw] max-w-md rounded-[3rem]"
+            ? "h-[90vh] sm:max-h-[90vh] sm:h-auto sm:max-w-md" 
+            : "h-[85vh] sm:max-h-[85vh] sm:h-auto sm:max-w-md"
         )}
       >
         <DialogTitle className="sr-only">

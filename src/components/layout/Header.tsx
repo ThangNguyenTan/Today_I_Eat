@@ -4,6 +4,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { type User } from "firebase/auth";
+import { motion, useScroll } from "framer-motion";
 interface HeaderProps {
   user: User | null;
   onLogin: () => void;
@@ -18,10 +19,11 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenFavorites,
 }) => {
   const { t } = useTranslation();
+  const { scrollYProgress } = useScroll();
 
   return (
     <header className="sticky top-0 z-40 w-full glass-premium border-b tracking-tight">
-      <div className="container flex h-16 items-center justify-between px-4 sm:px-6">
+      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 relative z-10">
         <div
           className="flex items-center gap-3 group cursor-pointer"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -62,6 +64,12 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </div>
       </div>
+      
+      {/* Scroll Progress Indicator */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary via-orange-400 to-amber-400 origin-[0%] z-20 shadow-[0_0_10px_rgba(249,115,22,0.5)]"
+        style={{ scaleX: scrollYProgress }}
+      />
     </header>
   );
 };

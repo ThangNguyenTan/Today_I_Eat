@@ -54,7 +54,7 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="fixed left-[50%] top-[50%] z-50 w-[94vw] max-w-2xl translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden bg-[#FAFAFA] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[92dvh] transition-all duration-300 [&>button]:hidden">
+      <DialogContent className="bg-[#FAFAFA] border-0 p-0 overflow-hidden flex flex-col h-[92dvh] sm:max-h-[90dvh] sm:h-auto sm:max-w-2xl [&>button]:hidden">
         <DialogTitle className="sr-only">
           {t("favorites.title")}
         </DialogTitle>

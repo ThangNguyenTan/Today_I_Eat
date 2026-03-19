@@ -181,7 +181,7 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="fixed left-[50%] top-[50%] z-50 w-[94vw] max-w-lg translate-x-[-50%] translate-y-[-50%] border-0 p-0 overflow-hidden rounded-[2.5rem] shadow-2xl max-h-[92dvh] flex flex-col transition-all duration-300 [&>button]:hidden">
+      <DialogContent className="bg-white border-0 p-0 overflow-hidden flex flex-col h-[85vh] sm:max-h-[85vh] sm:h-auto sm:max-w-lg [&>button]:hidden">
         <DialogTitle className="sr-only">
           {t("nearby.title")}
         </DialogTitle>
@@ -244,32 +244,34 @@ export const NearbyModal: React.FC<NearbyModalProps> = ({
 
           {/* Blocked Permission */}
           {permissionStatus === "denied" && (
-            <div className="py-8 flex flex-col items-center gap-4 text-center px-6 animate-in fade-in zoom-in-95 duration-500">
-              <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center">
-                <AlertCircle className="h-8 w-8 text-red-400" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-black text-gray-900">
-                  {t("nearby.blockedTitle")}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t("nearby.blockedDesc")}
-                </p>
-                <div className="mt-4 p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-left">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">
-                    {t("nearby.blockedQuickFix")}
-                  </p>
-                  <ol className="text-[11px] text-gray-600 space-y-1 ml-4 list-decimal leading-snug">
-                    <li>{t("nearby.blockedStep1")}</li>
-                    <li>{t("nearby.blockedStep2")}</li>
-                    <li>{t("nearby.blockedStep3")}</li>
-                  </ol>
+            <div className="py-4 flex flex-col items-center gap-3 text-center px-4 animate-in fade-in zoom-in-95 duration-500">
+              <div className="flex items-center gap-3 w-full justify-center">
+                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
+                <div className="text-left flex-1 max-w-[200px]">
+                  <h3 className="text-sm font-black text-gray-900 leading-tight">
+                    {t("nearby.blockedTitle")}
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                    {t("nearby.blockedDesc")}
+                  </p>
+                </div>
+              </div>
+              <div className="w-full mt-2 p-3 rounded-xl bg-gray-50 border border-gray-100 text-left">
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1.5">
+                  {t("nearby.blockedQuickFix")}
+                </p>
+                <ol className="text-[10px] text-gray-600 space-y-1 ml-4 list-decimal leading-snug">
+                  <li>{t("nearby.blockedStep1")}</li>
+                  <li>{t("nearby.blockedStep2")}</li>
+                  <li>{t("nearby.blockedStep3")}</li>
+                </ol>
               </div>
               <Button
                 variant="outline"
                 onClick={() => window.location.reload()}
-                className="w-full h-12 rounded-xl font-black uppercase tracking-[0.1em] gap-2 text-[11px]"
+                className="w-full h-10 mt-1 rounded-xl font-black uppercase tracking-[0.1em] gap-2 text-[10px]"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 {t("nearby.reloadBtn")}

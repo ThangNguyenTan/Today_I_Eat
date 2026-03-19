@@ -310,7 +310,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-32 font-sans selection:bg-primary/20">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] pb-24 sm:pb-0 font-sans selection:bg-primary/20">
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full" />
         <div className="absolute top-[20%] -left-[10%] w-[30%] h-[30%] bg-orange-200/20 blur-[100px] rounded-full" />
@@ -329,7 +329,7 @@ function App() {
         onOpenFavorites={() => pushModal("favorites")}
       />
 
-      <main className="container relative z-10 mx-auto max-w-2xl px-6 py-10">
+      <main className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         <HeroSection
           greeting={greeting}
           onSuggest={() => pushModal("suggestion")}
@@ -351,7 +351,7 @@ function App() {
 
         {/* Restaurant List */}
         <section className="space-y-8">
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <AnimatePresence mode="popLayout">
               {apiLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
@@ -398,7 +398,7 @@ function App() {
                   </motion.div>
                 ))
               ) : (
-                <EmptyState user={user} onLogin={login} />
+                <EmptyState user={user} onLogin={login} mode="search" />
               )}
             </AnimatePresence>
           </div>

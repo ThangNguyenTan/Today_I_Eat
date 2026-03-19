@@ -45,7 +45,9 @@
         "descNoFav": "Danh sách của bạn đang trống. Hiện tại tính năng thêm quán mới chỉ dành cho Quản trị viên (Admin).",
         "titleNotAuth": "Bạn chưa đăng nhập",
         "descNotAuth": "Đăng nhập để lưu lại những địa điểm ăn uống yêu thích và đồng bộ trên mọi thiết bị của bạn.",
-        "loginBtn": "Đăng nhập ngay"
+        "loginBtn": "Đăng nhập ngay",
+        "titleNoSearch": "Không tìm thấy quán nào",
+        "descNoSearch": "Chúng tôi không tìm thấy quán nào phù hợp với tìm kiếm của bạn. Hãy thử thay đổi bộ lọc hoặc từ khóa nhé."
     },
     "search": {
         "placeholder": "Tìm tên quán, món ăn hoặc địa chỉ...",

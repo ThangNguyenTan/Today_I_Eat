@@ -7,9 +7,10 @@ import type { User } from "firebase/auth";
 interface EmptyStateProps {
   user: User | null;
   onLogin: () => void;
+  mode?: "favorites" | "search";
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ user, onLogin }) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({ user, onLogin, mode = "favorites" }) => {
   const { t } = useTranslation();
 
   return (
@@ -35,7 +36,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ user, onLogin }) => {
         </div>
       </div>
 
-      {user ? (
+      {mode === "search" ? (
+        <div className="relative z-10 max-w-sm px-4">
+          <h4 className="text-2xl font-black mb-3 text-gray-800">
+            {t("empty.titleNoSearch")}
+          </h4>
+          <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+            {t("empty.descNoSearch")}
+          </p>
+        </div>
+      ) : user ? (
         <div className="relative z-10 max-w-sm px-4">
           <h4 className="text-2xl font-black mb-3 text-gray-800">
             {t("empty.titleNoFav")}

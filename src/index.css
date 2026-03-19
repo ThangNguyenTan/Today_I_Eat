@@ -52,7 +52,14 @@
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.15) transparent;
   }
+  
+  .dark * {
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: "Be Vietnam Pro", sans-serif;
@@ -277,6 +284,28 @@
 ::selection {
   background-color: hsl(var(--primary) / 0.2);
   color: inherit;
+}
+
+/* Elegant Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
 }
 
 @layer base {

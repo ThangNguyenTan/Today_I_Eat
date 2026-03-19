@@ -45,7 +45,9 @@
         "descNoFav": "Your list is empty. Currently, adding new places is for Admins only.",
         "titleNotAuth": "You are not logged in",
         "descNotAuth": "Log in to save your favorite eating spots and sync across all your devices.",
-        "loginBtn": "Login now"
+        "loginBtn": "Login now",
+        "titleNoSearch": "No places found",
+        "descNoSearch": "We couldn't find any places matching your criteria. Try adjusting your filters or search terms."
     },
     "search": {
         "placeholder": "Search name, dish or address...",
